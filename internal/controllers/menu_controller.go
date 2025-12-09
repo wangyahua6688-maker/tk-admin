@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"go-admin-full/internal/dao"
 	"net/http"
 	"strconv"
 
@@ -16,12 +17,17 @@ type MenuController struct {
 }
 
 func NewMenuController(db *gorm.DB) *MenuController {
+	menuDao := dao.NewMenuDao(db)
+	menuSvc := services.NewMenuService(menuDao)
+
+	userRoleDao := dao.NewUserRoleDao(db)
+	userRoleSvc := services.NewUserRoleService(userRoleDao)
+
 	return &MenuController{
-		svc:      services.NewMenuService(db),
-		svcRoles: services.NewUserRoleService(db),
+		svc:      menuSvc,
+		svcRoles: userRoleSvc,
 	}
 }
-
 func (mc *MenuController) List(c *gin.Context) {
 	items, err := mc.svc.List(c.Request.Context())
 	if err != nil {
