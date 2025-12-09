@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func UserRoutes(r *gin.Engine, mgr *tokenpkg.Manager, db *gorm.DB) {
+func UserRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenpkg.Manager) {
 	// 创建用户控制器
 	userCtrl := controllers.NewUserController(db)
 

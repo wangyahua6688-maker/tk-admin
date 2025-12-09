@@ -1,12 +1,11 @@
 package models
 
-import "time"
+import "gorm.io/gorm"
 
+// Role 角色模型
 type Role struct {
-	ID          uint   `gorm:"primaryKey"`
-	Name        string `gorm:"unique;not null"`
-	Description string
-	Permissions []Permission `gorm:"many2many:role_permissions"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	gorm.Model
+	Name        string       `gorm:"size:100;uniqueIndex" json:"name"`
+	Code        string       `gorm:"size:100;uniqueIndex" json:"code"`
+	Permissions []Permission `gorm:"many2many:role_permissions;" json:"permissions"`
 }

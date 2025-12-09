@@ -45,6 +45,8 @@ func SetupRouter(mgr *tokenpkg.Manager, db *gorm.DB, redisClient *redis.Client, 
 	// 注册路由
 	routes.AuthRoutes(r, db, mgr)
 	routes.UserRoutes(r, db, mgr)
+	routes.MenuRoutes(r, db, mgr)
+	routes.PermissionRoutes(r, db, mgr)
 
 	// 健康检查路由
 	r.GET("/health", func(c *gin.Context) {
