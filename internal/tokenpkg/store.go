@@ -3,6 +3,8 @@ package tokenpkg
 import (
 	"context"
 	"fmt"
+	"go-admin-full/internal/constants"
+	"sync"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -66,7 +68,7 @@ func (r *RedisStore) Get(key string) (string, error) {
 	v, err := r.client.Get(r.ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
-			return "", ErrTokenNotFound
+			return "", constants.ErrTokenNotFound
 		}
 		return "", err
 	}
@@ -89,13 +91,20 @@ func (r *RedisStore) Ping() error {
 
 // MemoryStore 内存存储实现
 type MemoryStore struct {
-	data map[string]string
+	mu   sync.RWMutex
+	data map[string]memoryEntry
+}
+
+// memoryEntry 内存存储条目，包含过期时间（零值表示不过期）。
+type memoryEntry struct {
+	value    string
+	expireAt time.Time
 }
 
 // NewMemoryStore 创建内存存储
 func NewMemoryStore() Store {
 	return &MemoryStore{
-		data: make(map[string]string),
+		data: make(map[string]memoryEntry),
 	}
 }
 
@@ -106,22 +115,42 @@ func (m *MemoryStore) GetType() StoreType {
 
 // Set 实现
 func (m *MemoryStore) Set(key string, value string, expire time.Duration) error {
-	m.data[key] = value
-	// 注意：内存存储不支持自动过期，需要自己实现清理逻辑
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	entry := memoryEntry{value: value}
+	if expire > 0 {
+		entry.expireAt = time.Now().Add(expire)
+	}
+	m.data[key] = entry
 	return nil
 }
 
 // Get 实现
 func (m *MemoryStore) Get(key string) (string, error) {
-	value, exists := m.data[key]
+	m.mu.RLock()
+	entry, exists := m.data[key]
+	m.mu.RUnlock()
+
 	if !exists {
-		return "", ErrTokenNotFound
+		return "", constants.ErrTokenNotFound
 	}
-	return value, nil
+
+	// 兼容过期能力：读取时惰性清理，保证本地开发与 Redis 行为一致。
+	if !entry.expireAt.IsZero() && time.Now().After(entry.expireAt) {
+		m.mu.Lock()
+		delete(m.data, key)
+		m.mu.Unlock()
+		return "", constants.ErrTokenNotFound
+	}
+
+	return entry.value, nil
 }
 
 // Delete 实现
 func (m *MemoryStore) Delete(key string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	delete(m.data, key)
 	return nil
 }

@@ -10,3 +10,8 @@ type RefreshTokenRecord struct {
 	ExpiresAt time.Time
 	CreatedAt time.Time
 }
+
+// TableName 指定 refresh_token_records 表名。
+func (RefreshTokenRecord) TableName() string {
+	return "sys_refresh_token_records"
+}

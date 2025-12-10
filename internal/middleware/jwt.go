@@ -5,7 +5,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"go-admin-full/internal/models"
 	"go-admin-full/internal/tokenpkg"
+	"go-admin-full/internal/utils"
 )
 
 // NewJWTMiddleware 接收一个 *tokenpkg.Manager 并返回 gin.HandlerFunc
@@ -17,8 +19,6 @@ func NewJWTMiddleware(mgr *tokenpkg.Manager) gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "jwt manager is not initialized"})
 		}
 	}
-	signingKey := mgr.Config.SigningKey
-
 	return func(c *gin.Context) {
 		auth := c.GetHeader("Authorization")
 		if auth == "" {
@@ -34,18 +34,25 @@ func NewJWTMiddleware(mgr *tokenpkg.Manager) gin.HandlerFunc {
 			return
 		}
 
-		uid, err := tokenpkg.ParseToken(tokenStr, signingKey)
+		claims, err := mgr.ValidateAccessToken(tokenStr)
 		if err != nil {
-			if err == tokenpkg.ErrExpiredToken {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "token expired"})
-				return
-			}
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "invalid token"})
 			return
 		}
 
+		// 安全防护：每次请求校验用户状态，禁用用户立即失效。
+		if db := utils.DBFromContext(c.Request.Context()); db != nil {
+			var user models.User
+			if err := db.Select("id", "status").First(&user, claims.UserID).Error; err != nil || user.Status != 1 {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "user disabled or not found"})
+				return
+			}
+		}
+
 		// 将解析到的 uid 写入 context（key: "uid"）
-		c.Set("uid", uid)
+		c.Set("uid", claims.UserID)
+		c.Set("claims", claims)
+		c.Set("access_token", tokenStr)
 		c.Next()
 	}
 }

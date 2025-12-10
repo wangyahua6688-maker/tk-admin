@@ -2,17 +2,20 @@ package server
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
+	"time"
+
+	"go-admin-full/config"
 	"go-admin-full/internal/middleware"
 	"go-admin-full/internal/routes"
 	"go-admin-full/internal/tokenpkg"
 	"go-admin-full/internal/utils"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
-	"time"
 )
 
-func SetupRouter(mgr *tokenpkg.Manager, db *gorm.DB, redisClient *redis.Client, logger *utils.Logger) *gin.Engine {
+func SetupRouter(mgr *tokenpkg.Manager, db *gorm.DB, redisClient *redis.Client, logger *utils.Logger, cfg config.Config) *gin.Engine {
 	r := gin.Default()
 
 	// 添加全局中间件
@@ -23,7 +26,10 @@ func SetupRouter(mgr *tokenpkg.Manager, db *gorm.DB, redisClient *redis.Client, 
 	r.Use(middleware.RecoveryMiddleware())
 
 	// 3. 全局CORS中间件
-	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.CORSMiddleware(middleware.CORSOptions{
+		AllowedOrigins:   cfg.CORS.AllowedOrigins,
+		AllowCredentials: cfg.CORS.AllowCredentials,
+	}))
 
 	// 4. 数据库上下文中间件（将db注入到请求上下文中）
 	r.Use(func(c *gin.Context) {
@@ -43,11 +49,9 @@ func SetupRouter(mgr *tokenpkg.Manager, db *gorm.DB, redisClient *redis.Client, 
 	}
 
 	// 注册路由
-	routes.AuthRoutes(r, db, mgr)
+	routes.AuthRoutes(r, db, mgr, cfg.Auth.AllowPublicRegister)
 	routes.UserRoutes(r, db, mgr)
-	routes.UserRoleRoutes(r, db, mgr)
-	routes.MenuRoutes(r, db, mgr)
-	routes.PermissionRoutes(r, db, mgr)
+	routes.RBACRoutes(r, db, mgr)
 
 	// 健康检查路由
 	r.GET("/health", func(c *gin.Context) {

@@ -7,6 +7,7 @@ import (
 	"go-admin-full/internal/models"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"strings"
 )
 
 type AuthService struct {
@@ -19,6 +20,12 @@ func NewAuthService(authDao *dao.AuthDao) *AuthService {
 
 // Register 处理用户注册业务逻辑
 func (s *AuthService) Register(ctx context.Context, username, password, email string) error {
+	username = strings.TrimSpace(username)
+	email = strings.TrimSpace(email)
+	if username == "" {
+		return errors.New("用户名不能为空")
+	}
+
 	// 检查用户名是否存在
 	existingUser, err := s.authDao.GetUserByUsername(ctx, username)
 	if err == nil && existingUser != nil {
@@ -28,6 +35,10 @@ func (s *AuthService) Register(ctx context.Context, username, password, email st
 	}
 
 	// 密码加密
+	if err := ValidatePasswordStrength(password); err != nil {
+		return err
+	}
+
 	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -47,6 +58,8 @@ func (s *AuthService) Register(ctx context.Context, username, password, email st
 
 // Login 处理用户登录业务逻辑
 func (s *AuthService) Login(ctx context.Context, username, password string) (*models.User, error) {
+	username = strings.TrimSpace(username)
+
 	// 查询用户
 	user, err := s.authDao.GetUserByUsername(ctx, username)
 	if err != nil {
@@ -59,6 +72,11 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*mo
 	// 验证密码
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return nil, errors.New("用户名或密码错误")
+	}
+
+	// 安全防护：禁用状态用户不允许登录
+	if user.Status != 1 {
+		return nil, errors.New("账号已被禁用")
 	}
 
 	return user, nil
@@ -88,4 +106,9 @@ func (s *AuthService) UpdateUserToken(ctx context.Context, userID uint, refreshT
 func (s *AuthService) Logout(ctx context.Context, userID uint) error {
 	// 清空刷新Token（此处根据实际业务逻辑调整）
 	return s.authDao.UpdateUserToken(ctx, userID, "")
+}
+
+// GetUserByID 根据 ID 查询用户，用于鉴权场景下的状态校验。
+func (s *AuthService) GetUserByID(ctx context.Context, userID uint) (*models.User, error) {
+	return s.authDao.GetUserByID(ctx, userID)
 }

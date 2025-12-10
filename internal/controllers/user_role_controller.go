@@ -24,7 +24,7 @@ func NewUserRoleController(db *gorm.DB) *UserRoleController {
 
 type bindRolesReq struct {
 	UserID  uint   `json:"user_id" binding:"required"`
-	RoleIDs []uint `json:"role_ids" binding:"required"`
+	RoleIDs []uint `json:"role_ids"`
 }
 
 func (uc *UserRoleController) BindRoles(c *gin.Context) {
@@ -33,6 +33,12 @@ func (uc *UserRoleController) BindRoles(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// 安全防护：禁止修改当前登录用户自身角色，避免误操作导致权限锁死或提权。
+	if req.UserID == c.GetUint("uid") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "不可修改当前登录用户角色"})
+		return
+	}
+
 	if err := uc.svc.BindRoles(c.Request.Context(), req.UserID, req.RoleIDs); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -46,6 +52,15 @@ func (uc *UserRoleController) AddRoles(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if len(req.RoleIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "role_ids不能为空"})
+		return
+	}
+	if req.UserID == c.GetUint("uid") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "不可修改当前登录用户角色"})
+		return
+	}
+
 	if err := uc.svc.AddRoles(c.Request.Context(), req.UserID, req.RoleIDs); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -59,6 +74,15 @@ func (uc *UserRoleController) RemoveRoles(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if len(req.RoleIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "role_ids不能为空"})
+		return
+	}
+	if req.UserID == c.GetUint("uid") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "不可修改当前登录用户角色"})
+		return
+	}
+
 	if err := uc.svc.RemoveRoles(c.Request.Context(), req.UserID, req.RoleIDs); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

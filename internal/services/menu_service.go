@@ -2,114 +2,91 @@ package services
 
 import (
 	"context"
-
+	"go-admin-full/internal/dao"
 	"go-admin-full/internal/models"
-	"gorm.io/gorm"
 )
 
 type MenuService struct {
-	db *gorm.DB
+	dao dao.MenuDAO
 }
 
-func NewMenuService(db *gorm.DB) *MenuService { return &MenuService{db: db} }
+func NewMenuService(dao dao.MenuDAO) *MenuService {
+	return &MenuService{dao: dao}
+}
 
 func (s *MenuService) Create(ctx context.Context, m *models.Menu) error {
-	return s.db.WithContext(ctx).Create(m).Error
+	return s.dao.Create(ctx, m)
 }
+
+func (s *MenuService) Update(ctx context.Context, m *models.Menu) error {
+	return s.dao.Update(ctx, m)
+}
+
 func (s *MenuService) List(ctx context.Context) ([]models.Menu, error) {
-	var items []models.Menu
-	err := s.db.WithContext(ctx).Find(&items).Error
-	return items, err
+	return s.dao.List(ctx)
 }
+
 func (s *MenuService) Get(ctx context.Context, id uint) (*models.Menu, error) {
-	var m models.Menu
-	if err := s.db.WithContext(ctx).First(&m, id).Error; err != nil {
-		return nil, err
-	}
-	return &m, nil
+	return s.dao.Get(ctx, id)
 }
+
 func (s *MenuService) Delete(ctx context.Context, id uint) error {
-	return s.db.WithContext(ctx).Delete(&models.Menu{}, id).Error
+	return s.dao.Delete(ctx, id)
 }
 
-func (s *MenuService) BuildMenuTree(menus []models.Menu) []*models.Menu {
-	idMap := make(map[uint]*models.Menu)
+// ListForUser 按用户可访问权限返回菜单列表。
+func (s *MenuService) ListForUser(ctx context.Context, userID uint) ([]models.Menu, error) {
+	return s.dao.ListByUserID(ctx, userID)
+}
 
-	// 复制并建立索引
-	for i := range menus {
-		m := menus[i]
-		m.Children = []*models.Menu{}
-		idMap[m.ID] = &m
+func (s *MenuService) BuildMenuTree(ctx context.Context) ([]*models.Menu, error) {
+	menus, err := s.dao.List(ctx)
+	if err != nil {
+		return nil, err
 	}
+	return s.buildTree(menus), nil
+}
 
-	var roots []*models.Menu
+// BuildMenuTreeFromList 将指定菜单集合构建成树结构（用于按权限返回前端路由）。
+func (s *MenuService) BuildMenuTreeFromList(menus []models.Menu) []*models.Menu {
+	return s.buildTree(menus)
+}
 
-	for _, m := range idMap {
-		if m.ParentID == nil {
-			roots = append(roots, m)
-		} else {
-			parent := idMap[*m.ParentID]
-			if parent != nil {
-				parent.Children = append(parent.Children, m)
-			}
+// buildTree 将扁平菜单转换为树结构。
+func (s *MenuService) buildTree(menus []models.Menu) []*models.Menu {
+	// 转成 map
+	m := make(map[uint]*models.Menu, len(menus))
+	for _, menu := range menus {
+		node := &models.Menu{
+			ID:          menu.ID,
+			ParentID:    menu.ParentID,
+			Title:       menu.Title,
+			Path:        menu.Path,
+			Icon:        menu.Icon,
+			Component:   menu.Component,
+			OrderNum:    menu.OrderNum,
+			Permissions: menu.Permissions,
+			Children:    []*models.Menu{},
 		}
+		m[menu.ID] = node
 	}
 
-	return roots
-}
-
-func (s *MenuService) ListForRoles(ctx context.Context, roleCodes []string) ([]*models.Menu, error) {
-	var menus []models.Menu
-
-	// 查询 role → permission → menu
-	err := s.db.WithContext(ctx).
-		Preload("Permissions").
-		Order("`order` asc").
-		Find(&menus).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	if len(roleCodes) == 0 {
-		return nil, nil
-	}
-
-	// 1）查询角色所有权限
-	var perms []models.Permission
-	err = s.db.WithContext(ctx).
-		Joins("JOIN role_permissions rp ON rp.permission_id = permissions.id").
-		Joins("JOIN roles r ON r.id = rp.role_id AND r.code IN ?", roleCodes).
-		Find(&perms).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	permSet := map[string]bool{}
-	for _, p := range perms {
-		permSet[p.Code] = true
-	}
-
-	// 2）过滤菜单（菜单没有要求权限 → 所有人可以访问）
-	var filtered []models.Menu
-	for _, m := range menus {
-		if len(m.Permissions) == 0 {
-			filtered = append(filtered, m)
+	// 构建树
+	tree := make([]*models.Menu, 0)
+	for _, raw := range menus {
+		item := m[raw.ID]
+		if item.ParentID == 0 {
+			tree = append(tree, item)
 			continue
 		}
-		allowed := false
-		for _, p := range m.Permissions {
-			if permSet[p.Code] {
-				allowed = true
-				break
-			}
+		if parent, ok := m[item.ParentID]; ok {
+			parent.Children = append(parent.Children, item)
+			continue
 		}
-		if allowed {
-			filtered = append(filtered, m)
-		}
+
+		// 容错：若父节点未在当前权限集合中，避免子节点丢失，降级为根节点返回。
+		tree = append(tree, item)
 	}
 
-	// 3）构建树结构
-	return s.BuildMenuTree(filtered), nil
+	return tree
 }

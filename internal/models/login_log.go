@@ -11,3 +11,8 @@ type LoginLog struct {
 	Status    int
 	CreatedAt time.Time
 }
+
+// TableName 指定 login_logs 表名。
+func (LoginLog) TableName() string {
+	return "sys_login_logs"
+}

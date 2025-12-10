@@ -9,7 +9,7 @@ import (
 )
 
 // AuthRoutes 注册认证相关路由
-func AuthRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenpkg.Manager) {
+func AuthRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenpkg.Manager, allowPublicRegister bool) {
 	// 创建认证控制器，传递数据库连接
 	auth := controllers.NewAuthController(db, mgr)
 
@@ -17,8 +17,10 @@ func AuthRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenpkg.Manager) {
 	public := r.Group("/auth")
 	{
 		public.POST("/login", auth.Login)
-		public.POST("/register", auth.Register)
-		//public.POST("/refresh", auth.Refresh)
+		if allowPublicRegister {
+			public.POST("/register", auth.Register)
+		}
+		public.POST("/refresh", auth.Refresh)
 	}
 
 	// 需要认证的路由组

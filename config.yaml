@@ -3,15 +3,28 @@ server:
   port: 8080
 
 jwt:
-  secret: "very_strong_secret_here"
-  expireHour: 1
-  refreshHour: 168
+  signing_key: "dev-local-signing-key-change-in-production-123456"
+  access_expire: 900
+  refresh_expire: 604800
+  allow_insecure_memory_store: true
 
 database:
-  dialect: "sqlite"
-  dsn: "data.db"
+  dsn: "root:12345678@tcp(127.0.0.1:3306)/nb_sys_001?charset=utf8mb4&parseTime=True&loc=Local"
+  log_level: "warn"
 
 redis:
-  addr: ""
+  addr: "127.0.0.1:6379"
   password: ""
   db: 0
+
+cors:
+  allowed_origins:
+    - "http://localhost:3000"
+  allow_credentials: false
+
+auth:
+  allow_public_register: false
+
+log:
+  level: "info"
+  file_path: ""

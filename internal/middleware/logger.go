@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"bytes"
-	"fmt"
+	"encoding/json"
 	"io"
-	"strings"
+	"regexp"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -36,7 +36,7 @@ func JSONLoggerMiddleware() gin.HandlerFunc {
 
 		// 读取请求体
 		var requestBody []byte
-		if c.Request.Body != nil {
+		if c.Request.Body != nil && shouldLogRequestBody(c) {
 			requestBody, _ = io.ReadAll(c.Request.Body)
 			c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody))
 		}
@@ -83,38 +83,79 @@ func maskSensitiveData(body string) string {
 		return body
 	}
 
-	// 这里可以添加更复杂的脱敏逻辑
-	// 例如：将密码、token、身份证号等敏感信息替换为***
-
-	// 简单的JSON密码字段脱敏
-	patterns := map[string]string{
-		`"password":\s*".*?"`:      `"password":"***"`,
-		`"token":\s*".*?"`:         `"token":"***"`,
-		`"refresh_token":\s*".*?"`: `"refresh_token":"***"`,
-		`"secret":\s*".*?"`:        `"secret":"***"`,
-		`"api_key":\s*".*?"`:       `"api_key":"***"`,
+	// 优先按JSON结构脱敏
+	var any interface{}
+	if err := json.Unmarshal([]byte(body), &any); err == nil {
+		maskJSON(any)
+		if out, err := json.Marshal(any); err == nil {
+			return string(out)
+		}
 	}
 
-	maskedBody := body
-	for pattern, replacement := range patterns {
-		maskedBody = strings.ReplaceAll(maskedBody, pattern, replacement)
+	// JSON解析失败时，使用正则兜底
+	replacements := []struct {
+		re   *regexp.Regexp
+		repl string
+	}{
+		{regexp.MustCompile(`(?i)"password"\s*:\s*"[^"]*"`), `"password":"***"`},
+		{regexp.MustCompile(`(?i)"token"\s*:\s*"[^"]*"`), `"token":"***"`},
+		{regexp.MustCompile(`(?i)"refresh_token"\s*:\s*"[^"]*"`), `"refresh_token":"***"`},
+		{regexp.MustCompile(`(?i)"secret"\s*:\s*"[^"]*"`), `"secret":"***"`},
+		{regexp.MustCompile(`(?i)"api_key"\s*:\s*"[^"]*"`), `"api_key":"***"`},
 	}
 
-	return maskedBody
+	masked := body
+	for _, item := range replacements {
+		masked = item.re.ReplaceAllString(masked, item.repl)
+	}
+	return masked
 }
 
 // toJSONString 将map转换为JSON字符串
 func toJSONString(data map[string]interface{}) string {
-	// 这里可以使用json.Marshal，简化示例使用fmt
-	jsonStr := "{"
-	first := true
-	for k, v := range data {
-		if !first {
-			jsonStr += ", "
-		}
-		jsonStr += fmt.Sprintf(`"%s": "%v"`, k, v)
-		first = false
+	b, err := json.Marshal(data)
+	if err != nil {
+		return `{"msg":"failed to marshal log"}`
 	}
-	jsonStr += "}"
-	return jsonStr
+	return string(b)
+}
+
+func shouldLogRequestBody(c *gin.Context) bool {
+	path := c.Request.URL.Path
+	switch path {
+	case "/auth/login", "/auth/register", "/auth/refresh":
+		return false
+	}
+	return true
+}
+
+func maskJSON(v interface{}) {
+	switch t := v.(type) {
+	case map[string]interface{}:
+		for k, val := range t {
+			lk := lower(k)
+			if lk == "password" || lk == "token" || lk == "refresh_token" || lk == "secret" || lk == "api_key" {
+				t[k] = "***"
+				continue
+			}
+			maskJSON(val)
+		}
+	case []interface{}:
+		for _, item := range t {
+			maskJSON(item)
+		}
+	}
+}
+
+func lower(s string) string {
+	out := make([]byte, 0, len(s))
+	for i := 0; i < len(s); i++ {
+		ch := s[i]
+		if ch >= 'A' && ch <= 'Z' {
+			out = append(out, ch+('a'-'A'))
+		} else {
+			out = append(out, ch)
+		}
+	}
+	return string(out)
 }

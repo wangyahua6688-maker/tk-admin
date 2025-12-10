@@ -3,12 +3,15 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
+	"strings"
+	"time"
+
 	"go-admin-full/config"
 	"go-admin-full/internal/models"
 	"go-admin-full/internal/tokenpkg"
 	"go-admin-full/internal/utils"
-	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 func Run(cfg config.Config) error {
@@ -25,7 +28,17 @@ func Run(cfg config.Config) error {
 	logger := utils.GetLogger()
 	logger.Info("Starting application...")
 
-	// 2. 初始化数据库连接
+	// 2. JWT配置安全校验（fail fast）
+	signingKey := strings.TrimSpace(cfg.JWT.SigningKey)
+	if len(signingKey) < 32 || signingKey == "change-this-secret" || strings.Contains(signingKey, "replace-with") {
+		return fmt.Errorf("invalid jwt.signing_key: require at least 32 chars and non-placeholder value")
+	}
+
+	if cfg.JWT.AccessExpire <= 0 || cfg.JWT.RefreshExpire <= 0 {
+		return fmt.Errorf("invalid jwt expiration config: access_expire and refresh_expire must be positive seconds")
+	}
+
+	// 3. 初始化数据库连接
 	dbCfg := utils.DefaultDBConfig()
 	dbCfg.DSN = cfg.Database.DSN
 	dbCfg.LogLevel = utils.GormLogLevelFromString(cfg.Database.LogLevel)
@@ -35,7 +48,7 @@ func Run(cfg config.Config) error {
 		logger.Fatal("Failed to connect to database: %v", err)
 	}
 
-	// 3. 初始化Redis连接（可选）
+	// 4. 初始化Redis连接（可选）
 	var redisClient *redis.Client
 	if cfg.Redis.Addr != "" {
 		redisCfg := utils.DefaultRedisConfig()
@@ -45,42 +58,49 @@ func Run(cfg config.Config) error {
 
 		redisClient, err = utils.NewRedisClient(redisCfg)
 		if err != nil {
-			logger.Warn("Failed to connect to Redis: %v, using memory store", err)
+			if !cfg.JWT.AllowInsecureMemoryStore {
+				return fmt.Errorf("failed to connect to redis and insecure memory token store is disabled: %w", err)
+			}
+			logger.Warn("Failed to connect to Redis: %v, falling back to memory token store", err)
 		} else {
 			logger.Info("Redis connected successfully")
 		}
 	}
 
-	// 4. 数据库迁移
+	// 5. 数据库迁移
 	ctx := context.Background()
 	if err := db.WithContext(ctx).AutoMigrate(
-		&models.User{}, &models.Role{}, &models.Permission{},
+		&models.User{}, &models.Role{}, &models.Permission{}, &models.Menu{},
+		&models.RolePermission{},
 		&models.LoginLog{}, &models.RefreshTokenRecord{},
 	); err != nil {
 		logger.Fatal("Failed to migrate database: %v", err)
 	}
 
-	// 5. 创建token存储
+	// 6. 创建token存储
 	var store tokenpkg.Store
 	if redisClient != nil {
 		// 创建Redis存储适配器
 		store = tokenpkg.NewRedisStoreWithClient(redisClient)
 	} else {
+		if !cfg.JWT.AllowInsecureMemoryStore {
+			return fmt.Errorf("未配置redis，且jwt.allow_insecure_memory_store=false")
+		}
 		// 使用内存存储
 		store = tokenpkg.NewMemoryStore()
 		logger.Warn("Using in-memory token store (not suitable for production)")
 	}
 
-	// 6. 配置token管理器
+	// 7. 配置token管理器
 	jwtCfg := tokenpkg.DefaultConfig()
-	jwtCfg.SigningKey = cfg.JWT.SigningKey
+	jwtCfg.SigningKey = signingKey
 	jwtCfg.AccessExpire = time.Duration(cfg.JWT.AccessExpire) * time.Second
 	jwtCfg.RefreshExpire = time.Duration(cfg.JWT.RefreshExpire) * time.Second
 
 	mgr := tokenpkg.NewManager(jwtCfg, store)
 
-	// 7. 设置路由
-	r := SetupRouter(mgr, db, redisClient, logger)
+	// 8. 设置路由
+	r := SetupRouter(mgr, db, redisClient, logger, cfg)
 
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	logger.Info("Server starting on %s", addr)

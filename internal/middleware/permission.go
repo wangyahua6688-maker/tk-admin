@@ -8,11 +8,18 @@ import (
 func PermissionRequired(code string, userRoleSvc *services.UserRoleService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uid := c.GetUint("uid")
+		if uid == 0 {
+			c.AbortWithStatusJSON(401, gin.H{"msg": "unauthorized"})
+			return
+		}
 
 		roles, err := userRoleSvc.GetUserRoles(c.Request.Context(), uid)
 		if err != nil {
-			c.JSON(403, gin.H{"msg": "no roles"})
-			c.Abort()
+			c.AbortWithStatusJSON(403, gin.H{"msg": "no roles"})
+			return
+		}
+		if len(roles) == 0 {
+			c.AbortWithStatusJSON(403, gin.H{"msg": "no roles"})
 			return
 		}
 
@@ -32,8 +39,7 @@ func PermissionRequired(code string, userRoleSvc *services.UserRoleService) gin.
 		}
 
 		if !permSet[code] {
-			c.JSON(403, gin.H{"msg": "permission denied"})
-			c.Abort()
+			c.AbortWithStatusJSON(403, gin.H{"msg": "permission denied"})
 			return
 		}
 
