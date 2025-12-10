@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"go-admin-full/internal/constants"
 	"go-admin-full/internal/dao"
 	"go-admin-full/internal/services"
 	"go-admin-full/internal/tokenpkg"
@@ -88,7 +89,7 @@ func (c *AuthController) Refresh(ctx *gin.Context) {
 	if err != nil {
 		logger.Error("刷新Token失败: %v", err)
 		status := http.StatusUnauthorized
-		if err == tokenpkg.ErrExpiredToken {
+		if err == constants.ErrExpiredToken {
 			status = http.StatusForbidden
 		}
 		utils.JSONError(ctx, status, err.Error())

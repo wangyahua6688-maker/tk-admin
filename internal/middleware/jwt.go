@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"go-admin-full/internal/constants"
 	"net/http"
 	"strings"
 
@@ -36,7 +37,7 @@ func NewJWTMiddleware(mgr *tokenpkg.Manager) gin.HandlerFunc {
 
 		uid, err := tokenpkg.ParseToken(tokenStr, signingKey)
 		if err != nil {
-			if err == tokenpkg.ErrExpiredToken {
+			if err == constants.ErrExpiredToken {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "token expired"})
 				return
 			}

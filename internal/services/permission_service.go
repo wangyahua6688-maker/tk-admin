@@ -1,33 +1,39 @@
 package services
 
 import (
-    "context"
-
-    "go-admin-full/internal/models"
-    "gorm.io/gorm"
+	"context"
+	"go-admin-full/internal/dao"
+	"go-admin-full/internal/models"
 )
 
 type PermissionService struct {
-    db *gorm.DB
+	dao dao.PermissionDAO
 }
 
-func NewPermissionService(db *gorm.DB) *PermissionService { return &PermissionService{db: db} }
+func NewPermissionService(dao dao.PermissionDAO) *PermissionService {
+	return &PermissionService{dao: dao}
+}
 
 func (s *PermissionService) Create(ctx context.Context, p *models.Permission) error {
-    return s.db.WithContext(ctx).Create(p).Error
+	return s.dao.Create(ctx, p)
 }
+
+func (s *PermissionService) Update(ctx context.Context, p *models.Permission) error {
+	return s.dao.Update(ctx, p)
+}
+
 func (s *PermissionService) List(ctx context.Context) ([]models.Permission, error) {
-    var items []models.Permission
-    err := s.db.WithContext(ctx).Find(&items).Error
-    return items, err
+	return s.dao.List(ctx)
 }
+
 func (s *PermissionService) Get(ctx context.Context, id uint) (*models.Permission, error) {
-    var p models.Permission
-    if err := s.db.WithContext(ctx).First(&p, id).Error; err != nil {
-        return nil, err
-    }
-    return &p, nil
+	return s.dao.Get(ctx, id)
 }
+
 func (s *PermissionService) Delete(ctx context.Context, id uint) error {
-    return s.db.WithContext(ctx).Delete(&models.Permission{}, id).Error
+	return s.dao.Delete(ctx, id)
+}
+
+func (s *PermissionService) GetPermissionsByRoleIDs(ctx context.Context, roleIDs []uint) ([]models.Permission, error) {
+	return s.dao.GetByRoleIDs(ctx, roleIDs)
 }

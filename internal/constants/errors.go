@@ -1,4 +1,4 @@
-package tokenpkg
+package constants
 
 import "errors"
 
@@ -10,4 +10,11 @@ var (
 	ErrParsingToken     = errors.New("failed to parse token")
 	ErrTokenNotFound    = errors.New("token not found in store")
 	ErrTokenStoreFailed = errors.New("failed to store token")
+)
+
+const (
+	ErrUnauthorized  = 10001
+	ErrForbidden     = 10002
+	ErrInvalidParam  = 10003
+	ErrInternalError = 10004
 )

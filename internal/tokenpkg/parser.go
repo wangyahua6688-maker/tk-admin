@@ -2,6 +2,7 @@ package tokenpkg
 
 import (
 	"errors"
+	"go-admin-full/internal/constants"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -19,13 +20,13 @@ func ParseToken(tokenString string, signingKey string) (uint, error) {
 	if err != nil {
 		// jwt v5 exports jwt.ErrTokenExpired for expired tokens
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			return 0, ErrExpiredToken
+			return 0, constants.ErrExpiredToken
 		}
-		return 0, ErrParsingToken
+		return 0, constants.ErrParsingToken
 	}
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
-		return 0, ErrInvalidToken
+		return 0, constants.ErrInvalidToken
 	}
 	return claims.UserID, nil
 }

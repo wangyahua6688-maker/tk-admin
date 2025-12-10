@@ -3,6 +3,7 @@ package tokenpkg
 import (
 	"context"
 	"fmt"
+	"go-admin-full/internal/constants"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -66,7 +67,7 @@ func (r *RedisStore) Get(key string) (string, error) {
 	v, err := r.client.Get(r.ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
-			return "", ErrTokenNotFound
+			return "", constants.ErrTokenNotFound
 		}
 		return "", err
 	}
@@ -115,7 +116,7 @@ func (m *MemoryStore) Set(key string, value string, expire time.Duration) error 
 func (m *MemoryStore) Get(key string) (string, error) {
 	value, exists := m.data[key]
 	if !exists {
-		return "", ErrTokenNotFound
+		return "", constants.ErrTokenNotFound
 	}
 	return value, nil
 }

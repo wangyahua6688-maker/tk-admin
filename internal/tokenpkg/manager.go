@@ -2,6 +2,7 @@ package tokenpkg
 
 import (
 	"fmt"
+	"go-admin-full/internal/constants"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -36,7 +37,7 @@ func (m *Manager) GenerateTokens(userID uint) (access string, refresh string, er
 	}
 	access, err = m.signClaims(accessClaims)
 	if err != nil {
-		return "", "", fmt.Errorf("%w: %v", ErrSigningToken, err)
+		return "", "", fmt.Errorf("%w: %v", constants.ErrSigningToken, err)
 	}
 
 	refreshClaims := Claims{
@@ -49,13 +50,13 @@ func (m *Manager) GenerateTokens(userID uint) (access string, refresh string, er
 	}
 	refresh, err = m.signClaims(refreshClaims)
 	if err != nil {
-		return "", "", fmt.Errorf("%w: %v", ErrSigningToken, err)
+		return "", "", fmt.Errorf("%w: %v", constants.ErrSigningToken, err)
 	}
 
 	if m.Store != nil {
 		key := m.getRefreshTokenKey(userID)
 		if serr := m.Store.Set(key, refresh, m.Config.RefreshExpire); serr != nil {
-			return "", "", ErrTokenStoreFailed
+			return "", "", constants.ErrTokenStoreFailed
 		}
 	}
 	return access, refresh, nil
@@ -72,10 +73,10 @@ func (m *Manager) RefreshToken(refreshToken string) (string, error) {
 		key := m.getRefreshTokenKey(uid)
 		stored, err := m.Store.Get(key)
 		if err != nil {
-			return "", ErrTokenNotFound
+			return "", constants.ErrTokenNotFound
 		}
 		if stored != refreshToken {
-			return "", ErrInvalidToken
+			return "", constants.ErrInvalidToken
 		}
 	}
 
