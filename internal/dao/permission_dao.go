@@ -55,10 +55,10 @@ func (d *permissionDAOImpl) GetByRoleIDs(ctx context.Context, roleIDs []uint) ([
 
 	// 通过角色-权限关联表加载权限，去重并过滤软删除数据。
 	err := d.db.WithContext(ctx).
-		Table("permissions p").
+		Table("sys_permissions p").
 		Select("DISTINCT p.*").
-		Joins("JOIN role_permissions rp ON rp.permission_id = p.id").
-		Joins("JOIN roles r ON r.id = rp.role_id").
+		Joins("JOIN sys_role_permissions rp ON rp.permission_id = p.id").
+		Joins("JOIN sys_roles r ON r.id = rp.role_id").
 		Where("rp.role_id IN ? AND p.deleted_at IS NULL AND r.deleted_at IS NULL", roleIDs).
 		Find(&list).Error
 

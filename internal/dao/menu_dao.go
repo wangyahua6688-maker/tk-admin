@@ -43,13 +43,14 @@ func (d *menuDAOImpl) List(ctx context.Context) ([]models.Menu, error) {
 // ListByUserID 根据用户拥有的权限查询可访问菜单。
 // 逻辑说明：
 // 1. admin 角色默认返回全部菜单；
-// 2. 普通角色通过 user_roles -> role_permissions -> menu_permissions 关联获取。
+// 2. 普通角色通过 sys_user_roles -> sys_role_permissions -> sys_menu_permissions 关联获取。
 func (d *menuDAOImpl) ListByUserID(ctx context.Context, userID uint) ([]models.Menu, error) {
 	var isAdmin bool
 	if err := d.db.WithContext(ctx).
-		Table("user_roles ur").
+		// 统一使用 sys_* 真实表名，避免因历史命名导致联调时 SQL 报表不存在。
+		Table("sys_user_roles ur").
 		Select("COUNT(1) > 0").
-		Joins("JOIN roles r ON r.id = ur.role_id").
+		Joins("JOIN sys_roles r ON r.id = ur.role_id").
 		Where("ur.user_id = ? AND r.code = ? AND r.deleted_at IS NULL", userID, "admin").
 		Scan(&isAdmin).Error; err != nil {
 		return nil, err
@@ -61,13 +62,14 @@ func (d *menuDAOImpl) ListByUserID(ctx context.Context, userID uint) ([]models.M
 
 	var list []models.Menu
 	err := d.db.WithContext(ctx).
-		Table("menus m").
+		// 通过用户角色与角色权限反查菜单权限，再去重得到用户可访问菜单。
+		Table("sys_menus m").
 		Select("DISTINCT m.*").
-		Joins("JOIN menu_permissions mp ON mp.menu_id = m.id").
-		Joins("JOIN role_permissions rp ON rp.permission_id = mp.permission_id").
-		Joins("JOIN user_roles ur ON ur.role_id = rp.role_id").
-		Joins("JOIN roles r ON r.id = ur.role_id").
-		Joins("JOIN permissions p ON p.id = rp.permission_id").
+		Joins("JOIN sys_menu_permissions mp ON mp.menu_id = m.id").
+		Joins("JOIN sys_role_permissions rp ON rp.permission_id = mp.permission_id").
+		Joins("JOIN sys_user_roles ur ON ur.role_id = rp.role_id").
+		Joins("JOIN sys_roles r ON r.id = ur.role_id").
+		Joins("JOIN sys_permissions p ON p.id = rp.permission_id").
 		Where("ur.user_id = ? AND m.deleted_at IS NULL AND r.deleted_at IS NULL AND p.deleted_at IS NULL", userID).
 		Order("m.parent_id ASC, m.order_num ASC, m.id ASC").
 		Scan(&list).Error

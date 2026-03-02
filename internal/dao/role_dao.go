@@ -53,10 +53,10 @@ func (d *roleDAOImpl) Delete(ctx context.Context, id uint) error {
 func (d *roleDAOImpl) GetByUserID(ctx context.Context, userID uint) ([]models.Role, error) {
 	var list []models.Role
 
-	// 通过 user_roles 关联拿到用户角色，并过滤软删除角色。
+	// 通过 sys_user_roles 关联拿到用户角色，并过滤软删除角色。
 	err := d.db.WithContext(ctx).
-		Table("roles r").
-		Joins("JOIN user_roles ur ON ur.role_id = r.id").
+		Table("sys_roles r").
+		Joins("JOIN sys_user_roles ur ON ur.role_id = r.id").
 		Where("ur.user_id = ? AND r.deleted_at IS NULL", userID).
 		Find(&list).Error
 

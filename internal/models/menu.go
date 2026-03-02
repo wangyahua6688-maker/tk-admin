@@ -8,7 +8,7 @@ import (
 
 // Menu 菜单模型
 // 说明：
-// 1. 菜单与权限是多对多关系（menu_permissions）。
+// 1. 菜单与权限是多对多关系（sys_menu_permissions）。
 // 2. ParentID + OrderNum 用于构建前端路由树。
 type Menu struct {
 	ID          uint           `gorm:"primaryKey" json:"id"`
