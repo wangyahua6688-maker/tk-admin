@@ -20,13 +20,14 @@ func NewAuthService(authDao *dao.AuthDao) *AuthService {
 
 // Register 处理用户注册业务逻辑
 func (s *AuthService) Register(ctx context.Context, username, password, email string) error {
+	// 1) 输入标准化：去掉首尾空格，避免“视觉相同账号”造成重复或绕过校验。
 	username = strings.TrimSpace(username)
 	email = strings.TrimSpace(email)
 	if username == "" {
 		return errors.New("用户名不能为空")
 	}
 
-	// 检查用户名是否存在
+	// 2) 检查用户名唯一性。
 	existingUser, err := s.authDao.GetUserByUsername(ctx, username)
 	if err == nil && existingUser != nil {
 		return errors.New("用户名已存在")
@@ -34,7 +35,7 @@ func (s *AuthService) Register(ctx context.Context, username, password, email st
 		return err
 	}
 
-	// 密码加密
+	// 3) 密码强度校验 + bcrypt 哈希存储（禁止明文落库）。
 	if err := ValidatePasswordStrength(password); err != nil {
 		return err
 	}
@@ -44,7 +45,7 @@ func (s *AuthService) Register(ctx context.Context, username, password, email st
 		return err
 	}
 
-	// 构建用户模型
+	// 4) 构建并持久化用户。
 	user := &models.User{
 		Username:     username,
 		PasswordHash: string(hashedPwd),
@@ -56,11 +57,14 @@ func (s *AuthService) Register(ctx context.Context, username, password, email st
 	return s.authDao.CreateUser(ctx, user)
 }
 
-// Login 处理用户登录业务逻辑
+// Login 处理用户登录业务逻辑。
+// 安全策略：
+// - 用户名不存在与密码错误统一返回相同提示，避免账号枚举；
+// - 禁用用户直接拒绝登录。
 func (s *AuthService) Login(ctx context.Context, username, password string) (*models.User, error) {
 	username = strings.TrimSpace(username)
 
-	// 查询用户
+	// 1) 通过用户名查询用户。
 	user, err := s.authDao.GetUserByUsername(ctx, username)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -69,43 +73,17 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*mo
 		return nil, err
 	}
 
-	// 验证密码
+	// 2) 比较密码哈希。
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return nil, errors.New("用户名或密码错误")
 	}
 
-	// 安全防护：禁用状态用户不允许登录
+	// 3) 禁用状态用户不允许登录。
 	if user.Status != 1 {
 		return nil, errors.New("账号已被禁用")
 	}
 
 	return user, nil
-}
-
-// RefreshToken 处理刷新Token业务逻辑
-func (s *AuthService) RefreshToken(ctx context.Context, userID uint, refreshToken string) (*models.User, error) {
-	// 查询用户
-	user, err := s.authDao.GetUserByID(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	// 验证刷新Token（此处根据实际业务逻辑调整，比如对比数据库中的refresh_token）
-	if user.RefreshToken != refreshToken {
-		return nil, errors.New("无效的刷新Token")
-	}
-
-	return user, nil
-}
-
-func (s *AuthService) UpdateUserToken(ctx context.Context, userID uint, refreshToken string) error {
-	return s.authDao.UpdateUserToken(ctx, userID, refreshToken)
-}
-
-// Logout 处理用户登出业务逻辑
-func (s *AuthService) Logout(ctx context.Context, userID uint) error {
-	// 清空刷新Token（此处根据实际业务逻辑调整）
-	return s.authDao.UpdateUserToken(ctx, userID, "")
 }
 
 // GetUserByID 根据 ID 查询用户，用于鉴权场景下的状态校验。

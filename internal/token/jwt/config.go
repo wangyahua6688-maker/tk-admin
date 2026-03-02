@@ -1,4 +1,4 @@
-package tokenpkg
+package jwt
 
 import "time"
 

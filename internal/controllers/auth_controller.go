@@ -10,7 +10,7 @@ import (
 	"go-admin-full/internal/dao"
 	"go-admin-full/internal/models"
 	"go-admin-full/internal/services"
-	"go-admin-full/internal/tokenpkg"
+	tokenjwt "go-admin-full/internal/token/jwt"
 	"go-admin-full/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +20,7 @@ import (
 type AuthController struct {
 	authService *services.AuthService
 	loginLogSvc *services.LoginLogService
-	tokenMgr    *tokenpkg.Manager
+	tokenMgr    *tokenjwt.Manager
 }
 
 const (
@@ -30,7 +30,7 @@ const (
 )
 
 // 修改构造函数，同时传入db和token管理器
-func NewAuthController(db *gorm.DB, mgr *tokenpkg.Manager) *AuthController {
+func NewAuthController(db *gorm.DB, mgr *tokenjwt.Manager) *AuthController {
 	authDao := dao.NewAuthDao(db)
 	authService := services.NewAuthService(authDao)
 	loginLogSvc := services.NewLoginLogService(dao.NewLoginLogDao(db))
@@ -114,7 +114,7 @@ func (c *AuthController) Refresh(ctx *gin.Context) {
 
 	// 安全防护：刷新前先校验 refresh token 基础有效性和用户状态。
 	req.RefreshToken = strings.TrimSpace(req.RefreshToken)
-	claims, err := tokenpkg.ParseTokenClaims(req.RefreshToken, c.tokenMgr.Config.SigningKey)
+	claims, err := tokenjwt.ParseTokenClaims(req.RefreshToken, c.tokenMgr.Config.SigningKey)
 	if err != nil {
 		status := http.StatusUnauthorized
 		if err == constants.ErrExpiredToken {
@@ -123,7 +123,7 @@ func (c *AuthController) Refresh(ctx *gin.Context) {
 		utils.JSONError(ctx, status, err.Error())
 		return
 	}
-	if claims.TokenType != tokenpkg.TokenTypeRefresh {
+	if claims.TokenType != tokenjwt.TokenTypeRefresh {
 		utils.JSONError(ctx, http.StatusUnauthorized, constants.ErrInvalidToken.Error())
 		return
 	}
@@ -199,7 +199,7 @@ func (c *AuthController) Logout(ctx *gin.Context) {
 
 	deviceID := resolveDeviceID(ctx)
 	if claimsRaw, ok := ctx.Get("claims"); ok {
-		if claims, ok := claimsRaw.(*tokenpkg.Claims); ok && strings.TrimSpace(claims.DeviceID) != "" {
+		if claims, ok := claimsRaw.(*tokenjwt.Claims); ok && strings.TrimSpace(claims.DeviceID) != "" {
 			deviceID = claims.DeviceID
 		}
 	}
@@ -220,36 +220,6 @@ func (c *AuthController) Logout(ctx *gin.Context) {
 	logger.Info("用户登出成功: ID=%d", userID)
 
 	utils.JSONOK(ctx, gin.H{"message": "登出成功"})
-}
-
-// Profile 获取用户信息（示例）
-func (c *AuthController) Profile(ctx *gin.Context) {
-	//// 从JWT中间件中获取用户ID
-	//uid, exists := ctx.Get("uid")
-	//if !exists {
-	//	utils.JSONError(ctx, http.StatusUnauthorized, "用户未认证")
-	//	return
-	//}
-	//
-	//userID := uid.(uint)
-	//logger := utils.LoggerFromContext(ctx.Request.Context())
-	//logger.Info("获取用户信息: ID=%d", userID)
-	//
-	//user, err := c.authService.GetUserByID(ctx.Request.Context(), userID)
-	//if err != nil {
-	//	logger.Error("获取用户信息失败: %v", err)
-	//	utils.JSONError(ctx, http.StatusNotFound, "用户不存在")
-	//	return
-	//}
-	//
-	//// 返回用户信息（注意不要返回敏感信息）
-	//utils.JSONOK(ctx, gin.H{
-	//	"user_id":    user.ID,
-	//	"username":   user.Username,
-	//	"email":      user.Email,
-	//	"status":     user.Status,
-	//	"created_at": user.CreatedAt,
-	//})
 }
 
 func resolveDeviceID(ctx *gin.Context) string {

@@ -7,18 +7,16 @@ import (
 	"go-admin-full/internal/dao"
 	"go-admin-full/internal/middleware"
 	"go-admin-full/internal/services"
-	"go-admin-full/internal/tokenpkg"
+	tokenjwt "go-admin-full/internal/token/jwt"
 	"gorm.io/gorm"
 )
 
-func UserRoleRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenpkg.Manager) {
-	// 创建用户控制器
+func UserRoleRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
+	// 用户角色管理：绑定/新增/移除/查询。
 	userRoleCtrl := controllers.NewUserRoleController(db)
 	userRoleSvc := services.NewUserRoleService(dao.NewUserRoleDao(db))
 
-	// 用户相关路由组（需要认证）
 	userRoleGroup := r.Group("/api/users/role")
-	// 使用JWT中间件
 	userRoleGroup.Use(middleware.NewJWTMiddleware(mgr))
 	{
 		userRoleGroup.POST("/bind", middleware.PermissionRequired(constants.PermUserRoleBind, userRoleSvc), userRoleCtrl.BindRoles)

@@ -20,7 +20,7 @@ func (d *AuthDao) GetUserByUsername(ctx context.Context, username string) (*mode
 	var user models.User
 	db := d.db
 	if ctx != nil {
-		// 优先使用上下文中的数据库连接
+		// 优先使用上下文中的数据库连接，确保中间件注入事务/连接时可透传。
 		if ctxDB := utils.DBFromContext(ctx); ctxDB != nil {
 			db = ctxDB
 		}
@@ -37,12 +37,8 @@ func (d *AuthDao) CreateUser(ctx context.Context, user *models.User) error {
 	return d.db.WithContext(ctx).Create(user).Error
 }
 
-// UpdateUserToken 更新用户token相关信息（可选，根据业务需求）
-func (d *AuthDao) UpdateUserToken(ctx context.Context, userID uint, refreshToken string) error {
-	return d.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", userID).Update("refresh_token", refreshToken).Error
-}
-
-// GetUserByID 根据用户ID查询用户
+// GetUserByID 根据用户ID查询用户。
+// 说明：该方法用于 JWT 中间件与 refresh 流程中的账号状态校验。
 func (d *AuthDao) GetUserByID(ctx context.Context, userID uint) (*models.User, error) {
 	var user models.User
 	if err := d.db.WithContext(ctx).Where("id = ?", userID).First(&user).Error; err != nil {

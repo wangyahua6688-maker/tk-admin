@@ -7,16 +7,16 @@ import (
 	"go-admin-full/internal/dao"
 	"go-admin-full/internal/middleware"
 	"go-admin-full/internal/services"
-	"go-admin-full/internal/tokenpkg"
+	tokenjwt "go-admin-full/internal/token/jwt"
 	"gorm.io/gorm"
 )
 
-func RoleRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenpkg.Manager) {
+func RoleRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
 	rc := controllers.NewRoleController(db)
 	userRoleSvc := services.NewUserRoleService(dao.NewUserRoleDao(db))
 
+	// 角色管理：包含角色 CRUD + 角色权限绑定。
 	rg := r.Group("/api/roles")
-	// protect with jwt
 	rg.Use(middleware.NewJWTMiddleware(mgr))
 	{
 		rg.GET("/", middleware.PermissionRequired(constants.PermRoleList, userRoleSvc), rc.List)

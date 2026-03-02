@@ -7,18 +7,16 @@ import (
 	"go-admin-full/internal/dao"
 	"go-admin-full/internal/middleware"
 	"go-admin-full/internal/services"
-	"go-admin-full/internal/tokenpkg"
+	tokenjwt "go-admin-full/internal/token/jwt"
 	"gorm.io/gorm"
 )
 
-func UserRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenpkg.Manager) {
-	// 创建用户控制器
+func UserRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
+	// 说明：用户接口统一走 “JWT认证 + 权限码校验” 双层防护。
 	userCtrl := controllers.NewUserController(db)
 	userRoleSvc := services.NewUserRoleService(dao.NewUserRoleDao(db))
 
-	// 用户相关路由组（需要认证）
 	userGroup := r.Group("/api/users")
-	// 使用JWT中间件
 	userGroup.Use(middleware.NewJWTMiddleware(mgr))
 	{
 		userGroup.GET("/", middleware.PermissionRequired(constants.PermUserList, userRoleSvc), userCtrl.List)

@@ -7,7 +7,7 @@ import (
 	"go-admin-full/config"
 	"go-admin-full/internal/middleware"
 	"go-admin-full/internal/routes"
-	"go-admin-full/internal/tokenpkg"
+	tokenjwt "go-admin-full/internal/token/jwt"
 	"go-admin-full/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -15,45 +15,46 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupRouter(mgr *tokenpkg.Manager, db *gorm.DB, redisClient *redis.Client, logger *utils.Logger, cfg config.Config) *gin.Engine {
+func SetupRouter(mgr *tokenjwt.Manager, db *gorm.DB, redisClient *redis.Client, logger *utils.Logger, cfg config.Config) *gin.Engine {
 	r := gin.Default()
 
-	// 添加全局中间件
-	// 1. 全局日志中间件（使用自定义logger）
+	// 全局中间件链（顺序很重要）：
+	// 1) 访问日志 -> 2) panic恢复 -> 3) CORS安全策略 -> 4) DB/Redis上下文注入。
+	// 说明：JWT/RBAC 中间件在具体业务路由中单独挂载，不在这里全局挂载。
 	r.Use(middleware.JSONLoggerMiddleware())
 
-	// 2. 全局错误恢复中间件
 	r.Use(middleware.RecoveryMiddleware())
 
-	// 3. 全局CORS中间件
 	r.Use(middleware.CORSMiddleware(middleware.CORSOptions{
 		AllowedOrigins:   cfg.CORS.AllowedOrigins,
 		AllowCredentials: cfg.CORS.AllowCredentials,
 	}))
 
-	// 4. 数据库上下文中间件（将db注入到请求上下文中）
+	// 注入数据库连接到 request context，便于 DAO 在无侵入情况下获取 db。
 	r.Use(func(c *gin.Context) {
 		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "db", db))
 		c.Next()
 	})
 
-	// 5. 如果manager有Redis存储，添加Redis连接上下文
+	// 若 Redis 可用，注入 Redis 客户端并追加健康检查。
 	if redisClient != nil {
 		r.Use(func(c *gin.Context) {
 			c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "redis", redisClient))
 			c.Next()
 		})
 
-		// 添加Redis连接健康检查中间件
 		r.Use(middleware.RedisCheckMiddleware(mgr))
 	}
 
-	// 注册路由
+	// 路由注册分为三段：
+	// 1) 认证路由（/auth）
+	// 2) 用户路由（/api/users）
+	// 3) RBAC 聚合路由（角色/权限/菜单/用户角色/审计）
 	routes.AuthRoutes(r, db, mgr, cfg.Auth.AllowPublicRegister)
 	routes.UserRoutes(r, db, mgr)
 	routes.RBACRoutes(r, db, mgr)
 
-	// 健康检查路由
+	// 统一健康检查：输出数据库、Redis、token 存储状态。
 	r.GET("/health", func(c *gin.Context) {
 		healthStatus := gin.H{
 			"status":  "ok",
@@ -96,7 +97,7 @@ func SetupRouter(mgr *tokenpkg.Manager, db *gorm.DB, redisClient *redis.Client, 
 		c.JSON(200, healthStatus)
 	})
 
-	// 404处理
+	// 统一 404 输出结构，便于前端和日志系统识别。
 	r.NoRoute(func(c *gin.Context) {
 		logger.Warn("404 Not Found: %s %s", c.Request.Method, c.Request.URL.Path)
 		c.JSON(404, gin.H{

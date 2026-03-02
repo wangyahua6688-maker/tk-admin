@@ -1,4 +1,4 @@
-package tokenpkg
+package store
 
 import (
 	"context"
@@ -10,7 +10,11 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-// Store 接口定义
+// Store 定义 token 存储抽象。
+// 业务约束：
+// - Set/Get/Delete 需满足并发安全；
+// - expire 语义需尽量与 Redis 行为一致；
+// - Get 未命中统一返回 constants.ErrTokenNotFound。
 type Store interface {
 	Set(key string, value string, expire time.Duration) error
 	Get(key string) (string, error)
@@ -32,7 +36,7 @@ type StoreWithType interface {
 	GetType() StoreType
 }
 
-// RedisStore 定义（添加GetType方法）
+// RedisStore 基于 Redis 的存储实现（生产推荐）。
 type RedisStore struct {
 	client *redis.Client
 	ctx    context.Context
@@ -89,7 +93,10 @@ func (r *RedisStore) Ping() error {
 	return nil
 }
 
-// MemoryStore 内存存储实现
+// MemoryStore 内存存储实现（仅建议开发环境使用）。
+// 注意：
+// - 数据仅当前进程可见，重启即丢失；
+// - 已实现基础过期语义与并发保护，便于本地调试行为接近 Redis。
 type MemoryStore struct {
 	mu   sync.RWMutex
 	data map[string]memoryEntry

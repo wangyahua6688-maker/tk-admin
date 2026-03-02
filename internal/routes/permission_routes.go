@@ -7,14 +7,15 @@ import (
 	"go-admin-full/internal/dao"
 	"go-admin-full/internal/middleware"
 	"go-admin-full/internal/services"
-	"go-admin-full/internal/tokenpkg"
+	tokenjwt "go-admin-full/internal/token/jwt"
 	"gorm.io/gorm"
 )
 
-func PermissionRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenpkg.Manager) {
+func PermissionRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
 	pc := controllers.NewPermissionController(db)
 	userRoleSvc := services.NewUserRoleService(dao.NewUserRoleDao(db))
 
+	// 权限管理：提供权限点的 CRUD。
 	pr := r.Group("/api/permissions")
 	pr.Use(middleware.NewJWTMiddleware(mgr))
 	{

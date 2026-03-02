@@ -53,6 +53,7 @@ func (d *permissionDAOImpl) Delete(ctx context.Context, id uint) error {
 func (d *permissionDAOImpl) GetByRoleIDs(ctx context.Context, roleIDs []uint) ([]models.Permission, error) {
 	var list []models.Permission
 
+	// 通过角色-权限关联表加载权限，去重并过滤软删除数据。
 	err := d.db.WithContext(ctx).
 		Table("permissions p").
 		Select("DISTINCT p.*").
@@ -62,36 +63,4 @@ func (d *permissionDAOImpl) GetByRoleIDs(ctx context.Context, roleIDs []uint) ([
 		Find(&list).Error
 
 	return list, err
-}
-
-func (d *permissionDAOImpl) GetByAdminID(ctx context.Context, adminID int64) ([]*models.Permission, error) {
-	var list []*models.Permission
-
-	err := d.db.WithContext(ctx).
-		Joins("JOIN role_permissions rp ON rp.permission_id = permissions.id").
-		Joins("JOIN admin_roles ar ON rp.role_id = ar.role_id").
-		Where("ar.admin_id = ?", adminID).
-		Group("permissions.id").
-		Find(&list).Error
-
-	return list, err
-}
-
-// 用于路由自动注册
-func (d *permissionDAOImpl) CreateIfNotExists(ctx context.Context, method, path string) error {
-	var count int64
-	d.db.WithContext(ctx).
-		Model(&models.Permission{}).
-		Where("method = ? AND path = ?", method, path).
-		Count(&count)
-
-	if count > 0 {
-		return nil
-	}
-
-	return d.db.WithContext(ctx).Create(&models.Permission{
-		Method: method,
-		Path:   path,
-		Name:   method + " " + path,
-	}).Error
 }

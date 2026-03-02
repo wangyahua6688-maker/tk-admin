@@ -4,16 +4,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-admin-full/internal/controllers"
 	"go-admin-full/internal/middleware"
-	"go-admin-full/internal/tokenpkg"
+	tokenjwt "go-admin-full/internal/token/jwt"
 	"gorm.io/gorm"
 )
 
-// AuthRoutes 注册认证相关路由
-func AuthRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenpkg.Manager, allowPublicRegister bool) {
+// AuthRoutes 注册认证相关路由。
+// 分组原则：
+// - /auth/login /auth/refresh（公共接口）
+// - /auth/register（按配置决定是否开放）
+// - /auth/logout（必须登录后访问）
+func AuthRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager, allowPublicRegister bool) {
 	// 创建认证控制器，传递数据库连接
 	auth := controllers.NewAuthController(db, mgr)
 
-	// 公共路由组
+	// 公共路由组：不走 JWT 中间件。
 	public := r.Group("/auth")
 	{
 		public.POST("/login", auth.Login)
@@ -23,7 +27,7 @@ func AuthRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenpkg.Manager, allowPublicRe
 		public.POST("/refresh", auth.Refresh)
 	}
 
-	// 需要认证的路由组
+	// 受保护路由组：统一挂载 JWT 中间件。
 	protected := r.Group("/auth")
 	protected.Use(middleware.NewJWTMiddleware(mgr))
 	{

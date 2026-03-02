@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"go-admin-full/internal/tokenpkg"
+	tokenjwt "go-admin-full/internal/token/jwt"
 )
 
 // RedisCheckMiddleware Redis连接检查中间件
-func RedisCheckMiddleware(mgr *tokenpkg.Manager) gin.HandlerFunc {
+func RedisCheckMiddleware(mgr *tokenjwt.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 对于重要的API端点，检查Redis连接
 		if c.Request.URL.Path == "/auth/refresh" || c.Request.URL.Path == "/auth/logout" {

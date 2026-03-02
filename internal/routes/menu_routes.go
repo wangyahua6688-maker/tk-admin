@@ -7,14 +7,15 @@ import (
 	"go-admin-full/internal/dao"
 	"go-admin-full/internal/middleware"
 	"go-admin-full/internal/services"
-	"go-admin-full/internal/tokenpkg"
+	tokenjwt "go-admin-full/internal/token/jwt"
 	"gorm.io/gorm"
 )
 
-func MenuRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenpkg.Manager) {
+func MenuRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
 	mc := controllers.NewMenuController(db)
 	userRoleSvc := services.NewUserRoleService(dao.NewUserRoleDao(db))
 
+	// 菜单管理：菜单 CRUD、前端菜单树、菜单-权限绑定。
 	mr := r.Group("/api/menus")
 	mr.Use(middleware.NewJWTMiddleware(mgr))
 	{

@@ -53,6 +53,7 @@ func (d *roleDAOImpl) Delete(ctx context.Context, id uint) error {
 func (d *roleDAOImpl) GetByUserID(ctx context.Context, userID uint) ([]models.Role, error) {
 	var list []models.Role
 
+	// 通过 user_roles 关联拿到用户角色，并过滤软删除角色。
 	err := d.db.WithContext(ctx).
 		Table("roles r").
 		Joins("JOIN user_roles ur ON ur.role_id = r.id").
@@ -60,33 +61,4 @@ func (d *roleDAOImpl) GetByUserID(ctx context.Context, userID uint) ([]models.Ro
 		Find(&list).Error
 
 	return list, err
-}
-
-// AssignPermissions 给角色分配权限（全量替换）。
-func (d *roleDAOImpl) AssignPermissions(ctx context.Context, roleID uint, permissionIDs []uint) error {
-	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("role_id = ?", roleID).Delete(&models.RolePermission{}).Error; err != nil {
-			return err
-		}
-
-		for _, pid := range permissionIDs {
-			rp := models.RolePermission{RoleID: roleID, PermissionID: pid}
-			if err := tx.Create(&rp).Error; err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-}
-
-// 角色对应的权限
-func (d *roleDAOImpl) ListPermissions(ctx context.Context, roleID uint) ([]*models.Permission, error) {
-	var items []*models.Permission
-	err := d.db.WithContext(ctx).
-		Table("permissions p").
-		Joins("JOIN role_permissions rp ON rp.permission_id = p.id").
-		Where("rp.role_id = ?", roleID).
-		Scan(&items).Error
-	return items, err
 }
