@@ -83,6 +83,7 @@ func Run(cfg config.Config) error {
 		&models.User{}, &models.Role{}, &models.Permission{}, &models.Menu{},
 		&models.RolePermission{},
 		&models.LoginLog{}, &models.RefreshTokenRecord{},
+		&models.SystemMessage{},
 	); err != nil {
 		logger.Fatal("Failed to migrate database: %v", err)
 	}

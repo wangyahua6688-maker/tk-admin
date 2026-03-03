@@ -3,23 +3,27 @@ package controllers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go-admin-full/internal/dao"
+	"go-admin-full/internal/models"
 	"go-admin-full/internal/services"
 	"gorm.io/gorm"
 )
 
 // UserRoleController handles binding roles to users.
 type UserRoleController struct {
-	svc *services.UserRoleService
+	svc    *services.UserRoleService
+	msgSvc *services.SystemMessageService
 }
 
 // NewUserRoleController constructs controller by wiring DAO -> Service
 func NewUserRoleController(db *gorm.DB) *UserRoleController {
 	d := dao.NewUserRoleDao(db)
 	s := services.NewUserRoleService(d)
-	return &UserRoleController{svc: s}
+	msgSvc := services.NewSystemMessageService(dao.NewSystemMessageDao(db))
+	return &UserRoleController{svc: s, msgSvc: msgSvc}
 }
 
 type bindRolesReq struct {
@@ -43,6 +47,19 @@ func (uc *UserRoleController) BindRoles(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	roles, _ := uc.svc.GetUserRoles(c.Request.Context(), req.UserID)
+	_ = uc.msgSvc.PushToUser(
+		c.Request.Context(),
+		req.UserID,
+		"角色分配变更通知",
+		"管理员已调整你的角色分配，当前角色："+joinRoleNames(roles),
+		"warning",
+		"user_role",
+		req.UserID,
+		c.GetUint("uid"),
+	)
+
 	c.JSON(http.StatusOK, gin.H{"msg": "roles bound"})
 }
 
@@ -65,6 +82,19 @@ func (uc *UserRoleController) AddRoles(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	roles, _ := uc.svc.GetUserRoles(c.Request.Context(), req.UserID)
+	_ = uc.msgSvc.PushToUser(
+		c.Request.Context(),
+		req.UserID,
+		"角色新增通知",
+		"管理员已给你新增角色，当前角色："+joinRoleNames(roles),
+		"info",
+		"user_role",
+		req.UserID,
+		c.GetUint("uid"),
+	)
+
 	c.JSON(http.StatusOK, gin.H{"msg": "roles added"})
 }
 
@@ -87,6 +117,19 @@ func (uc *UserRoleController) RemoveRoles(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	roles, _ := uc.svc.GetUserRoles(c.Request.Context(), req.UserID)
+	_ = uc.msgSvc.PushToUser(
+		c.Request.Context(),
+		req.UserID,
+		"角色移除通知",
+		"管理员已移除你的部分角色，当前角色："+joinRoleNames(roles),
+		"warning",
+		"user_role",
+		req.UserID,
+		c.GetUint("uid"),
+	)
+
 	c.JSON(http.StatusOK, gin.H{"msg": "roles removed"})
 }
 
@@ -111,4 +154,21 @@ func (uc *UserRoleController) GetUserRoles(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": roles})
+}
+
+func joinRoleNames(roles []models.Role) string {
+	if len(roles) == 0 {
+		return "无"
+	}
+	names := make([]string, 0, len(roles))
+	for _, role := range roles {
+		if strings.TrimSpace(role.Name) == "" {
+			continue
+		}
+		names = append(names, role.Name)
+	}
+	if len(names) == 0 {
+		return "无"
+	}
+	return strings.Join(names, "、")
 }

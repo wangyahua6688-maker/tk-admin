@@ -17,9 +17,10 @@ func NewUserService(userDao *dao.UserDao) *UserService {
 	return &UserService{userDao: userDao}
 }
 
-func (s *UserService) CreateUser(ctx context.Context, username, password, email string) (*models.User, error) {
+func (s *UserService) CreateUser(ctx context.Context, username, password, email, avatar string) (*models.User, error) {
 	username = strings.TrimSpace(username)
 	email = strings.TrimSpace(email)
+	avatar = strings.TrimSpace(avatar)
 	if username == "" {
 		return nil, errors.New("用户名不能为空")
 	}
@@ -45,6 +46,7 @@ func (s *UserService) CreateUser(ctx context.Context, username, password, email 
 		Username:     username,
 		PasswordHash: string(hashedPassword),
 		Email:        email,
+		Avatar:       avatar,
 		Status:       1,
 	}
 
@@ -68,7 +70,7 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uint) (*models.Use
 // 安全规则：
 // 1. 用户名不可通过该接口修改；
 // 2. 密码非空时会重新哈希后存储。
-func (s *UserService) UpdateUser(ctx context.Context, userID uint, email string, status *int, password string) error {
+func (s *UserService) UpdateUser(ctx context.Context, userID uint, email string, status *int, password string, avatar *string) error {
 	updates := make(map[string]interface{})
 
 	if strings.TrimSpace(email) != "" {
@@ -77,6 +79,11 @@ func (s *UserService) UpdateUser(ctx context.Context, userID uint, email string,
 
 	if status != nil {
 		updates["status"] = *status
+	}
+
+	// avatar 允许显式置空，因此以指针判断“是否传入”。
+	if avatar != nil {
+		updates["avatar"] = strings.TrimSpace(*avatar)
 	}
 
 	if strings.TrimSpace(password) != "" {

@@ -38,4 +38,8 @@ const (
 	PermUserRoleAdd       = "sys:user_role:add"
 	PermUserRoleRemove    = "sys:user_role:remove"
 	PermAuditLoginLogList = "sys:audit:login_log:list"
+
+	PermMessageList    = "sys:message:list"
+	PermMessageRead    = "sys:message:read"
+	PermMessageReadAll = "sys:message:read_all"
 )

@@ -11,7 +11,8 @@ type User struct {
 	Username     string `gorm:"unique;not null"`
 	PasswordHash string
 	Email        string
-	Status       int `gorm:"default:1"`
+	Avatar       string `gorm:"size:255;default:''"` // 用户头像 URL（可为空）
+	Status       int    `gorm:"default:1"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	Roles        []Role `gorm:"many2many:sys_user_roles"`

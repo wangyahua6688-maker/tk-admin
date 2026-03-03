@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,7 +14,8 @@ import (
 )
 
 type PermissionController struct {
-	svc *services.PermissionService
+	svc    *services.PermissionService
+	msgSvc *services.SystemMessageService
 }
 
 type permissionUpsertReq struct {
@@ -25,7 +27,10 @@ type permissionUpsertReq struct {
 }
 
 func NewPermissionController(db *gorm.DB) *PermissionController {
-	return &PermissionController{svc: services.NewPermissionService(dao.NewPermissionDAO(db))}
+	return &PermissionController{
+		svc:    services.NewPermissionService(dao.NewPermissionDAO(db)),
+		msgSvc: services.NewSystemMessageService(dao.NewSystemMessageDao(db)),
+	}
 }
 
 func (pc *PermissionController) List(c *gin.Context) {
@@ -110,6 +115,18 @@ func (pc *PermissionController) Update(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	_ = pc.msgSvc.PushToUsersByPermissionIDs(
+		c.Request.Context(),
+		[]uint{p.ID},
+		"权限策略变更通知",
+		fmt.Sprintf("权限【%s】已被管理员更新，请确认你的菜单与接口访问范围。", p.Name),
+		"warning",
+		"permission",
+		p.ID,
+		c.GetUint("uid"),
+	)
+
 	c.JSON(http.StatusOK, gin.H{"data": p})
 }
 
@@ -120,9 +137,29 @@ func (pc *PermissionController) Delete(c *gin.Context) {
 		return
 	}
 
+	permission, err := pc.svc.Get(c.Request.Context(), uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	affectedUserIDs, _ := pc.msgSvc.ListUserIDsByPermissionIDs(c.Request.Context(), []uint{uint(id)})
+
 	if err := pc.svc.Delete(c.Request.Context(), uint(id)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	_ = pc.msgSvc.PushToUsers(
+		c.Request.Context(),
+		affectedUserIDs,
+		"权限删除通知",
+		fmt.Sprintf("权限【%s】已被管理员删除，你的可访问资源可能发生变化。", permission.Name),
+		"warning",
+		"permission",
+		uint(id),
+		c.GetUint("uid"),
+	)
+
 	c.JSON(http.StatusOK, gin.H{"msg": "deleted"})
 }

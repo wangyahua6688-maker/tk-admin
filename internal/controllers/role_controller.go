@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ import (
 type RoleController struct {
 	svc         *services.RoleService
 	rolePermSvc *services.RolePermissionService
+	msgSvc      *services.SystemMessageService
 }
 
 type roleUpsertReq struct {
@@ -25,9 +27,11 @@ type roleUpsertReq struct {
 func NewRoleController(db *gorm.DB) *RoleController {
 	svc := services.NewRoleService(dao.NewRoleDAO(db))
 	rolePermSvc := services.NewRolePermissionService(dao.NewRolePermissionDao(db))
+	msgSvc := services.NewSystemMessageService(dao.NewSystemMessageDao(db))
 	return &RoleController{
 		svc:         svc,
 		rolePermSvc: rolePermSvc,
+		msgSvc:      msgSvc,
 	}
 }
 
@@ -110,6 +114,19 @@ func (rc *RoleController) Update(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// 角色信息变更后，通知该角色关联用户。
+	_ = rc.msgSvc.PushToUsersByRoleIDs(
+		c.Request.Context(),
+		[]uint{role.ID},
+		"角色信息更新通知",
+		fmt.Sprintf("角色【%s】信息已更新，你的角色权限可能受到影响。", role.Name),
+		"warning",
+		"role",
+		role.ID,
+		c.GetUint("uid"),
+	)
+
 	c.JSON(http.StatusOK, gin.H{"data": role})
 }
 
@@ -132,10 +149,25 @@ func (rc *RoleController) Delete(c *gin.Context) {
 		return
 	}
 
+	// 删除角色前先缓存受影响用户，避免角色删除后关联关系被清空无法通知。
+	affectedUserIDs, _ := rc.msgSvc.ListUserIDsByRoleIDs(c.Request.Context(), []uint{role.ID})
+
 	if err := rc.svc.Delete(c.Request.Context(), uint(id)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	_ = rc.msgSvc.PushToUsers(
+		c.Request.Context(),
+		affectedUserIDs,
+		"角色删除通知",
+		fmt.Sprintf("角色【%s】已被管理员删除，请检查你的账号权限是否仍满足业务需求。", role.Name),
+		"warning",
+		"role",
+		role.ID,
+		c.GetUint("uid"),
+	)
+
 	c.JSON(http.StatusOK, gin.H{"msg": "deleted"})
 }
 
@@ -156,10 +188,28 @@ func (rc *RoleController) BindPermissions(c *gin.Context) {
 		return
 	}
 
+	role, err := rc.svc.Get(c.Request.Context(), uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
 	if err := rc.rolePermSvc.BindPermissions(c.Request.Context(), uint(id), req.PermissionIDs); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	_ = rc.msgSvc.PushToUsersByRoleIDs(
+		c.Request.Context(),
+		[]uint{uint(id)},
+		"角色权限变更通知",
+		fmt.Sprintf("角色【%s】的权限策略已调整，你的菜单与接口访问范围可能发生变化。", role.Name),
+		"warning",
+		"role_permission",
+		uint(id),
+		c.GetUint("uid"),
+	)
+
 	c.JSON(http.StatusOK, gin.H{"msg": "permissions bound"})
 }
 

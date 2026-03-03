@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-admin-full/internal/dao"
 	"go-admin-full/internal/models"
@@ -17,30 +18,35 @@ import (
 func NewUserController(db *gorm.DB) *UserController {
 	userDao := dao.NewUserDao(db)
 	userService := service.NewUserService(userDao)
-	return &UserController{service: userService}
+	msgSvc := service.NewSystemMessageService(dao.NewSystemMessageDao(db))
+	return &UserController{service: userService, msgSvc: msgSvc}
 }
 
 type UserController struct {
 	service *service.UserService
+	msgSvc  *service.SystemMessageService
 }
 
 type CreateUserReq struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required,min=8"`
 	Email    string `json:"email"`
+	Avatar   string `json:"avatar"`
 	Status   *int   `json:"status"`
 }
 
 type UpdateUserReq struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Status   *int   `json:"status"`
+	Email    string  `json:"email"`
+	Avatar   *string `json:"avatar"`
+	Password string  `json:"password"`
+	Status   *int    `json:"status"`
 }
 
 type UserResp struct {
 	ID        uint      `json:"id"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
+	Avatar    string    `json:"avatar"`
 	Status    int       `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -87,8 +93,9 @@ func (c *UserController) Create(ctx *gin.Context) {
 
 	req.Username = strings.TrimSpace(req.Username)
 	req.Email = strings.TrimSpace(req.Email)
+	req.Avatar = strings.TrimSpace(req.Avatar)
 
-	user, err := c.service.CreateUser(ctx.Request.Context(), req.Username, req.Password, req.Email)
+	user, err := c.service.CreateUser(ctx.Request.Context(), req.Username, req.Password, req.Email, req.Avatar)
 	if err != nil {
 		utils.JSONError(ctx, http.StatusBadRequest, err.Error())
 		return
@@ -96,7 +103,7 @@ func (c *UserController) Create(ctx *gin.Context) {
 
 	// 可选设置状态
 	if req.Status != nil {
-		if err := c.service.UpdateUser(ctx.Request.Context(), user.ID, req.Email, req.Status, ""); err != nil {
+		if err := c.service.UpdateUser(ctx.Request.Context(), user.ID, req.Email, req.Status, "", nil); err != nil {
 			utils.JSONError(ctx, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -107,6 +114,19 @@ func (c *UserController) Create(ctx *gin.Context) {
 		utils.JSONError(ctx, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	// 创建用户后向目标用户投递系统消息，便于其登录后感知账号变更。
+	_ = c.msgSvc.PushToUser(
+		ctx.Request.Context(),
+		created.ID,
+		"账号创建通知",
+		fmt.Sprintf("管理员已创建你的账号（用户名：%s），请及时确认角色与权限配置。", created.Username),
+		"success",
+		"user",
+		created.ID,
+		ctx.GetUint("uid"),
+	)
+
 	utils.JSONOK(ctx, toUserResp(*created))
 }
 
@@ -124,7 +144,13 @@ func (c *UserController) Update(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.service.UpdateUser(ctx.Request.Context(), uint(id), req.Email, req.Status, req.Password); err != nil {
+	target, err := c.service.GetUserByID(ctx.Request.Context(), uint(id))
+	if err != nil {
+		utils.JSONError(ctx, http.StatusNotFound, "用户不存在")
+		return
+	}
+
+	if err := c.service.UpdateUser(ctx.Request.Context(), uint(id), req.Email, req.Status, req.Password, req.Avatar); err != nil {
 		utils.JSONError(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -134,6 +160,18 @@ func (c *UserController) Update(ctx *gin.Context) {
 		utils.JSONError(ctx, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	_ = c.msgSvc.PushToUser(
+		ctx.Request.Context(),
+		updated.ID,
+		"账号资料更新通知",
+		fmt.Sprintf("管理员已更新你的账号资料（用户名：%s）。如有异常请联系系统管理员。", target.Username),
+		"info",
+		"user",
+		updated.ID,
+		ctx.GetUint("uid"),
+	)
+
 	utils.JSONOK(ctx, toUserResp(*updated))
 }
 
@@ -191,6 +229,7 @@ func toUserResp(u models.User) UserResp {
 		ID:        u.ID,
 		Username:  u.Username,
 		Email:     u.Email,
+		Avatar:    u.Avatar,
 		Status:    u.Status,
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,

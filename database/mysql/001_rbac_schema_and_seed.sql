@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS `sys_users` (
   `username` VARCHAR(100) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
   `email` VARCHAR(255) DEFAULT '',
+  `avatar` VARCHAR(255) DEFAULT '',
   `status` TINYINT NOT NULL DEFAULT 1,
   `refresh_token` VARCHAR(512) DEFAULT NULL,
   `created_at` DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
@@ -24,6 +25,10 @@ CREATE TABLE IF NOT EXISTS `sys_users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_users_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统用户表';
+
+-- 兼容旧库：若历史版本缺少 avatar 列，则自动补齐。
+ALTER TABLE `sys_users`
+  ADD COLUMN IF NOT EXISTS `avatar` VARCHAR(255) DEFAULT '' AFTER `email`;
 
 -- -------------------------
 -- 2) 角色表
@@ -146,7 +151,30 @@ CREATE TABLE IF NOT EXISTS `sys_refresh_token_records` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='刷新令牌审计表';
 
 -- -------------------------
--- 10) 初始化角色
+-- 10) 系统消息表
+-- -------------------------
+CREATE TABLE IF NOT EXISTS `sys_system_messages` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `title` VARCHAR(200) NOT NULL,
+  `content` TEXT NOT NULL,
+  `level` VARCHAR(20) NOT NULL DEFAULT 'info',
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+  `operator_id` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  `biz_type` VARCHAR(50) DEFAULT '',
+  `biz_id` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_at` DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (`id`),
+  KEY `idx_sys_msg_user_id` (`user_id`),
+  KEY `idx_sys_msg_operator_id` (`operator_id`),
+  KEY `idx_sys_msg_biz` (`biz_type`, `biz_id`),
+  KEY `idx_sys_msg_user_read` (`user_id`, `is_read`),
+  CONSTRAINT `fk_sys_system_messages_user_id` FOREIGN KEY (`user_id`) REFERENCES `sys_users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统消息表';
+
+-- -------------------------
+-- 11) 初始化角色
 -- -------------------------
 INSERT INTO `sys_roles` (`id`, `name`, `code`, `created_at`, `updated_at`)
 VALUES
@@ -156,7 +184,7 @@ VALUES
 ON DUPLICATE KEY UPDATE `updated_at` = VALUES(`updated_at`);
 
 -- -------------------------
--- 11) 初始化权限（与当前后端路由保持一致）
+-- 12) 初始化权限（与当前后端路由保持一致）
 -- -------------------------
 INSERT INTO `sys_permissions` (`id`, `name`, `code`, `type`, `method`, `path`, `created_at`, `updated_at`)
 VALUES
@@ -190,11 +218,14 @@ VALUES
   (28, '用户角色绑定',             'sys:user_role:bind',         'api', 'POST',   '/api/users/role/bind',            NOW(3), NOW(3)),
   (29, '用户角色新增',             'sys:user_role:add',          'api', 'POST',   '/api/users/role/add',             NOW(3), NOW(3)),
   (30, '用户角色移除',             'sys:user_role:remove',       'api', 'POST',   '/api/users/role/remove',          NOW(3), NOW(3)),
-  (31, '登录日志查看',             'sys:audit:login_log:list',   'api', 'GET',    '/api/audit/login-logs',           NOW(3), NOW(3))
+  (31, '登录日志查看',             'sys:audit:login_log:list',   'api', 'GET',    '/api/audit/login-logs',           NOW(3), NOW(3)),
+  (32, '系统消息列表',             'sys:message:list',           'api', 'GET',    '/api/messages/',                  NOW(3), NOW(3)),
+  (33, '系统消息已读',             'sys:message:read',           'api', 'POST',   '/api/messages/:id/read',          NOW(3), NOW(3)),
+  (34, '系统消息全部已读',         'sys:message:read_all',       'api', 'POST',   '/api/messages/read-all',          NOW(3), NOW(3))
 ON DUPLICATE KEY UPDATE `updated_at` = VALUES(`updated_at`);
 
 -- -------------------------
--- 12) 初始化菜单
+-- 13) 初始化菜单
 -- -------------------------
 INSERT INTO `sys_menus` (`id`, `title`, `path`, `icon`, `parent_id`, `component`, `order_num`, `created_at`, `updated_at`)
 VALUES
@@ -209,7 +240,7 @@ VALUES
 ON DUPLICATE KEY UPDATE `updated_at` = VALUES(`updated_at`);
 
 -- -------------------------
--- 13) 角色-权限初始化
+-- 14) 角色-权限初始化
 -- admin：所有权限
 -- security_auditor：只读类权限 + 菜单树
 -- operator：基础运营权限（菜单树 + 用户角色查看）
@@ -222,14 +253,14 @@ SELECT 1 AS role_id, p.id AS permission_id FROM `sys_permissions` p;
 
 -- security_auditor -> 只读权限集合
 INSERT INTO `sys_role_permissions` (`role_id`, `permission_id`) VALUES
-  (2, 1), (2, 3), (2, 6), (2, 8), (2, 10), (2, 13), (2, 15), (2, 18), (2, 19), (2, 21), (2, 23), (2, 26), (2, 27), (2, 31);
+  (2, 1), (2, 3), (2, 6), (2, 8), (2, 10), (2, 13), (2, 15), (2, 18), (2, 19), (2, 21), (2, 23), (2, 26), (2, 27), (2, 31), (2, 32), (2, 33), (2, 34);
 
 -- operator -> 基础权限集合
 INSERT INTO `sys_role_permissions` (`role_id`, `permission_id`) VALUES
-  (3, 13), (3, 15), (3, 18), (3, 21), (3, 23), (3, 26), (3, 27);
+  (3, 13), (3, 15), (3, 18), (3, 21), (3, 23), (3, 26), (3, 27), (3, 32), (3, 33), (3, 34);
 
 -- -------------------------
--- 14) 菜单-权限初始化
+-- 15) 菜单-权限初始化
 -- 说明：用于“按权限返回前端菜单树”
 -- -------------------------
 DELETE FROM `sys_menu_permissions` WHERE `menu_id` IN (1, 2, 3, 4, 5, 6, 7, 8);
@@ -253,16 +284,17 @@ INSERT INTO `sys_menu_permissions` (`menu_id`, `permission_id`) VALUES
   (7, 31);
 
 -- -------------------------
--- 15) 初始化管理员账号
+-- 16) 初始化管理员账号
 -- 默认账号：admin
 -- 默认密码：Admin@123456
 -- -------------------------
-INSERT INTO `sys_users` (`id`, `username`, `password_hash`, `email`, `status`, `created_at`, `updated_at`)
+INSERT INTO `sys_users` (`id`, `username`, `password_hash`, `email`, `avatar`, `status`, `created_at`, `updated_at`)
 VALUES
-  (1, 'admin', '$2a$10$AwkXKvSji6Xb.rZdjQGkR.60r7eZZaoGYJo50gUoIFLiOpH/W1pA.', 'admin@example.com', 1, NOW(3), NOW(3))
+  (1, 'admin', '$2a$10$AwkXKvSji6Xb.rZdjQGkR.60r7eZZaoGYJo50gUoIFLiOpH/W1pA.', 'admin@example.com', '', 1, NOW(3), NOW(3))
 ON DUPLICATE KEY UPDATE
   `password_hash` = VALUES(`password_hash`),
   `email` = VALUES(`email`),
+  `avatar` = VALUES(`avatar`),
   `status` = VALUES(`status`),
   `updated_at` = VALUES(`updated_at`);
 
