@@ -15,4 +15,6 @@ func RBACRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
 	UserRoleRoutes(r, db, mgr)
 	AuditRoutes(r, db, mgr)
 	SystemMessageRoutes(r, db, mgr)
+	UserOpsRoutes(r, db, mgr)
+	BizConfigRoutes(r, db, mgr)
 }

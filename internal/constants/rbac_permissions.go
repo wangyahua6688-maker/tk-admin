@@ -42,4 +42,23 @@ const (
 	PermMessageList    = "sys:message:list"
 	PermMessageRead    = "sys:message:read"
 	PermMessageReadAll = "sys:message:read_all"
+
+	PermBizClientView  = "biz:client:view"
+	PermBizForumView   = "biz:forum:view"
+	PermBizLotteryView = "biz:lottery:view"
+	PermBizDrawView    = "biz:draw:view"
+	PermBizLiveView    = "biz:live:view"
+
+	PermClientUserList       = "client:user:list"
+	PermClientPostList       = "client:post:list"
+	PermClientHotCommentList = "client:comment:hot:list"
+
+	PermBizBannerList         = "biz:banner:list"
+	PermBizBroadcastList      = "biz:broadcast:list"
+	PermBizSpecialLotteryList = "biz:special_lottery:list"
+	PermBizLotteryInfoList    = "biz:lottery_info:list"
+	PermBizOfficialPostList   = "biz:official_post:list"
+	PermBizExternalLinkList   = "biz:external_link:list"
+	PermBizHomePopupList      = "biz:home_popup:list"
+	PermBizSMSChannelList     = "biz:sms_channel:list"
 )

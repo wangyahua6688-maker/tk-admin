@@ -84,6 +84,18 @@ func Run(cfg config.Config) error {
 		&models.RolePermission{},
 		&models.LoginLog{}, &models.RefreshTokenRecord{},
 		&models.SystemMessage{},
+		&models.WUser{},
+		&models.WBanner{},
+		&models.WBroadcast{},
+		&models.WSpecialLottery{},
+		&models.WLotteryCategory{},
+		&models.WLotteryInfo{},
+		&models.WLotteryOption{},
+		&models.WPostArticle{},
+		&models.WComment{},
+		&models.WExternalLink{},
+		&models.WHomePopup{},
+		&models.WSMSChannel{},
 	); err != nil {
 		logger.Fatal("Failed to migrate database: %v", err)
 	}
