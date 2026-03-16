@@ -1,0 +1,23 @@
+package biz
+
+import (
+	bizsvc "go-admin-full/internal/services/biz"
+	"gorm.io/gorm"
+)
+
+// BizConfigController 业务配置域入口控制器。
+// 具体能力按功能拆分在多个文件中：
+// - banner
+// - broadcast
+// - special_lottery
+// - draw_record
+// - lottery_info(图库内容)
+// - official post
+// - external link
+type BizConfigController struct {
+	svc *bizsvc.BizConfigService // 业务配置服务聚合
+}
+
+func NewBizConfigController(db *gorm.DB) *BizConfigController {
+	return &BizConfigController{svc: bizsvc.NewBizConfigService(db)}
+}

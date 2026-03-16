@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"go-admin-full/internal/controllers"
+	rbac "go-admin-full/internal/controllers/rbac"
 	"go-admin-full/internal/middleware"
 	tokenjwt "go-admin-full/internal/token/jwt"
 	"gorm.io/gorm"
@@ -10,7 +10,7 @@ import (
 
 // SystemMessageRoutes 系统消息路由。
 func SystemMessageRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
-	mc := controllers.NewSystemMessageController(db)
+	mc := rbac.NewSystemMessageController(db)
 
 	group := r.Group("/api/messages")
 	group.Use(middleware.NewJWTMiddleware(mgr))

@@ -14,7 +14,7 @@
 - 服务装配：`internal/server/server.go`、`internal/server/router.go`
 - JWT 核心：`internal/token/jwt/manager.go`、`internal/token/jwt/parser.go`、`internal/middleware/jwt.go`
 - Token 存储：`internal/token/store/store.go`
-- RBAC 核心：`internal/middleware/permission.go`、`internal/services/user_role_service.go`
+- RBAC 核心：`internal/middleware/permission.go`、`internal/services/rbac/user_role_service.go`
 - 路由聚合：`internal/routes/rbac_routes.go`
 
 ## 3. JWT 流程

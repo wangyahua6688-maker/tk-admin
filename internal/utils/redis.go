@@ -2,11 +2,10 @@ package utils
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	redisx "tk-common/utils/redisx/v8"
 )
 
 // RedisConfig Redis配置
@@ -23,22 +22,19 @@ type RedisConfig struct {
 
 // DefaultRedisConfig 默认Redis配置
 func DefaultRedisConfig() RedisConfig {
+	cfg := redisx.DefaultConfig()
 	return RedisConfig{
-		PoolSize:     10,
-		MinIdleConns: 5,
-		DialTimeout:  5 * time.Second,
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
+		PoolSize:     cfg.PoolSize,
+		MinIdleConns: cfg.MinIdleConns,
+		DialTimeout:  cfg.DialTimeout,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
 	}
 }
 
 // NewRedisClient 初始化Redis客户端
 func NewRedisClient(cfg RedisConfig) (*redis.Client, error) {
-	if cfg.Addr == "" {
-		return nil, fmt.Errorf("redis address is empty")
-	}
-
-	client := redis.NewClient(&redis.Options{
+	return redisx.NewClient(context.Background(), redisx.Config{
 		Addr:         cfg.Addr,
 		Password:     cfg.Password,
 		DB:           cfg.DB,
@@ -48,38 +44,23 @@ func NewRedisClient(cfg RedisConfig) (*redis.Client, error) {
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 	})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// 测试连接
-	if err := client.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("failed to connect to redis: %w", err)
-	}
-
-	log.Println("Redis connected successfully")
-	return client, nil
 }
 
 // NewRedisClientWithContext 创建带上下文的Redis客户端
 func NewRedisClientWithContext(ctx context.Context, cfg RedisConfig) (*redis.Client, error) {
-	client, err := NewRedisClient(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	// 测试连接（使用传入的上下文）
-	if err := client.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("failed to ping redis: %w", err)
-	}
-
-	return client, nil
+	return redisx.NewClient(ctx, redisx.Config{
+		Addr:         cfg.Addr,
+		Password:     cfg.Password,
+		DB:           cfg.DB,
+		PoolSize:     cfg.PoolSize,
+		MinIdleConns: cfg.MinIdleConns,
+		DialTimeout:  cfg.DialTimeout,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
+	})
 }
 
 // RedisFromContext 从上下文中获取Redis客户端（需提前设置）
 func RedisFromContext(ctx context.Context) *redis.Client {
-	if client, ok := ctx.Value("redis").(*redis.Client); ok {
-		return client
-	}
-	return nil
+	return redisx.RedisFromContext(ctx, "redis")
 }

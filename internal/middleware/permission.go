@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"go-admin-full/internal/services"
+	rbacsvc "go-admin-full/internal/services/rbac"
 )
 
 // PermissionRequired 按“权限码”做 RBAC 鉴权。
@@ -11,7 +11,7 @@ import (
 // 2. 查询用户全部角色（并预加载角色权限）；
 // 3. admin 角色直接放行；
 // 4. 聚合权限码集合，判断目标权限码是否存在。
-func PermissionRequired(code string, userRoleSvc *services.UserRoleService) gin.HandlerFunc {
+func PermissionRequired(code string, userRoleSvc *rbacsvc.UserRoleService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1) 必须有已认证用户。
 		uid := c.GetUint("uid")

@@ -3,17 +3,17 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"go-admin-full/internal/constants"
-	"go-admin-full/internal/controllers"
-	"go-admin-full/internal/dao"
+	rbac "go-admin-full/internal/controllers/rbac"
+	rbacdao "go-admin-full/internal/dao/rbac"
 	"go-admin-full/internal/middleware"
-	"go-admin-full/internal/services"
+	rbacsvc "go-admin-full/internal/services/rbac"
 	tokenjwt "go-admin-full/internal/token/jwt"
 	"gorm.io/gorm"
 )
 
 func MenuRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
-	mc := controllers.NewMenuController(db)
-	userRoleSvc := services.NewUserRoleService(dao.NewUserRoleDao(db))
+	mc := rbac.NewMenuController(db)
+	userRoleSvc := rbacsvc.NewUserRoleService(rbacdao.NewUserRoleDao(db))
 
 	// 菜单管理：菜单 CRUD、前端菜单树、菜单-权限绑定。
 	mr := r.Group("/api/menus")

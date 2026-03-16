@@ -3,17 +3,17 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"go-admin-full/internal/constants"
-	"go-admin-full/internal/controllers"
-	"go-admin-full/internal/dao"
+	rbac "go-admin-full/internal/controllers/rbac"
+	rbacdao "go-admin-full/internal/dao/rbac"
 	"go-admin-full/internal/middleware"
-	"go-admin-full/internal/services"
+	rbacsvc "go-admin-full/internal/services/rbac"
 	tokenjwt "go-admin-full/internal/token/jwt"
 	"gorm.io/gorm"
 )
 
 func RoleRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
-	rc := controllers.NewRoleController(db)
-	userRoleSvc := services.NewUserRoleService(dao.NewUserRoleDao(db))
+	rc := rbac.NewRoleController(db)
+	userRoleSvc := rbacsvc.NewUserRoleService(rbacdao.NewUserRoleDao(db))
 
 	// 角色管理：包含角色 CRUD + 角色权限绑定。
 	rg := r.Group("/api/roles")

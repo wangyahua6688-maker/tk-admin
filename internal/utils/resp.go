@@ -1,33 +1,28 @@
 package utils
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	commonresp "tk-common/utils/httpresp"
+)
 
 func JSONOK(c *gin.Context, data interface{}) {
-	c.JSON(200, gin.H{"code": 0, "msg": "ok", "data": data})
+	commonresp.GinOK(c, data)
 }
 
 func JSONError(c *gin.Context, code int, msg string) {
-	c.JSON(200, gin.H{"code": code, "msg": msg})
+	commonresp.GinError(c, code, msg)
 }
 
 func OK(c *gin.Context, data interface{}) {
-	c.JSON(200, gin.H{
-		"code": 0,
-		"msg":  "success",
-		"data": data,
-	})
+	commonresp.GinOK(c, data)
 }
 
 func Error(c *gin.Context, msg string) {
-	c.JSON(400, gin.H{
-		"code": 400,
-		"msg":  msg,
-	})
+	commonresp.GinFailWithStatus(c, http.StatusBadRequest, http.StatusBadRequest, msg)
 }
 
 func Forbidden(c *gin.Context, msg string) {
-	c.JSON(403, gin.H{
-		"code": 403,
-		"msg":  msg,
-	})
+	commonresp.GinFailWithStatus(c, http.StatusForbidden, http.StatusForbidden, msg)
 }

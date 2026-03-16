@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"go-admin-full/internal/controllers"
+	rbac "go-admin-full/internal/controllers/rbac"
 	"go-admin-full/internal/middleware"
 	tokenjwt "go-admin-full/internal/token/jwt"
 	"gorm.io/gorm"
@@ -15,7 +15,7 @@ import (
 // - /auth/logout（必须登录后访问）
 func AuthRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager, allowPublicRegister bool) {
 	// 创建认证控制器，传递数据库连接
-	auth := controllers.NewAuthController(db, mgr)
+	auth := rbac.NewAuthController(db, mgr)
 
 	// 公共路由组：不走 JWT 中间件。
 	public := r.Group("/auth")

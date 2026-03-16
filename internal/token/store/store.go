@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	redisx "tk-common/utils/redisx/v8"
 )
 
 // Store 定义 token 存储抽象。
@@ -64,24 +65,24 @@ func (r *RedisStore) GetType() StoreType {
 
 // Set 实现
 func (r *RedisStore) Set(key string, value string, expire time.Duration) error {
-	return r.client.Set(r.ctx, key, value, expire).Err()
+	return redisx.SetString(r.ctx, r.client, key, value, expire)
 }
 
 // Get 实现
 func (r *RedisStore) Get(key string) (string, error) {
-	v, err := r.client.Get(r.ctx, key).Result()
+	v, hit, err := redisx.GetString(r.ctx, r.client, key)
 	if err != nil {
-		if err == redis.Nil {
-			return "", constants.ErrTokenNotFound
-		}
 		return "", err
+	}
+	if !hit {
+		return "", constants.ErrTokenNotFound
 	}
 	return v, nil
 }
 
 // Delete 实现
 func (r *RedisStore) Delete(key string) error {
-	return r.client.Del(r.ctx, key).Err()
+	return redisx.Del(r.ctx, r.client, key)
 }
 
 // Ping 实现
