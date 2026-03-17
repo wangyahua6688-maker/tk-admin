@@ -26,17 +26,6 @@ CREATE TABLE IF NOT EXISTS tk_users (
   KEY idx_tk_users_user_type (user_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户表';
 
--- 兼容历史库：若旧版本缺失认证字段，自动补齐。
-ALTER TABLE tk_users ADD COLUMN IF NOT EXISTS phone VARCHAR(20) NOT NULL DEFAULT '' COMMENT '手机号（用于验证码登录，唯一）' AFTER username;
-ALTER TABLE tk_users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255) NOT NULL DEFAULT '' COMMENT '密码哈希（bcrypt）' AFTER avatar;
-ALTER TABLE tk_users ADD COLUMN IF NOT EXISTS register_source VARCHAR(20) NOT NULL DEFAULT 'password' COMMENT '注册来源：password/sms/admin/import' AFTER password_hash;
-ALTER TABLE tk_users ADD COLUMN IF NOT EXISTS last_login_at DATETIME(3) NULL COMMENT '最近登录时间' AFTER register_source;
-ALTER TABLE tk_users ADD COLUMN IF NOT EXISTS fans_count BIGINT NOT NULL DEFAULT 0 COMMENT '粉丝数' AFTER user_type;
-ALTER TABLE tk_users ADD COLUMN IF NOT EXISTS following_count BIGINT NOT NULL DEFAULT 0 COMMENT '关注数' AFTER fans_count;
-ALTER TABLE tk_users ADD COLUMN IF NOT EXISTS growth_value BIGINT NOT NULL DEFAULT 0 COMMENT '成长值' AFTER following_count;
-ALTER TABLE tk_users ADD COLUMN IF NOT EXISTS read_post_count BIGINT NOT NULL DEFAULT 0 COMMENT '阅读帖子数' AFTER growth_value;
-ALTER TABLE tk_users ADD UNIQUE KEY uk_tk_users_phone (phone);
-
 CREATE TABLE IF NOT EXISTS tk_banner (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   title VARCHAR(120) NOT NULL COMMENT 'Banner标题',

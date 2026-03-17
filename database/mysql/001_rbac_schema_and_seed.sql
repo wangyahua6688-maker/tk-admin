@@ -26,9 +26,6 @@ CREATE TABLE IF NOT EXISTS `sys_users` (
   UNIQUE KEY `uk_users_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统用户表';
 
--- 兼容旧库：若历史版本缺少 avatar 列，则自动补齐。
-ALTER TABLE `sys_users`
-  ADD COLUMN IF NOT EXISTS `avatar` VARCHAR(255) DEFAULT '' AFTER `email`;
 
 -- -------------------------
 -- 2) 角色表

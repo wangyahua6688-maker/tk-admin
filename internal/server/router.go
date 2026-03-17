@@ -50,9 +50,18 @@ func SetupRouter(mgr *tokenjwt.Manager, db *gorm.DB, redisClient *redis.Client, 
 	// 1) 认证路由（/auth）
 	// 2) 用户路由（/api/users）
 	// 3) RBAC 聚合路由（角色/权限/菜单/用户角色/审计）
+	// 4) 上传路由（/api/upload）
 	routes.AuthRoutes(r, db, mgr, cfg.Auth.AllowPublicRegister)
 	routes.UserRoutes(r, db, mgr)
 	routes.RBACRoutes(r, db, mgr)
+	routes.UploadRoutes(r, mgr)
+
+	// 静态资源路由（用于图片回显）
+	// 注意：如果 save_path 是前端目录，前端开发服务器通常会自动处理静态文件
+	// 但为了后端独立可用，这里也挂载一下。
+	if cfg.Upload.BaseURL != "" && cfg.Upload.SavePath != "" {
+		r.Static(cfg.Upload.BaseURL, cfg.Upload.SavePath)
+	}
 
 	// 统一健康检查：输出数据库、Redis、token 存储状态。
 	r.GET("/health", func(c *gin.Context) {

@@ -28,3 +28,7 @@ auth:
 log:
   level: "info"
   file_path: ""
+
+upload:
+  save_path: "/Users/huazi/webWork/tk-admin-web/public/uploads"
+  base_url: "/uploads"

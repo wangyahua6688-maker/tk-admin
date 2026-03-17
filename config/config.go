@@ -45,6 +45,11 @@ type Config struct {
 		Level    string `yaml:"level"`
 		FilePath string `yaml:"file_path"`
 	} `yaml:"log"`
+
+	Upload struct {
+		SavePath string `yaml:"save_path"`
+		BaseURL  string `yaml:"base_url"`
+	} `yaml:"upload"`
 }
 
 var cfg Config
@@ -73,6 +78,8 @@ func Init(path string) {
 	viper.SetDefault("auth.allow_public_register", false)
 	viper.SetDefault("log.level", "info")
 	viper.SetDefault("log.file_path", "")
+	viper.SetDefault("upload.save_path", "uploads")
+	viper.SetDefault("upload.base_url", "/uploads")
 
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Printf("未找到配置文件，使用默认配置: %v\n", err)
@@ -116,6 +123,8 @@ func Init(path string) {
 	cfg.Auth.AllowPublicRegister = viper.GetBool("auth.allow_public_register")
 	cfg.Log.Level = viper.GetString("log.level")
 	cfg.Log.FilePath = viper.GetString("log.file_path")
+	cfg.Upload.SavePath = viper.GetString("upload.save_path")
+	cfg.Upload.BaseURL = viper.GetString("upload.base_url")
 }
 
 func GetConfig() Config {
