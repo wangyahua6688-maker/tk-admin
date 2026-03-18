@@ -1,14 +1,15 @@
 package rbac
 
 import (
-	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"go-admin-full/internal/constants"
 	rbacdao "go-admin-full/internal/dao/rbac"
 	rbacsvc "go-admin-full/internal/services/rbac"
-	"go-admin-full/internal/utils"
+	commonresp "tk-common/utils/httpresp"
+
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -34,14 +35,14 @@ func (ac *AuditController) ListLoginLogs(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if page < 1 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "page必须大于0")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "page必须大于0")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if pageSize < 1 || pageSize > 100 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "page_size范围必须在1-100")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "page_size范围必须在1-100")
 		// 返回当前处理结果。
 		return
 	}
@@ -51,13 +52,13 @@ func (ac *AuditController) ListLoginLogs(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 
 	// 返回分页数据
-	utils.JSONOK(c, gin.H{
+	commonresp.GinOK(c, gin.H{
 		// 处理当前语句逻辑。
 		"list": logs,
 		// 处理当前语句逻辑。

@@ -2,16 +2,37 @@ package biz
 
 import (
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"go-admin-full/config"
+	"go-admin-full/internal/constants"
+	commonresp "tk-common/utils/httpresp"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"go-admin-full/config"
-	"go-admin-full/internal/utils"
+)
+
+// 声明当前变量。
+var (
+	// maxUploadImageSize 单次图片上传体积上限（5MB）。
+	maxUploadImageSize int64 = 5 << 20
+	// allowedImageContentTypes 声明允许的图片 MIME 类型集合。
+	allowedImageContentTypes = map[string]struct{}{
+		// 处理当前语句逻辑。
+		"image/jpeg": {},
+		// 处理当前语句逻辑。
+		"image/png": {},
+		// 处理当前语句逻辑。
+		"image/gif": {},
+		// 处理当前语句逻辑。
+		"image/webp": {},
+	}
 )
 
 // UploadController 定义UploadController相关结构。
@@ -31,7 +52,21 @@ func (uc *UploadController) UploadImage(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "no file uploaded")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "no file uploaded")
+		// 返回当前处理结果。
+		return
+	}
+	// 判断条件并进入对应分支逻辑。
+	if file.Size <= 0 {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "empty file is not allowed")
+		// 返回当前处理结果。
+		return
+	}
+	// 判断条件并进入对应分支逻辑。
+	if file.Size > maxUploadImageSize {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "file size exceeds 5MB limit")
 		// 返回当前处理结果。
 		return
 	}
@@ -41,7 +76,23 @@ func (uc *UploadController) UploadImage(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".gif" && ext != ".webp" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid file type, only images are allowed")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid file type, only images are allowed")
+		// 返回当前处理结果。
+		return
+	}
+	// 定义并初始化当前变量。
+	contentType, err := detectImageContentType(file)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "failed to read upload file")
+		// 返回当前处理结果。
+		return
+	}
+	// 判断条件并进入对应分支逻辑。
+	if _, ok := allowedImageContentTypes[contentType]; !ok {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid file content type")
 		// 返回当前处理结果。
 		return
 	}
@@ -49,14 +100,42 @@ func (uc *UploadController) UploadImage(c *gin.Context) {
 	// 定义并初始化当前变量。
 	cfg := config.GetConfig()
 	// 定义并初始化当前变量。
-	savePath := cfg.Upload.SavePath
+	savePath := strings.TrimSpace(cfg.Upload.SavePath)
 	// 定义并初始化当前变量。
-	baseURL := cfg.Upload.BaseURL
+	baseURL := strings.TrimSpace(cfg.Upload.BaseURL)
+	// 判断条件并进入对应分支逻辑。
+	if savePath == "" || baseURL == "" {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminSysInternalError, "upload config is invalid")
+		// 返回当前处理结果。
+		return
+	}
+	// 判断条件并进入对应分支逻辑。
+	if !strings.HasPrefix(baseURL, "/") {
+		// 更新当前变量或字段值。
+		baseURL = "/" + strings.TrimPrefix(baseURL, "/")
+	}
+	// 判断条件并进入对应分支逻辑。
+	if strings.Contains(baseURL, "..") {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminSysInternalError, "upload base_url is invalid")
+		// 返回当前处理结果。
+		return
+	}
+	// 定义并初始化当前变量。
+	absSavePath, err := filepath.Abs(savePath)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminSysInternalError, "failed to resolve save directory")
+		// 返回当前处理结果。
+		return
+	}
 
 	// 确保保存目录存在
-	if err := os.MkdirAll(savePath, 0755); err != nil {
+	if err := os.MkdirAll(absSavePath, 0755); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, "failed to create save directory")
+		commonresp.GinError(c, constants.AdminSysInternalError, "failed to create save directory")
 		// 返回当前处理结果。
 		return
 	}
@@ -64,12 +143,28 @@ func (uc *UploadController) UploadImage(c *gin.Context) {
 	// 生成唯一文件名
 	newFilename := fmt.Sprintf("%d_%s%s", time.Now().UnixNano(), uuid.New().String()[:8], ext)
 	// 定义并初始化当前变量。
-	dst := filepath.Join(savePath, newFilename)
+	dst := filepath.Join(absSavePath, newFilename)
+	// 定义并初始化当前变量。
+	absDst, err := filepath.Abs(dst)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminSysInternalError, "failed to resolve upload file path")
+		// 返回当前处理结果。
+		return
+	}
+	// 判断条件并进入对应分支逻辑。
+	if !strings.HasPrefix(absDst, absSavePath+string(os.PathSeparator)) {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminSysInternalError, "invalid upload file path")
+		// 返回当前处理结果。
+		return
+	}
 
 	// 保存文件
-	if err := c.SaveUploadedFile(file, dst); err != nil {
+	if err := c.SaveUploadedFile(file, absDst); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, "failed to save file")
+		commonresp.GinError(c, constants.AdminSysInternalError, "failed to save file")
 		// 返回当前处理结果。
 		return
 	}
@@ -81,8 +176,41 @@ func (uc *UploadController) UploadImage(c *gin.Context) {
 	relativePath = filepath.ToSlash(relativePath)
 
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{
+	commonresp.GinOK(c, gin.H{
 		// 处理当前语句逻辑。
 		"url": relativePath,
 	})
+}
+
+// detectImageContentType 检测上传文件 MIME 类型。
+func detectImageContentType(fileHeader *multipart.FileHeader) (string, error) {
+	// 定义并初始化当前变量。
+	src, err := fileHeader.Open()
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 返回当前处理结果。
+		return "", err
+	}
+	// 注册延迟执行逻辑。
+	defer src.Close()
+	// 定义并初始化当前变量。
+	buf := make([]byte, 512)
+	// 定义并初始化当前变量。
+	n, err := src.Read(buf)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil && err != io.EOF {
+		// 返回当前处理结果。
+		return "", err
+	}
+	// 判断条件并进入对应分支逻辑。
+	if n <= 0 {
+		// 返回当前处理结果。
+		return "", fmt.Errorf("empty file")
+	}
+	// 定义并初始化当前变量。
+	contentType := strings.ToLower(strings.TrimSpace(http.DetectContentType(buf[:n])))
+	// 定义并初始化当前变量。
+	parts := strings.Split(contentType, ";")
+	// 返回当前处理结果。
+	return strings.TrimSpace(parts[0]), nil
 }

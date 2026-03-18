@@ -1,11 +1,12 @@
 package biz
 
 import (
-	"net/http"
+	"go-admin-full/internal/constants"
 	"strings"
 
+	commonresp "tk-common/utils/httpresp"
+
 	"github.com/gin-gonic/gin"
-	"go-admin-full/internal/utils"
 )
 
 // -------------------- 热点评论 --------------------
@@ -16,12 +17,12 @@ func (uc *UserOpsController) ListHotComments(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"items": items})
+	commonresp.GinOK(c, gin.H{"items": items})
 }
 
 // CreateHotComment 创建HotComment。
@@ -44,14 +45,14 @@ func (uc *UserOpsController) CreateHotComment(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.PostID == 0 || req.UserID == 0 || strings.TrimSpace(req.Content) == "" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "post_id/user_id/content required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "post_id/user_id/content required")
 		// 返回当前处理结果。
 		return
 	}
@@ -61,12 +62,12 @@ func (uc *UserOpsController) CreateHotComment(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, err.Error())
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, item)
+	commonresp.GinOK(c, item)
 }
 
 // UpdateHotComment 更新HotComment。
@@ -76,7 +77,7 @@ func (uc *UserOpsController) UpdateHotComment(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
@@ -92,7 +93,7 @@ func (uc *UserOpsController) UpdateHotComment(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
@@ -117,7 +118,7 @@ func (uc *UserOpsController) UpdateHotComment(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if len(updates) == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "empty updates")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "empty updates")
 		// 返回当前处理结果。
 		return
 	}
@@ -125,12 +126,12 @@ func (uc *UserOpsController) UpdateHotComment(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := uc.svc.UpdateHotComment(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // DeleteHotComment 删除HotComment。
@@ -140,17 +141,17 @@ func (uc *UserOpsController) DeleteHotComment(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if err := uc.svc.DeleteHotComment(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }

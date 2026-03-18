@@ -1,11 +1,12 @@
 package biz
 
 import (
-	"net/http"
+	"go-admin-full/internal/constants"
 	"strings"
 
+	commonresp "tk-common/utils/httpresp"
+
 	"github.com/gin-gonic/gin"
-	"go-admin-full/internal/utils"
 )
 
 // -------------------- 帖子评论管理（按帖子维度） --------------------
@@ -16,7 +17,7 @@ func (uc *UserOpsController) ListPostComments(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid post id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid post id")
 		// 返回当前处理结果。
 		return
 	}
@@ -25,12 +26,12 @@ func (uc *UserOpsController) ListPostComments(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"items": items})
+	commonresp.GinOK(c, gin.H{"items": items})
 }
 
 // CreatePostComment 创建PostComment。
@@ -40,7 +41,7 @@ func (uc *UserOpsController) CreatePostComment(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid post id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid post id")
 		// 返回当前处理结果。
 		return
 	}
@@ -59,14 +60,14 @@ func (uc *UserOpsController) CreatePostComment(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.UserID == 0 || strings.TrimSpace(req.Content) == "" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "user_id/content required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "user_id/content required")
 		// 返回当前处理结果。
 		return
 	}
@@ -75,10 +76,10 @@ func (uc *UserOpsController) CreatePostComment(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, err.Error())
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, item)
+	commonresp.GinOK(c, item)
 }

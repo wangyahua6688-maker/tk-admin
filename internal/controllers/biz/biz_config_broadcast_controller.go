@@ -1,12 +1,13 @@
 package biz
 
 import (
-	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"go-admin-full/internal/constants"
 	"go-admin-full/internal/models"
-	"go-admin-full/internal/utils"
+	commonresp "tk-common/utils/httpresp"
+
+	"github.com/gin-gonic/gin"
 )
 
 // -------------------- Broadcast --------------------
@@ -17,12 +18,12 @@ func (bc *BizConfigController) ListBroadcasts(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"items": items})
+	commonresp.GinOK(c, gin.H{"items": items})
 }
 
 // CreateBroadcast 创建Broadcast。
@@ -41,14 +42,14 @@ func (bc *BizConfigController) CreateBroadcast(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if strings.TrimSpace(req.Title) == "" || strings.TrimSpace(req.Content) == "" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "title/content required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "title/content required")
 		// 返回当前处理结果。
 		return
 	}
@@ -67,12 +68,12 @@ func (bc *BizConfigController) CreateBroadcast(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.CreateBroadcast(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, item)
+	commonresp.GinOK(c, item)
 }
 
 // UpdateBroadcast 更新Broadcast。
@@ -82,7 +83,7 @@ func (bc *BizConfigController) UpdateBroadcast(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
@@ -100,7 +101,7 @@ func (bc *BizConfigController) UpdateBroadcast(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
@@ -129,19 +130,19 @@ func (bc *BizConfigController) UpdateBroadcast(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if len(updates) == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "empty updates")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "empty updates")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.UpdateBroadcast(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // DeleteBroadcast 删除Broadcast。
@@ -151,17 +152,17 @@ func (bc *BizConfigController) DeleteBroadcast(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.DeleteBroadcast(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }

@@ -5,7 +5,7 @@ import (
 	"runtime/debug"
 
 	"github.com/gin-gonic/gin"
-	"go-admin-full/internal/utils"
+	commonlogx "tk-common/utils/logx"
 )
 
 // RecoveryMiddleware 恢复中间件
@@ -20,7 +20,7 @@ func RecoveryMiddleware() gin.HandlerFunc {
 				stack := debug.Stack()
 
 				// 记录错误日志
-				logger := utils.GetLogger()
+				logger := commonlogx.GetLogger()
 				// 调用logger.Error完成当前处理。
 				logger.Error("Panic recovered: %v\n%s", err, stack)
 

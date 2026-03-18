@@ -1,12 +1,13 @@
 package biz
 
 import (
-	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"go-admin-full/internal/constants"
 	"go-admin-full/internal/models"
-	"go-admin-full/internal/utils"
+	commonresp "tk-common/utils/httpresp"
+
+	"github.com/gin-gonic/gin"
 )
 
 // -------------------- 首页首屏弹窗 --------------------
@@ -26,12 +27,12 @@ func (bc *BizConfigController) ListHomePopups(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"items": items})
+	commonresp.GinOK(c, gin.H{"items": items})
 }
 
 // CreateHomePopup 新增首页首屏弹窗。
@@ -65,14 +66,32 @@ func (bc *BizConfigController) CreateHomePopup(c *gin.Context) {
 	// 绑定并校验请求体。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if strings.TrimSpace(req.Title) == "" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "title required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "title required")
+		// 返回当前处理结果。
+		return
+	}
+	// 定义并初始化当前变量。
+	imageURL, err := normalizeSafeURL(req.ImageURL, true)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid image_url")
+		// 返回当前处理结果。
+		return
+	}
+	// 定义并初始化当前变量。
+	buttonLink, err := normalizeSafeURL(req.ButtonLink, true)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid button_link")
 		// 返回当前处理结果。
 		return
 	}
@@ -83,12 +102,12 @@ func (bc *BizConfigController) CreateHomePopup(c *gin.Context) {
 		Title: strings.TrimSpace(req.Title),
 		// 调用strings.TrimSpace完成当前处理。
 		Content: strings.TrimSpace(req.Content),
-		// 调用strings.TrimSpace完成当前处理。
-		ImageURL: strings.TrimSpace(req.ImageURL),
+		// 处理当前语句逻辑。
+		ImageURL: imageURL,
 		// 调用strings.TrimSpace完成当前处理。
 		ButtonText: strings.TrimSpace(req.ButtonText),
-		// 调用strings.TrimSpace完成当前处理。
-		ButtonLink: strings.TrimSpace(req.ButtonLink),
+		// 处理当前语句逻辑。
+		ButtonLink: buttonLink,
 		// 调用strings.TrimSpace完成当前处理。
 		Position: strings.TrimSpace(req.Position),
 		// 处理当前语句逻辑。
@@ -126,12 +145,12 @@ func (bc *BizConfigController) CreateHomePopup(c *gin.Context) {
 	// 落库并返回新建记录。
 	if err := bc.svc.CreateHomePopup(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, item)
+	commonresp.GinOK(c, item)
 }
 
 // UpdateHomePopup 更新首页首屏弹窗。
@@ -141,7 +160,7 @@ func (bc *BizConfigController) UpdateHomePopup(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
@@ -175,7 +194,7 @@ func (bc *BizConfigController) UpdateHomePopup(c *gin.Context) {
 	// 绑定请求体。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
@@ -189,7 +208,7 @@ func (bc *BizConfigController) UpdateHomePopup(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if title == "" {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusBadRequest, "title required")
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "title required")
 			// 返回当前处理结果。
 			return
 		}
@@ -203,8 +222,17 @@ func (bc *BizConfigController) UpdateHomePopup(c *gin.Context) {
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.ImageURL != nil {
+		// 定义并初始化当前变量。
+		imageURL, imageErr := normalizeSafeURL(*req.ImageURL, true)
+		// 判断条件并进入对应分支逻辑。
+		if imageErr != nil {
+			// 调用utils.JSONError完成当前处理。
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid image_url")
+			// 返回当前处理结果。
+			return
+		}
 		// 更新当前变量或字段值。
-		updates["image_url"] = strings.TrimSpace(*req.ImageURL)
+		updates["image_url"] = imageURL
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.ButtonText != nil {
@@ -213,8 +241,17 @@ func (bc *BizConfigController) UpdateHomePopup(c *gin.Context) {
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.ButtonLink != nil {
+		// 定义并初始化当前变量。
+		buttonLink, linkErr := normalizeSafeURL(*req.ButtonLink, true)
+		// 判断条件并进入对应分支逻辑。
+		if linkErr != nil {
+			// 调用utils.JSONError完成当前处理。
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid button_link")
+			// 返回当前处理结果。
+			return
+		}
 		// 更新当前变量或字段值。
-		updates["button_link"] = strings.TrimSpace(*req.ButtonLink)
+		updates["button_link"] = buttonLink
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.Position != nil {
@@ -256,7 +293,7 @@ func (bc *BizConfigController) UpdateHomePopup(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if len(updates) == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "empty updates")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "empty updates")
 		// 返回当前处理结果。
 		return
 	}
@@ -264,12 +301,12 @@ func (bc *BizConfigController) UpdateHomePopup(c *gin.Context) {
 	// 执行更新并返回ID。
 	if err := bc.svc.UpdateHomePopup(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // DeleteHomePopup 删除首页首屏弹窗。
@@ -279,7 +316,7 @@ func (bc *BizConfigController) DeleteHomePopup(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
@@ -287,10 +324,10 @@ func (bc *BizConfigController) DeleteHomePopup(c *gin.Context) {
 	// 执行删除。
 	if err := bc.svc.DeleteHomePopup(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }

@@ -1,13 +1,14 @@
 package biz
 
 import (
-	"net/http"
 	"sort"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"go-admin-full/internal/constants"
 	"go-admin-full/internal/models"
-	"go-admin-full/internal/utils"
+	commonresp "tk-common/utils/httpresp"
+
+	"github.com/gin-gonic/gin"
 )
 
 // -------------------- Banner --------------------
@@ -20,12 +21,12 @@ func (bc *BizConfigController) ListBanners(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"items": items})
+	commonresp.GinOK(c, gin.H{"items": items})
 }
 
 // CreateBanner 创建Banner。
@@ -64,7 +65,7 @@ func (bc *BizConfigController) CreateBanner(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
@@ -73,7 +74,25 @@ func (bc *BizConfigController) CreateBanner(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if strings.TrimSpace(req.Title) == "" || strings.TrimSpace(req.ImageURL) == "" || strings.TrimSpace(req.Type) == "" || len(positions) == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "title/image_url/type/positions required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "title/image_url/type/positions required")
+		// 返回当前处理结果。
+		return
+	}
+	// 定义并初始化当前变量。
+	linkURL, err := normalizeSafeURL(req.LinkURL, true)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid link_url")
+		// 返回当前处理结果。
+		return
+	}
+	// 定义并初始化当前变量。
+	jumpURL, err := normalizeSafeURL(req.JumpURL, true)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid jump_url")
 		// 返回当前处理结果。
 		return
 	}
@@ -83,14 +102,14 @@ func (bc *BizConfigController) CreateBanner(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if jumpType == "post" && req.JumpPostID == 0 {
 		// 更新当前变量或字段值。
-		utils.JSONError(c, http.StatusBadRequest, "jump_post_id required when jump_type=post")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "jump_post_id required when jump_type=post")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if jumpType == "external" && strings.TrimSpace(req.JumpURL) == "" {
 		// 更新当前变量或字段值。
-		utils.JSONError(c, http.StatusBadRequest, "jump_url required when jump_type=external")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "jump_url required when jump_type=external")
 		// 返回当前处理结果。
 		return
 	}
@@ -101,14 +120,14 @@ func (bc *BizConfigController) CreateBanner(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if err != nil {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusInternalServerError, err.Error())
+			commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 			// 返回当前处理结果。
 			return
 		}
 		// 判断条件并进入对应分支逻辑。
 		if !ok {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusBadRequest, "jump_post_id not found")
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "jump_post_id not found")
 			// 返回当前处理结果。
 			return
 		}
@@ -120,8 +139,8 @@ func (bc *BizConfigController) CreateBanner(c *gin.Context) {
 		Title: strings.TrimSpace(req.Title),
 		// 调用strings.TrimSpace完成当前处理。
 		ImageURL: strings.TrimSpace(req.ImageURL),
-		// 调用strings.TrimSpace完成当前处理。
-		LinkURL: strings.TrimSpace(req.LinkURL),
+		// 处理当前语句逻辑。
+		LinkURL: linkURL,
 		// 调用strings.TrimSpace完成当前处理。
 		Type: strings.TrimSpace(req.Type),
 		// 处理当前语句逻辑。
@@ -132,8 +151,8 @@ func (bc *BizConfigController) CreateBanner(c *gin.Context) {
 		JumpType: jumpType,
 		// 处理当前语句逻辑。
 		JumpPostID: req.JumpPostID,
-		// 调用strings.TrimSpace完成当前处理。
-		JumpURL: strings.TrimSpace(req.JumpURL),
+		// 处理当前语句逻辑。
+		JumpURL: jumpURL,
 		// 处理当前语句逻辑。
 		ContentHTML: req.ContentHTML,
 		// 处理当前语句逻辑。
@@ -148,7 +167,7 @@ func (bc *BizConfigController) CreateBanner(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if jumpType == "external" {
 		// 更新当前变量或字段值。
-		item.LinkURL = strings.TrimSpace(req.JumpURL)
+		item.LinkURL = jumpURL
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.Status != nil {
@@ -163,12 +182,12 @@ func (bc *BizConfigController) CreateBanner(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.CreateBanner(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, item)
+	commonresp.GinOK(c, item)
 }
 
 // UpdateBanner 更新Banner。
@@ -178,7 +197,7 @@ func (bc *BizConfigController) UpdateBanner(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
@@ -216,7 +235,7 @@ func (bc *BizConfigController) UpdateBanner(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
@@ -235,8 +254,17 @@ func (bc *BizConfigController) UpdateBanner(c *gin.Context) {
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.LinkURL != nil {
+		// 定义并初始化当前变量。
+		linkURL, linkErr := normalizeSafeURL(*req.LinkURL, true)
+		// 判断条件并进入对应分支逻辑。
+		if linkErr != nil {
+			// 调用utils.JSONError完成当前处理。
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid link_url")
+			// 返回当前处理结果。
+			return
+		}
 		// 更新当前变量或字段值。
-		updates["link_url"] = strings.TrimSpace(*req.LinkURL)
+		updates["link_url"] = linkURL
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.Type != nil {
@@ -272,8 +300,17 @@ func (bc *BizConfigController) UpdateBanner(c *gin.Context) {
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.JumpURL != nil {
+		// 定义并初始化当前变量。
+		jumpURL, jumpErr := normalizeSafeURL(*req.JumpURL, true)
+		// 判断条件并进入对应分支逻辑。
+		if jumpErr != nil {
+			// 调用utils.JSONError完成当前处理。
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid jump_url")
+			// 返回当前处理结果。
+			return
+		}
 		// 更新当前变量或字段值。
-		updates["jump_url"] = strings.TrimSpace(*req.JumpURL)
+		updates["jump_url"] = jumpURL
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.ContentHTML != nil {
@@ -311,7 +348,7 @@ func (bc *BizConfigController) UpdateBanner(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if len(updates) == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "empty updates")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "empty updates")
 		// 返回当前处理结果。
 		return
 	}
@@ -319,12 +356,12 @@ func (bc *BizConfigController) UpdateBanner(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.UpdateBanner(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // DeleteBanner 删除Banner。
@@ -334,19 +371,19 @@ func (bc *BizConfigController) DeleteBanner(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.DeleteBanner(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // normalizePositions 处理normalizePositions相关逻辑。

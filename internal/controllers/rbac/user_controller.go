@@ -2,16 +2,17 @@ package rbac
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
+	"go-admin-full/internal/constants"
 	rbacdao "go-admin-full/internal/dao/rbac"
 	"go-admin-full/internal/models"
 	rbacsvc "go-admin-full/internal/services/rbac"
-	"go-admin-full/internal/utils"
-	"gorm.io/gorm"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
+	commonresp "tk-common/utils/httpresp"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // 依赖注入
@@ -80,7 +81,7 @@ func (c *UserController) List(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(ctx, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
@@ -93,7 +94,7 @@ func (c *UserController) List(ctx *gin.Context) {
 		resp = append(resp, toUserResp(u))
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(ctx, resp)
+	commonresp.GinOK(ctx, resp)
 }
 
 // Get 查询用户详情。
@@ -103,7 +104,7 @@ func (c *UserController) Get(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil || id <= 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusBadRequest, "invalid user id")
+		commonresp.GinError(ctx, constants.AdminBizInvalidRequest, "invalid user id")
 		// 返回当前处理结果。
 		return
 	}
@@ -113,12 +114,12 @@ func (c *UserController) Get(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusNotFound, "用户不存在")
+		commonresp.GinError(ctx, constants.AdminBizResourceNotFound, "用户不存在")
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(ctx, toUserResp(*user))
+	commonresp.GinOK(ctx, toUserResp(*user))
 }
 
 // Create 创建用户。
@@ -128,7 +129,7 @@ func (c *UserController) Create(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusBadRequest, "参数错误")
+		commonresp.GinError(ctx, constants.AdminBizInvalidRequest, "参数错误")
 		// 返回当前处理结果。
 		return
 	}
@@ -145,7 +146,7 @@ func (c *UserController) Create(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusBadRequest, err.Error())
+		commonresp.GinError(ctx, constants.AdminBizInvalidRequest, err.Error())
 		// 返回当前处理结果。
 		return
 	}
@@ -155,7 +156,7 @@ func (c *UserController) Create(ctx *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if err := c.service.UpdateUser(ctx.Request.Context(), user.ID, req.Email, req.Status, "", nil); err != nil {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(ctx, http.StatusInternalServerError, err.Error())
+			commonresp.GinError(ctx, constants.AdminSysInternalError, err.Error())
 			// 返回当前处理结果。
 			return
 		}
@@ -166,7 +167,7 @@ func (c *UserController) Create(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(ctx, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
@@ -192,7 +193,7 @@ func (c *UserController) Create(ctx *gin.Context) {
 	)
 
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(ctx, toUserResp(*created))
+	commonresp.GinOK(ctx, toUserResp(*created))
 }
 
 // Update 更新用户。
@@ -202,7 +203,7 @@ func (c *UserController) Update(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil || id <= 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusBadRequest, "invalid user id")
+		commonresp.GinError(ctx, constants.AdminBizInvalidRequest, "invalid user id")
 		// 返回当前处理结果。
 		return
 	}
@@ -212,7 +213,7 @@ func (c *UserController) Update(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusBadRequest, "参数错误")
+		commonresp.GinError(ctx, constants.AdminBizInvalidRequest, "参数错误")
 		// 返回当前处理结果。
 		return
 	}
@@ -222,7 +223,7 @@ func (c *UserController) Update(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusNotFound, "用户不存在")
+		commonresp.GinError(ctx, constants.AdminBizResourceNotFound, "用户不存在")
 		// 返回当前处理结果。
 		return
 	}
@@ -230,7 +231,7 @@ func (c *UserController) Update(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.service.UpdateUser(ctx.Request.Context(), uint(id), req.Email, req.Status, req.Password, req.Avatar); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusBadRequest, err.Error())
+		commonresp.GinError(ctx, constants.AdminBizInvalidRequest, err.Error())
 		// 返回当前处理结果。
 		return
 	}
@@ -240,7 +241,7 @@ func (c *UserController) Update(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(ctx, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
@@ -266,7 +267,7 @@ func (c *UserController) Update(ctx *gin.Context) {
 	)
 
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(ctx, toUserResp(*updated))
+	commonresp.GinOK(ctx, toUserResp(*updated))
 }
 
 // Delete 删除用户。
@@ -276,7 +277,7 @@ func (c *UserController) Delete(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil || id <= 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusBadRequest, "invalid user id")
+		commonresp.GinError(ctx, constants.AdminBizInvalidRequest, "invalid user id")
 		// 返回当前处理结果。
 		return
 	}
@@ -286,7 +287,7 @@ func (c *UserController) Delete(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusNotFound, "用户不存在")
+		commonresp.GinError(ctx, constants.AdminBizResourceNotFound, "用户不存在")
 		// 返回当前处理结果。
 		return
 	}
@@ -294,7 +295,7 @@ func (c *UserController) Delete(ctx *gin.Context) {
 	// 安全防护：禁止删除内置管理员账号
 	if strings.EqualFold(target.Username, "admin") {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusForbidden, "admin账号不可删除")
+		commonresp.GinError(ctx, constants.AdminAuthForbidden, "admin账号不可删除")
 		// 返回当前处理结果。
 		return
 	}
@@ -304,7 +305,7 @@ func (c *UserController) Delete(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if uid == uint(id) {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusForbidden, "不可删除当前登录账号")
+		commonresp.GinError(ctx, constants.AdminAuthForbidden, "不可删除当前登录账号")
 		// 返回当前处理结果。
 		return
 	}
@@ -312,12 +313,12 @@ func (c *UserController) Delete(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.service.DeleteUser(ctx.Request.Context(), uint(id)); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(ctx, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(ctx, gin.H{"msg": "deleted"})
+	commonresp.GinOK(ctx, gin.H{"msg": "deleted"})
 }
 
 // Profile 处理Profile相关逻辑。
@@ -327,7 +328,7 @@ func (c *UserController) Profile(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if uid == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusUnauthorized, "用户未认证")
+		commonresp.GinError(ctx, constants.AdminAuthUnauthorized, "用户未认证")
 		// 返回当前处理结果。
 		return
 	}
@@ -337,12 +338,12 @@ func (c *UserController) Profile(ctx *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusNotFound, "用户不存在")
+		commonresp.GinError(ctx, constants.AdminBizResourceNotFound, "用户不存在")
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(ctx, toUserResp(*user))
+	commonresp.GinOK(ctx, toUserResp(*user))
 }
 
 // toUserResp 处理toUserResp相关逻辑。

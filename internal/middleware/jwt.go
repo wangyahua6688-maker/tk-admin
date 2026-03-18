@@ -5,9 +5,12 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"go-admin-full/config"
+	"go-admin-full/internal/auth/sessioncookie"
+	"go-admin-full/internal/constants"
 	"go-admin-full/internal/models"
 	tokenjwt "go-admin-full/internal/token/jwt"
-	"go-admin-full/internal/utils"
+	gormx "tk-common/utils/dbx/gormx"
 )
 
 // NewJWTMiddleware JWT 认证中间件。
@@ -25,29 +28,22 @@ func NewJWTMiddleware(mgr *tokenjwt.Manager) gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "jwt manager is not initialized"})
 		}
 	}
+	cookieOpt := sessioncookie.FromConfig(config.GetConfig())
 	// 返回当前处理结果。
 	return func(c *gin.Context) {
-		// 1) 提取并规范化 Bearer Token。
-		auth := c.GetHeader("Authorization")
-		// 判断条件并进入对应分支逻辑。
-		if auth == "" {
-			// 调用c.AbortWithStatusJSON完成当前处理。
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "authorization header required"})
-			// 返回当前处理结果。
-			return
-		}
-		// 定义并初始化当前变量。
-		tokenStr := strings.TrimSpace(auth)
-		// 判断条件并进入对应分支逻辑。
-		if strings.HasPrefix(strings.ToLower(tokenStr), "bearer ") {
-			// 更新当前变量或字段值。
-			tokenStr = tokenStr[7:]
-		}
+		// 1) 先从 Authorization 头提取，再回退到 HttpOnly Cookie。
+		tokenStr, fromCookie := resolveAccessToken(c, cookieOpt.AccessTokenName)
 		// 判断条件并进入对应分支逻辑。
 		if tokenStr == "" {
 			// 调用c.AbortWithStatusJSON完成当前处理。
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "token is empty"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "authentication required"})
 			// 返回当前处理结果。
+			return
+		}
+		// Cookie 鉴权场景增加轻量 CSRF 防护：
+		// 非安全方法必须带 X-Device-ID（浏览器跨站表单无法伪造该头）。
+		if fromCookie && !isSafeMethod(c.Request.Method) && strings.TrimSpace(c.GetHeader("X-Device-ID")) == "" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "msg": "csrf validation failed"})
 			return
 		}
 
@@ -55,14 +51,18 @@ func NewJWTMiddleware(mgr *tokenjwt.Manager) gin.HandlerFunc {
 		claims, err := mgr.ValidateAccessToken(tokenStr)
 		// 判断条件并进入对应分支逻辑。
 		if err != nil {
+			msg := "invalid token"
+			if err == constants.ErrExpiredToken {
+				msg = "token is expired"
+			}
 			// 调用c.AbortWithStatusJSON完成当前处理。
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "invalid token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": msg})
 			// 返回当前处理结果。
 			return
 		}
 
 		// 安全防护：每次请求校验用户状态，禁用用户立即失效。
-		if db := utils.DBFromContext(c.Request.Context()); db != nil {
+		if db := gormx.DBFromContext(c.Request.Context()); db != nil {
 			// 声明当前变量。
 			var user models.User
 			// 判断条件并进入对应分支逻辑。
@@ -82,5 +82,32 @@ func NewJWTMiddleware(mgr *tokenjwt.Manager) gin.HandlerFunc {
 		c.Set("access_token", tokenStr)
 		// 调用c.Next完成当前处理。
 		c.Next()
+	}
+}
+
+// resolveAccessToken 从 Authorization 头或认证 Cookie 提取 access token。
+func resolveAccessToken(c *gin.Context, accessCookieName string) (string, bool) {
+	auth := strings.TrimSpace(c.GetHeader("Authorization"))
+	if strings.HasPrefix(strings.ToLower(auth), "bearer ") {
+		return strings.TrimSpace(auth[7:]), false
+	}
+	if auth != "" {
+		return auth, false
+	}
+
+	raw, err := c.Cookie(accessCookieName)
+	if err != nil {
+		return "", false
+	}
+	return strings.TrimSpace(raw), true
+}
+
+// isSafeMethod 判断请求方法是否为“无副作用”方法。
+func isSafeMethod(method string) bool {
+	switch strings.ToUpper(strings.TrimSpace(method)) {
+	case http.MethodGet, http.MethodHead, http.MethodOptions:
+		return true
+	default:
+		return false
 	}
 }

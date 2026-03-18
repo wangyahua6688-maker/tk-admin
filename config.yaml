@@ -6,6 +6,7 @@ jwt:
   signing_key: "dev-local-signing-key-change-in-production-123456"
   access_expire: 3600
   refresh_expire: 604800
+  session_idle_timeout: 3600
   allow_insecure_memory_store: true
 
 database:
@@ -19,11 +20,20 @@ redis:
 
 cors:
   allowed_origins:
+    - "http://localhost:5173"
     - "http://localhost:3000"
-  allow_credentials: false
+  allow_credentials: true
 
 auth:
   allow_public_register: false
+  cookie:
+    access_token_name: "tk_admin_access_token"
+    refresh_token_name: "tk_admin_refresh_token"
+    domain: ""
+    path: "/"
+    secure: false
+    http_only: true
+    same_site: "lax"
 
 log:
   level: "info"

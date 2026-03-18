@@ -2,12 +2,13 @@ package biz
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"go-admin-full/internal/constants"
 	"go-admin-full/internal/models"
-	"go-admin-full/internal/utils"
+	commonresp "tk-common/utils/httpresp"
+
+	"github.com/gin-gonic/gin"
 )
 
 // -------------------- 官方发帖 --------------------
@@ -18,12 +19,12 @@ func (bc *BizConfigController) ListOfficialPosts(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"items": items})
+	commonresp.GinOK(c, gin.H{"items": items})
 }
 
 // CreateOfficialPost 创建OfficialPost。
@@ -44,28 +45,28 @@ func (bc *BizConfigController) CreateOfficialPost(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if strings.TrimSpace(req.Title) == "" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "title required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "title required")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.UserID == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "user_id required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "user_id required")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if !bc.svc.IsUserTypes(c.Request.Context(), req.UserID, "official") {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "user_id must be official account")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "user_id must be official account")
 		// 返回当前处理结果。
 		return
 	}
@@ -93,12 +94,12 @@ func (bc *BizConfigController) CreateOfficialPost(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.CreateOfficialPost(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, item)
+	commonresp.GinOK(c, item)
 }
 
 // UpdateOfficialPost 更新OfficialPost。
@@ -108,7 +109,7 @@ func (bc *BizConfigController) UpdateOfficialPost(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
@@ -117,7 +118,7 @@ func (bc *BizConfigController) UpdateOfficialPost(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
@@ -130,7 +131,7 @@ func (bc *BizConfigController) UpdateOfficialPost(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if userID == 0 || !bc.svc.IsUserTypes(c.Request.Context(), userID, "official") {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusBadRequest, "user_id must be official account")
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "user_id must be official account")
 			// 返回当前处理结果。
 			return
 		}
@@ -140,12 +141,12 @@ func (bc *BizConfigController) UpdateOfficialPost(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.UpdateOfficialPost(c.Request.Context(), id, req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // DeleteOfficialPost 删除OfficialPost。
@@ -155,19 +156,19 @@ func (bc *BizConfigController) DeleteOfficialPost(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.DeleteOfficialPost(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // toUint 处理toUint相关逻辑。

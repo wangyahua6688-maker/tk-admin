@@ -1,22 +1,23 @@
 package server
 
 import (
-	"context"
 	"time"
 
 	"go-admin-full/config"
 	"go-admin-full/internal/middleware"
 	"go-admin-full/internal/routes"
 	tokenjwt "go-admin-full/internal/token/jwt"
-	"go-admin-full/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
+	"tk-common/utils/ctxx"
+	gormx "tk-common/utils/dbx/gormx"
+	commonlogx "tk-common/utils/logx"
 )
 
 // SetupRouter 初始化Router。
-func SetupRouter(mgr *tokenjwt.Manager, db *gorm.DB, redisClient *redis.Client, logger *utils.Logger, cfg config.Config) *gin.Engine {
+func SetupRouter(mgr *tokenjwt.Manager, db *gorm.DB, redisClient *redis.Client, logger *commonlogx.Logger, cfg config.Config) *gin.Engine {
 	// 定义并初始化当前变量。
 	r := gin.Default()
 
@@ -39,7 +40,7 @@ func SetupRouter(mgr *tokenjwt.Manager, db *gorm.DB, redisClient *redis.Client, 
 	// 注入数据库连接到 request context，便于 DAO 在无侵入情况下获取 db。
 	r.Use(func(c *gin.Context) {
 		// 更新当前变量或字段值。
-		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "db", db))
+		c.Request = c.Request.WithContext(gormx.ContextWithDB(c.Request.Context(), db))
 		// 调用c.Next完成当前处理。
 		c.Next()
 	})
@@ -49,7 +50,7 @@ func SetupRouter(mgr *tokenjwt.Manager, db *gorm.DB, redisClient *redis.Client, 
 		// 调用r.Use完成当前处理。
 		r.Use(func(c *gin.Context) {
 			// 更新当前变量或字段值。
-			c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "redis", redisClient))
+			c.Request = c.Request.WithContext(ctxx.With(c.Request.Context(), ctxx.RedisKey, redisClient))
 			// 调用c.Next完成当前处理。
 			c.Next()
 		})
@@ -63,7 +64,7 @@ func SetupRouter(mgr *tokenjwt.Manager, db *gorm.DB, redisClient *redis.Client, 
 	// 2) 用户路由（/api/users）
 	// 3) RBAC 聚合路由（角色/权限/菜单/用户角色/审计）
 	// 4) 上传路由（/api/upload）
-	routes.AuthRoutes(r, db, mgr, cfg.Auth.AllowPublicRegister)
+	routes.AuthRoutes(r, db, mgr, cfg)
 	// 调用routes.UserRoutes完成当前处理。
 	routes.UserRoutes(r, db, mgr)
 	// 调用routes.RBACRoutes完成当前处理。

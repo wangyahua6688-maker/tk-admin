@@ -2,14 +2,15 @@ package rbac
 
 import (
 	"errors"
-	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"go-admin-full/internal/constants"
 	rbacdao "go-admin-full/internal/dao/rbac"
 	rbacsvc "go-admin-full/internal/services/rbac"
-	"go-admin-full/internal/utils"
+	commonresp "tk-common/utils/httpresp"
+
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -32,7 +33,7 @@ func (mc *SystemMessageController) ListMyMessages(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if uid == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusUnauthorized, "用户未认证")
+		commonresp.GinError(c, constants.AdminAuthUnauthorized, "用户未认证")
 		// 返回当前处理结果。
 		return
 	}
@@ -68,13 +69,13 @@ func (mc *SystemMessageController) ListMyMessages(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 
 	// 返回分页数据
-	utils.JSONOK(c, gin.H{
+	commonresp.GinOK(c, gin.H{
 		// 处理当前语句逻辑。
 		"items": items,
 		// 处理当前语句逻辑。
@@ -94,7 +95,7 @@ func (mc *SystemMessageController) MarkRead(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if uid == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusUnauthorized, "用户未认证")
+		commonresp.GinError(c, constants.AdminAuthUnauthorized, "用户未认证")
 		// 返回当前处理结果。
 		return
 	}
@@ -104,7 +105,7 @@ func (mc *SystemMessageController) MarkRead(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil || id <= 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid message id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid message id")
 		// 返回当前处理结果。
 		return
 	}
@@ -114,18 +115,18 @@ func (mc *SystemMessageController) MarkRead(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusNotFound, "消息不存在")
+			commonresp.GinError(c, constants.AdminBizResourceNotFound, "消息不存在")
 			// 返回当前处理结果。
 			return
 		}
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"msg": "ok"})
+	commonresp.GinOK(c, gin.H{"msg": "ok"})
 }
 
 // MarkAllRead 将当前用户全部消息标记为已读。
@@ -134,7 +135,7 @@ func (mc *SystemMessageController) MarkAllRead(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if uid == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusUnauthorized, "用户未认证")
+		commonresp.GinError(c, constants.AdminAuthUnauthorized, "用户未认证")
 		// 返回当前处理结果。
 		return
 	}
@@ -142,11 +143,11 @@ func (mc *SystemMessageController) MarkAllRead(c *gin.Context) {
 	// 标记全部已读
 	if err := mc.svc.MarkAllRead(c.Request.Context(), uid); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"msg": "ok"})
+	commonresp.GinOK(c, gin.H{"msg": "ok"})
 }

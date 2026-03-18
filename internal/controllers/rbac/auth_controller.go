@@ -1,17 +1,22 @@
 package rbac
 
 import (
-	"net/http"
+	"errors"
+	"io"
 	"strconv"
 	"strings"
 	"time"
 
+	"go-admin-full/config"
+	"go-admin-full/internal/auth/sessioncookie"
 	"go-admin-full/internal/constants"
 	rbacdao "go-admin-full/internal/dao/rbac"
 	"go-admin-full/internal/models"
 	rbacsvc "go-admin-full/internal/services/rbac"
 	tokenjwt "go-admin-full/internal/token/jwt"
-	"go-admin-full/internal/utils"
+	commonresp "tk-common/utils/httpresp"
+
+	commonlogx "tk-common/utils/logx"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -22,6 +27,7 @@ type AuthController struct {
 	authService *rbacsvc.AuthService     // 认证业务服务
 	loginLogSvc *rbacsvc.LoginLogService // 登录日志服务
 	tokenMgr    *tokenjwt.Manager        // JWT 管理器
+	cookieOpt   sessioncookie.Options    // 认证 Cookie 选项
 }
 
 // 声明当前常量。
@@ -33,15 +39,16 @@ const (
 )
 
 // 修改构造函数，同时传入db和token管理器
-func NewAuthController(db *gorm.DB, mgr *tokenjwt.Manager) *AuthController {
+func NewAuthController(db *gorm.DB, mgr *tokenjwt.Manager, cfg config.Config) *AuthController {
 	authDao := rbacdao.NewAuthDao(db)                                     // 初始化认证 DAO
 	authService := rbacsvc.NewAuthService(authDao)                        // 初始化认证服务
 	loginLogSvc := rbacsvc.NewLoginLogService(rbacdao.NewLoginLogDao(db)) // 初始化登录日志服务
 	// 返回当前处理结果。
 	return &AuthController{
-		authService: authService, // 注入认证服务
-		loginLogSvc: loginLogSvc, // 注入登录日志服务
-		tokenMgr:    mgr,         // 注入 Token 管理器
+		authService: authService,                   // 注入认证服务
+		loginLogSvc: loginLogSvc,                   // 注入登录日志服务
+		tokenMgr:    mgr,                           // 注入 Token 管理器
+		cookieOpt:   sessioncookie.FromConfig(cfg), // 注入认证 Cookie 配置
 	}
 }
 
@@ -58,13 +65,13 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	// 绑定并校验请求体
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusBadRequest, "参数错误："+err.Error())
+		commonresp.GinError(ctx, constants.AdminBizInvalidRequest, "参数错误："+err.Error())
 		// 返回当前处理结果。
 		return
 	}
 
 	// 获取上下文中的logger
-	logger := utils.LoggerFromContext(ctx.Request.Context())
+	logger := commonlogx.LoggerFromContext(ctx.Request.Context())
 	req.Username = strings.TrimSpace(req.Username) // 规范化用户名
 	clientIP := ctx.ClientIP()                     // 取客户端 IP
 	deviceID := resolveDeviceID(ctx)               // 解析设备标识
@@ -75,7 +82,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	if blocked := c.isLoginBlocked(req.Username, clientIP); blocked {
 		c.writeLoginLog(ctx, 0, req.Username, clientIP, deviceID, 0) // 记录失败日志
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusTooManyRequests, "登录失败次数过多，请稍后重试")
+		commonresp.GinError(ctx, constants.AdminAuthRateLimited, "登录失败次数过多，请稍后重试")
 		// 返回当前处理结果。
 		return
 	}
@@ -89,7 +96,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		// 调用logger.Error完成当前处理。
 		logger.Error("登录失败: %v", err)
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusUnauthorized, err.Error())
+		commonresp.GinError(ctx, constants.AdminAuthUnauthorized, err.Error())
 		// 返回当前处理结果。
 		return
 	}
@@ -102,17 +109,18 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		// 调用logger.Error完成当前处理。
 		logger.Error("生成Token失败: %v", err)
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusInternalServerError, "生成Token失败")
+		commonresp.GinError(ctx, constants.AdminSysInternalError, "生成Token失败")
 		// 返回当前处理结果。
 		return
 	}
 	c.writeLoginLog(ctx, user.ID, user.Username, clientIP, deviceID, 1) // 记录成功日志
+	c.setAuthCookies(ctx, accessToken, refreshToken)                    // 设置 HttpOnly 认证 Cookie
 
 	// 调用logger.Info完成当前处理。
 	logger.Info("用户登录成功: %s (ID: %d)", req.Username, user.ID)
 
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(ctx, gin.H{
+	commonresp.GinOK(ctx, gin.H{
 		// 处理当前语句逻辑。
 		"access_token": accessToken,
 		// 处理当前语句逻辑。
@@ -131,43 +139,53 @@ func (c *AuthController) Refresh(ctx *gin.Context) {
 	// 声明当前变量。
 	var req struct {
 		// 处理当前语句逻辑。
-		RefreshToken string `json:"refresh_token" binding:"required"`
+		RefreshToken string `json:"refresh_token"`
 	}
 
 	// 绑定并校验请求体
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil && !errors.Is(err, io.EOF) {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusBadRequest, "参数错误："+err.Error())
+		commonresp.GinError(ctx, constants.AdminBizInvalidRequest, "参数错误："+err.Error())
 		// 返回当前处理结果。
 		return
 	}
 
 	// 定义并初始化当前变量。
-	logger := utils.LoggerFromContext(ctx.Request.Context())
+	logger := commonlogx.LoggerFromContext(ctx.Request.Context())
 	// 调用logger.Info完成当前处理。
 	logger.Info("刷新Token请求")
 
 	// 安全防护：刷新前先校验 refresh token 基础有效性和用户状态。
-	req.RefreshToken = strings.TrimSpace(req.RefreshToken)                                   // 规范化 token
+	req.RefreshToken = strings.TrimSpace(req.RefreshToken) // 规范化 token
+	if req.RefreshToken == "" {
+		req.RefreshToken = c.readRefreshTokenFromCookie(ctx) // 从 Cookie 回退读取 refresh token
+	}
+	if req.RefreshToken == "" {
+		c.clearAuthCookies(ctx) // 缺少 refresh token 时清理残留 Cookie
+		commonresp.GinError(ctx, constants.AdminAuthUnauthorized, constants.ErrInvalidToken.Error())
+		return
+	}
 	claims, err := tokenjwt.ParseTokenClaims(req.RefreshToken, c.tokenMgr.Config.SigningKey) // 解析 claims
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		c.clearAuthCookies(ctx) // 非法/过期 refresh token 直接清空 Cookie
 		// 定义并初始化当前变量。
-		status := http.StatusUnauthorized
+		code := constants.AdminAuthTokenInvalid
 		// 判断条件并进入对应分支逻辑。
 		if err == constants.ErrExpiredToken {
 			// 更新当前变量或字段值。
-			status = http.StatusForbidden
+			code = constants.AdminAuthForbidden
 		}
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, status, err.Error())
+		commonresp.GinError(ctx, code, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if claims.TokenType != tokenjwt.TokenTypeRefresh {
+		c.clearAuthCookies(ctx) // token 类型错误时清理 Cookie
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusUnauthorized, constants.ErrInvalidToken.Error())
+		commonresp.GinError(ctx, constants.AdminAuthUnauthorized, constants.ErrInvalidToken.Error())
 		// 返回当前处理结果。
 		return
 	}
@@ -175,8 +193,9 @@ func (c *AuthController) Refresh(ctx *gin.Context) {
 	user, err := c.authService.GetUserByID(ctx.Request.Context(), claims.UserID) // 查询用户状态
 	// 判断条件并进入对应分支逻辑。
 	if err != nil || user.Status != 1 {
+		c.clearAuthCookies(ctx) // 账号不可用时清理 Cookie
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusUnauthorized, "账号不可用")
+		commonresp.GinError(ctx, constants.AdminAuthUnauthorized, "账号不可用")
 		// 返回当前处理结果。
 		return
 	}
@@ -185,26 +204,28 @@ func (c *AuthController) Refresh(ctx *gin.Context) {
 	newAccessToken, newRefreshToken, err := c.tokenMgr.RefreshTokenPair(req.RefreshToken) // 生成新 token
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		c.clearAuthCookies(ctx) // 刷新失败时清理 Cookie，避免前端重复携带失效凭证
 		// 调用logger.Error完成当前处理。
 		logger.Error("刷新Token失败: %v", err)
 		// 定义并初始化当前变量。
-		status := http.StatusUnauthorized
+		code := constants.AdminAuthTokenInvalid
 		// 判断条件并进入对应分支逻辑。
 		if err == constants.ErrExpiredToken {
 			// 更新当前变量或字段值。
-			status = http.StatusForbidden
+			code = constants.AdminAuthForbidden
 		}
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, status, err.Error())
+		commonresp.GinError(ctx, code, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 
 	// 调用logger.Info完成当前处理。
 	logger.Info("Token刷新成功")
+	c.setAuthCookies(ctx, newAccessToken, newRefreshToken) // 回写轮换后的认证 Cookie
 
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(ctx, gin.H{
+	commonresp.GinOK(ctx, gin.H{
 		"access_token":  newAccessToken,                                // 新 access token
 		"refresh_token": newRefreshToken,                               // 新 refresh token
 		"expires_in":    int(c.tokenMgr.Config.AccessExpire.Seconds()), // access token 有效期
@@ -226,13 +247,13 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	// 绑定并校验请求体
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusBadRequest, "参数错误："+err.Error())
+		commonresp.GinError(ctx, constants.AdminBizInvalidRequest, "参数错误："+err.Error())
 		// 返回当前处理结果。
 		return
 	}
 
 	// 定义并初始化当前变量。
-	logger := utils.LoggerFromContext(ctx.Request.Context())
+	logger := commonlogx.LoggerFromContext(ctx.Request.Context())
 	req.Username = strings.TrimSpace(req.Username) // 规范化用户名
 	req.Email = strings.TrimSpace(req.Email)       // 规范化邮箱
 	// 调用logger.Info完成当前处理。
@@ -243,7 +264,7 @@ func (c *AuthController) Register(ctx *gin.Context) {
 		// 调用logger.Error完成当前处理。
 		logger.Error("注册失败: %v", err)
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusBadRequest, err.Error())
+		commonresp.GinError(ctx, constants.AdminBizInvalidRequest, err.Error())
 		// 返回当前处理结果。
 		return
 	}
@@ -252,24 +273,25 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	logger.Info("用户注册成功: %s", req.Username)
 
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(ctx, gin.H{"message": "注册成功"})
+	commonresp.GinOK(ctx, gin.H{"message": "注册成功"})
 }
 
 // Logout 用户登出
 func (c *AuthController) Logout(ctx *gin.Context) {
+	c.clearAuthCookies(ctx) // 无论鉴权结果如何，优先清理客户端 Cookie
 	// 从JWT中间件中获取用户ID
 	uid, exists := ctx.Get("uid")
 	// 判断条件并进入对应分支逻辑。
 	if !exists {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(ctx, http.StatusUnauthorized, "用户未认证")
+		commonresp.GinError(ctx, constants.AdminAuthUnauthorized, "用户未认证")
 		// 返回当前处理结果。
 		return
 	}
 
 	userID := uid.(uint) // 转换为 uint
 	// 定义并初始化当前变量。
-	logger := utils.LoggerFromContext(ctx.Request.Context())
+	logger := commonlogx.LoggerFromContext(ctx.Request.Context())
 	// 更新当前变量或字段值。
 	logger.Info("用户登出: ID=%d", userID)
 
@@ -304,7 +326,46 @@ func (c *AuthController) Logout(ctx *gin.Context) {
 	logger.Info("用户登出成功: ID=%d", userID)
 
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(ctx, gin.H{"message": "登出成功"})
+	commonresp.GinOK(ctx, gin.H{"message": "登出成功"})
+}
+
+// setAuthCookies 写入认证 Cookie（HttpOnly + SameSite）。
+func (c *AuthController) setAuthCookies(ctx *gin.Context, accessToken, refreshToken string) {
+	ctx.SetSameSite(c.cookieOpt.SameSite) // 应用 SameSite 策略
+	ctx.SetCookie(
+		c.cookieOpt.AccessTokenName,
+		strings.TrimSpace(accessToken),
+		int(c.tokenMgr.Config.AccessExpire.Seconds()),
+		c.cookieOpt.Path,
+		c.cookieOpt.Domain,
+		c.cookieOpt.Secure,
+		c.cookieOpt.HTTPOnly,
+	)
+	ctx.SetCookie(
+		c.cookieOpt.RefreshTokenName,
+		strings.TrimSpace(refreshToken),
+		int(c.tokenMgr.Config.RefreshExpire.Seconds()),
+		c.cookieOpt.Path,
+		c.cookieOpt.Domain,
+		c.cookieOpt.Secure,
+		c.cookieOpt.HTTPOnly,
+	)
+}
+
+// clearAuthCookies 清理认证 Cookie。
+func (c *AuthController) clearAuthCookies(ctx *gin.Context) {
+	ctx.SetSameSite(c.cookieOpt.SameSite) // 清理时保持同一 SameSite 策略
+	ctx.SetCookie(c.cookieOpt.AccessTokenName, "", -1, c.cookieOpt.Path, c.cookieOpt.Domain, c.cookieOpt.Secure, c.cookieOpt.HTTPOnly)
+	ctx.SetCookie(c.cookieOpt.RefreshTokenName, "", -1, c.cookieOpt.Path, c.cookieOpt.Domain, c.cookieOpt.Secure, c.cookieOpt.HTTPOnly)
+}
+
+// readRefreshTokenFromCookie 从认证 Cookie 读取 refresh token。
+func (c *AuthController) readRefreshTokenFromCookie(ctx *gin.Context) string {
+	raw, err := ctx.Cookie(c.cookieOpt.RefreshTokenName)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(raw)
 }
 
 // resolveDeviceID 处理resolveDeviceID相关逻辑。

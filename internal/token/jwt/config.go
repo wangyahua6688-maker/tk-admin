@@ -4,10 +4,11 @@ import "time"
 
 // Config holds token related configuration.
 type Config struct {
-	SigningKey    string        // JWT 签名密钥（请从 env/config 注入）
-	AccessExpire  time.Duration // access token 过期时间
-	RefreshExpire time.Duration // refresh token 过期时间
-	Issuer        string        // issuer claim
+	SigningKey         string        // JWT 签名密钥（请从 env/config 注入）
+	AccessExpire       time.Duration // access token 过期时间
+	RefreshExpire      time.Duration // refresh token 过期时间
+	SessionIdleTimeout time.Duration // 会话空闲超时（超过该时长无操作则会话失效）
+	Issuer             string        // issuer claim
 }
 
 // DefaultConfig returns a safe default (must replace SigningKey in production).
@@ -20,6 +21,8 @@ func DefaultConfig() *Config {
 		AccessExpire: 1 * time.Hour,
 		// 处理当前语句逻辑。
 		RefreshExpire: 7 * 24 * time.Hour,
+		// 处理当前语句逻辑。
+		SessionIdleTimeout: 1 * time.Hour,
 		// 处理当前语句逻辑。
 		Issuer: "go-admin-full",
 	}

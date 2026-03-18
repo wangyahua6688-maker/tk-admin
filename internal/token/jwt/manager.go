@@ -135,6 +135,17 @@ func (m *Manager) GenerateTokensWithDevice(userID uint, deviceID string) (access
 			// 返回当前处理结果。
 			return "", "", constants.ErrTokenStoreFailed
 		}
+
+		// 同步刷新“会话活跃标记”，用于 1 小时空闲自动失效。
+		if m.Config.SessionIdleTimeout > 0 {
+			// 定义并初始化当前变量。
+			sessionKey := m.getSessionActivityKey(userID, deviceID)
+			// 判断条件并进入对应分支逻辑。
+			if serr := m.Store.Set(sessionKey, "1", m.Config.SessionIdleTimeout); serr != nil {
+				// 返回当前处理结果。
+				return "", "", constants.ErrTokenStoreFailed
+			}
+		}
 	}
 	// 返回当前处理结果。
 	return access, refresh, nil
@@ -181,6 +192,22 @@ func (m *Manager) RefreshTokenPair(refreshToken string) (string, string, error) 
 		if stored != refreshToken {
 			// 返回当前处理结果。
 			return "", "", constants.ErrInvalidToken
+		}
+
+		// 空闲超时控制：refresh 前必须仍在活跃会话窗口内。
+		if m.Config.SessionIdleTimeout > 0 {
+			// 定义并初始化当前变量。
+			sessionKey := m.getSessionActivityKey(claims.UserID, deviceID)
+			// 判断条件并进入对应分支逻辑。
+			if _, err := m.Store.Get(sessionKey); err != nil {
+				// 判断条件并进入对应分支逻辑。
+				if err == constants.ErrTokenNotFound {
+					// 返回当前处理结果。
+					return "", "", constants.ErrExpiredToken
+				}
+				// 返回当前处理结果。
+				return "", "", constants.ErrTokenStoreFailed
+			}
 		}
 	}
 
@@ -233,6 +260,31 @@ func (m *Manager) ValidateAccessToken(accessToken string) (*Claims, error) {
 			// 返回当前处理结果。
 			return nil, constants.ErrInvalidToken
 		}
+
+		// 会话空闲续期：
+		// 1. access token 每次通过鉴权都触发会话续约；
+		// 2. 若活跃键不存在，视为超过空闲窗口，直接判定失效。
+		if m.Config.SessionIdleTimeout > 0 {
+			// 定义并初始化当前变量。
+			deviceID := normalizeDeviceID(claims.DeviceID)
+			// 定义并初始化当前变量。
+			sessionKey := m.getSessionActivityKey(claims.UserID, deviceID)
+			// 判断条件并进入对应分支逻辑。
+			if _, err := m.Store.Get(sessionKey); err != nil {
+				// 判断条件并进入对应分支逻辑。
+				if err == constants.ErrTokenNotFound {
+					// 返回当前处理结果。
+					return nil, constants.ErrExpiredToken
+				}
+				// 返回当前处理结果。
+				return nil, constants.ErrTokenStoreFailed
+			}
+			// 判断条件并进入对应分支逻辑。
+			if err := m.Store.Set(sessionKey, "1", m.Config.SessionIdleTimeout); err != nil {
+				// 返回当前处理结果。
+				return nil, constants.ErrTokenStoreFailed
+			}
+		}
 	}
 
 	// 返回当前处理结果。
@@ -278,8 +330,23 @@ func (m *Manager) InvalidateRefresh(userID uint, deviceID string) error {
 		// 返回当前处理结果。
 		return nil
 	}
+	// 定义并初始化当前变量。
+	normalized := normalizeDeviceID(deviceID)
+	// 判断条件并进入对应分支逻辑。
+	if err := m.Store.Delete(m.getRefreshTokenKey(userID, normalized)); err != nil {
+		// 返回当前处理结果。
+		return err
+	}
+	// 判断条件并进入对应分支逻辑。
+	if m.Config.SessionIdleTimeout > 0 {
+		// 判断条件并进入对应分支逻辑。
+		if err := m.Store.Delete(m.getSessionActivityKey(userID, normalized)); err != nil {
+			// 返回当前处理结果。
+			return err
+		}
+	}
 	// 返回当前处理结果。
-	return m.Store.Delete(m.getRefreshTokenKey(userID, normalizeDeviceID(deviceID)))
+	return nil
 }
 
 // signClaims 处理signClaims相关逻辑。
@@ -302,19 +369,49 @@ func (m *Manager) getAccessBlacklistKey(jti string) string {
 	return fmt.Sprintf("blacklist:access:%s", jti)
 }
 
+// getSessionActivityKey 返回会话活跃标记存储 key。
+func (m *Manager) getSessionActivityKey(userID uint, deviceID string) string {
+	// 返回当前处理结果。
+	return fmt.Sprintf("session:active:%d:%s", userID, deviceID)
+}
+
 // normalizeDeviceID 处理normalizeDeviceID相关逻辑。
 func normalizeDeviceID(deviceID string) string {
 	// 定义并初始化当前变量。
-	trimmed := strings.TrimSpace(deviceID)
+	trimmed := strings.ToLower(strings.TrimSpace(deviceID))
 	// 判断条件并进入对应分支逻辑。
 	if trimmed == "" {
 		// 返回当前处理结果。
 		return defaultDeviceID
 	}
+	// 若输入已经是 32 位十六进制（本项目归一化后的 deviceID），直接返回避免二次哈希。
+	if isHexToken(trimmed, 32) {
+		// 返回当前处理结果。
+		return trimmed
+	}
 	// 对 device 标识做哈希，避免把原始 UA/设备信息直接作为 Redis key 暴露。
 	sum := sha256.Sum256([]byte(trimmed))
 	// 返回当前处理结果。
 	return hex.EncodeToString(sum[:16])
+}
+
+// isHexToken 判断字符串是否为固定长度十六进制文本。
+func isHexToken(v string, expectLen int) bool {
+	// 判断条件并进入对应分支逻辑。
+	if len(v) != expectLen {
+		// 返回当前处理结果。
+		return false
+	}
+	// 循环处理当前数据集合。
+	for _, ch := range v {
+		// 判断条件并进入对应分支逻辑。
+		if !(ch >= '0' && ch <= '9') && !(ch >= 'a' && ch <= 'f') {
+			// 返回当前处理结果。
+			return false
+		}
+	}
+	// 返回当前处理结果。
+	return true
 }
 
 // newJTI 处理newJTI相关逻辑。

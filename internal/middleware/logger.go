@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"go-admin-full/internal/utils"
+	commonlogx "tk-common/utils/logx"
 )
 
 // RequestInfo 请求信息结构
@@ -57,7 +57,7 @@ func JSONLoggerMiddleware() gin.HandlerFunc {
 		latency := endTime.Sub(startTime)
 
 		// 定义并初始化当前变量。
-		logger := utils.LoggerFromContext(c.Request.Context())
+		logger := commonlogx.LoggerFromContext(c.Request.Context())
 
 		// 构建JSON格式的日志
 		logEntry := map[string]interface{}{

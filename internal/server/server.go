@@ -10,36 +10,38 @@ import (
 	"go-admin-full/internal/models"
 	tokenjwt "go-admin-full/internal/token/jwt"
 	tokenstore "go-admin-full/internal/token/store"
-	"go-admin-full/internal/utils"
 
 	"github.com/go-redis/redis/v8"
+	gormx "tk-common/utils/dbx/gormx"
+	commonlogx "tk-common/utils/logx"
+	redisx "tk-common/utils/redisx/v8"
 )
 
 // Run 处理Run相关逻辑。
 func Run(cfg config.Config) error {
 	// 1) 初始化全局日志记录器。
 	// 说明：logger 在整个进程生命周期内复用，便于统一输出格式与等级控制。
-	logCfg := utils.DefaultLogConfig()
+	logCfg := commonlogx.DefaultLogConfig()
 	// 更新当前变量或字段值。
-	logCfg.Level = utils.LogLevelFromString(cfg.Log.Level)
+	logCfg.Level = commonlogx.LogLevelFromString(cfg.Log.Level)
 	// 更新当前变量或字段值。
 	logCfg.FilePath = cfg.Log.FilePath
 
 	// 判断条件并进入对应分支逻辑。
-	if err := utils.InitGlobalLogger(logCfg); err != nil {
+	if err := commonlogx.InitGlobalLogger(logCfg); err != nil {
 		// 返回当前处理结果。
 		return fmt.Errorf("failed to init logger: %w", err)
 	}
 	// 注册延迟执行逻辑。
-	defer func(logger *utils.Logger) {
-		err := logger.Close()
-		if err != nil {
-
+	defer func(logger *commonlogx.Logger) {
+		// 尝试关闭日志文件句柄，失败时打印到标准错误避免静默丢失错误。
+		if err := logger.Close(); err != nil {
+			fmt.Printf("close logger failed: %v\n", err)
 		}
-	}(utils.GetLogger())
+	}(commonlogx.GetLogger())
 
 	// 定义并初始化当前变量。
-	logger := utils.GetLogger()
+	logger := commonlogx.GetLogger()
 	// 调用logger.Info完成当前处理。
 	logger.Info("Starting application...")
 
@@ -53,20 +55,20 @@ func Run(cfg config.Config) error {
 	}
 
 	// 判断条件并进入对应分支逻辑。
-	if cfg.JWT.AccessExpire <= 0 || cfg.JWT.RefreshExpire <= 0 {
+	if cfg.JWT.AccessExpire <= 0 || cfg.JWT.RefreshExpire <= 0 || cfg.JWT.SessionIdleTimeout <= 0 {
 		// 返回当前处理结果。
-		return fmt.Errorf("invalid jwt expiration config: access_expire and refresh_expire must be positive seconds")
+		return fmt.Errorf("invalid jwt expiration config: access_expire, refresh_expire and session_idle_timeout must be positive seconds")
 	}
 
 	// 3) 初始化数据库连接。
-	dbCfg := utils.DefaultDBConfig()
+	dbCfg := gormx.DefaultDBConfig()
 	// 更新当前变量或字段值。
 	dbCfg.DSN = cfg.Database.DSN
 	// 更新当前变量或字段值。
-	dbCfg.LogLevel = utils.GormLogLevelFromString(cfg.Database.LogLevel)
+	dbCfg.LogLevel = gormx.GormLogLevelFromString(cfg.Database.LogLevel)
 
 	// 定义并初始化当前变量。
-	db, err := utils.NewMySQLDB(dbCfg)
+	db, err := gormx.NewMySQLDB(dbCfg)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用logger.Fatal完成当前处理。
@@ -81,7 +83,7 @@ func Run(cfg config.Config) error {
 	// 判断条件并进入对应分支逻辑。
 	if cfg.Redis.Addr != "" {
 		// 定义并初始化当前变量。
-		redisCfg := utils.DefaultRedisConfig()
+		redisCfg := redisx.DefaultConfig()
 		// 更新当前变量或字段值。
 		redisCfg.Addr = cfg.Redis.Addr
 		// 更新当前变量或字段值。
@@ -90,7 +92,7 @@ func Run(cfg config.Config) error {
 		redisCfg.DB = cfg.Redis.DB
 
 		// 更新当前变量或字段值。
-		redisClient, err = utils.NewRedisClient(redisCfg)
+		redisClient, err = redisx.NewClient(context.Background(), redisCfg)
 		// 判断条件并进入对应分支逻辑。
 		if err != nil {
 			// 判断条件并进入对应分支逻辑。
@@ -182,6 +184,8 @@ func Run(cfg config.Config) error {
 	jwtCfg.AccessExpire = time.Duration(cfg.JWT.AccessExpire) * time.Second
 	// 更新当前变量或字段值。
 	jwtCfg.RefreshExpire = time.Duration(cfg.JWT.RefreshExpire) * time.Second
+	// 更新当前变量或字段值。
+	jwtCfg.SessionIdleTimeout = time.Duration(cfg.JWT.SessionIdleTimeout) * time.Second
 
 	// 定义并初始化当前变量。
 	mgr := tokenjwt.NewManager(jwtCfg, store)

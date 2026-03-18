@@ -2,15 +2,16 @@ package biz
 
 import (
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
 
-	"github.com/gin-gonic/gin"
+	"go-admin-full/internal/constants"
 	"go-admin-full/internal/models"
-	"go-admin-full/internal/utils"
+	commonresp "tk-common/utils/httpresp"
+
+	"github.com/gin-gonic/gin"
 )
 
 // -------------------- Special Lottery --------------------
@@ -22,12 +23,12 @@ func (bc *BizConfigController) ListSpecialLotteries(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"items": items})
+	commonresp.GinOK(c, gin.H{"items": items})
 }
 
 // CreateSpecialLottery 新增彩种配置。
@@ -56,14 +57,23 @@ func (bc *BizConfigController) CreateSpecialLottery(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
 	// 名称和编码为必填。
 	if strings.TrimSpace(req.Name) == "" || strings.TrimSpace(req.Code) == "" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "name/code required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "name/code required")
+		// 返回当前处理结果。
+		return
+	}
+	// 定义并初始化当前变量。
+	liveStreamURL, err := normalizeSafeURL(req.LiveStreamURL, true)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid live_stream_url")
 		// 返回当前处理结果。
 		return
 	}
@@ -83,8 +93,8 @@ func (bc *BizConfigController) CreateSpecialLottery(c *gin.Context) {
 		LiveEnabled: 0,
 		// 调用strings.TrimSpace完成当前处理。
 		LiveStatus: strings.TrimSpace(req.LiveStatus),
-		// 调用strings.TrimSpace完成当前处理。
-		LiveStreamURL: strings.TrimSpace(req.LiveStreamURL),
+		// 处理当前语句逻辑。
+		LiveStreamURL: liveStreamURL,
 		// 处理当前语句逻辑。
 		Status: 1,
 		// 处理当前语句逻辑。
@@ -113,12 +123,12 @@ func (bc *BizConfigController) CreateSpecialLottery(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.CreateSpecialLottery(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, item)
+	commonresp.GinOK(c, item)
 }
 
 // UpdateSpecialLottery 更新彩种配置。
@@ -128,7 +138,7 @@ func (bc *BizConfigController) UpdateSpecialLottery(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
@@ -156,7 +166,7 @@ func (bc *BizConfigController) UpdateSpecialLottery(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
@@ -194,8 +204,17 @@ func (bc *BizConfigController) UpdateSpecialLottery(c *gin.Context) {
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.LiveStreamURL != nil {
+		// 定义并初始化当前变量。
+		liveStreamURL, liveErr := normalizeSafeURL(*req.LiveStreamURL, true)
+		// 判断条件并进入对应分支逻辑。
+		if liveErr != nil {
+			// 调用utils.JSONError完成当前处理。
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid live_stream_url")
+			// 返回当前处理结果。
+			return
+		}
 		// 更新当前变量或字段值。
-		updates["live_stream_url"] = strings.TrimSpace(*req.LiveStreamURL)
+		updates["live_stream_url"] = liveStreamURL
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.Status != nil {
@@ -210,19 +229,19 @@ func (bc *BizConfigController) UpdateSpecialLottery(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if len(updates) == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "empty updates")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "empty updates")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.UpdateSpecialLottery(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // DeleteSpecialLottery 删除彩种配置。
@@ -232,19 +251,19 @@ func (bc *BizConfigController) DeleteSpecialLottery(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.DeleteSpecialLottery(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // -------------------- Lottery Info --------------------
@@ -310,12 +329,12 @@ func (bc *BizConfigController) ListLotteryInfos(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{
+	commonresp.GinOK(c, gin.H{
 		// 处理当前语句逻辑。
 		"items": items,
 		// 处理当前语句逻辑。
@@ -330,14 +349,14 @@ func (bc *BizConfigController) CreateLotteryInfo(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
 	// 校验基础必填项（图库内容不再强制绑定彩种）。
 	if req.Issue == nil || strings.TrimSpace(*req.Issue) == "" || req.Title == nil || strings.TrimSpace(*req.Title) == "" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "issue/title required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "issue/title required")
 		// 返回当前处理结果。
 		return
 	}
@@ -354,7 +373,7 @@ func (bc *BizConfigController) CreateLotteryInfo(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, err.Error())
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, err.Error())
 		// 返回当前处理结果。
 		return
 	}
@@ -380,7 +399,7 @@ func (bc *BizConfigController) CreateLotteryInfo(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if normalizeErr != nil {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusBadRequest, normalizeErr.Error())
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, normalizeErr.Error())
 			// 返回当前处理结果。
 			return
 		}
@@ -398,6 +417,33 @@ func (bc *BizConfigController) CreateLotteryInfo(c *gin.Context) {
 		optionNames = defaultAnimalOptionNames()
 	}
 	// 定义并初始化当前变量。
+	coverImageURL, err := normalizeSafeURL(safeString(req.CoverImageURL), true)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid cover_image_url")
+		// 返回当前处理结果。
+		return
+	}
+	// 定义并初始化当前变量。
+	detailImageURL, err := normalizeSafeURL(safeString(req.DetailImageURL), true)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid detail_image_url")
+		// 返回当前处理结果。
+		return
+	}
+	// 定义并初始化当前变量。
+	playbackURL, err := normalizeSafeURL(safeString(req.PlaybackURL), true)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid playback_url")
+		// 返回当前处理结果。
+		return
+	}
+	// 定义并初始化当前变量。
 	now := time.Now()
 	// 定义并初始化当前变量。
 	item := models.WLotteryInfo{
@@ -413,10 +459,10 @@ func (bc *BizConfigController) CreateLotteryInfo(c *gin.Context) {
 		Year: now.Year(),
 		// 调用strings.TrimSpace完成当前处理。
 		Title: strings.TrimSpace(*req.Title),
-		// 调用safeString完成当前处理。
-		CoverImageURL: safeString(req.CoverImageURL),
-		// 调用safeString完成当前处理。
-		DetailImageURL: safeString(req.DetailImageURL),
+		// 处理当前语句逻辑。
+		CoverImageURL: coverImageURL,
+		// 处理当前语句逻辑。
+		DetailImageURL: detailImageURL,
 		// 调用safeString完成当前处理。
 		DrawCode: safeString(req.DrawCode),
 		// 处理当前语句逻辑。
@@ -427,8 +473,8 @@ func (bc *BizConfigController) CreateLotteryInfo(c *gin.Context) {
 		DrawResult: mergedRaw,
 		// 调用parseDateTimeOrDefault完成当前处理。
 		DrawAt: parseDateTimeOrDefault(safeString(req.DrawAt), now),
-		// 调用safeString完成当前处理。
-		PlaybackURL: safeString(req.PlaybackURL),
+		// 处理当前语句逻辑。
+		PlaybackURL: playbackURL,
 		// 调用safeInt64完成当前处理。
 		LikesCount: safeInt64(req.LikesCount, 0),
 		// 调用safeInt64完成当前处理。
@@ -459,12 +505,12 @@ func (bc *BizConfigController) CreateLotteryInfo(c *gin.Context) {
 	// 当前期约束：同一彩种只能有一条 is_current=1 记录。
 	if err := bc.svc.CreateLotteryInfo(c.Request.Context(), &item, optionNames); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, item)
+	commonresp.GinOK(c, item)
 }
 
 // UpdateLotteryInfo 编辑图库内容。
@@ -474,7 +520,7 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
@@ -483,7 +529,7 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
@@ -492,7 +538,7 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusNotFound, "lottery info not found")
+		commonresp.GinError(c, constants.AdminBizResourceNotFound, "lottery info not found")
 		// 返回当前处理结果。
 		return
 	}
@@ -522,13 +568,31 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.CoverImageURL != nil {
+		// 定义并初始化当前变量。
+		coverImageURL, coverErr := normalizeSafeURL(*req.CoverImageURL, true)
+		// 判断条件并进入对应分支逻辑。
+		if coverErr != nil {
+			// 调用utils.JSONError完成当前处理。
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid cover_image_url")
+			// 返回当前处理结果。
+			return
+		}
 		// 更新当前变量或字段值。
-		next.CoverImageURL = strings.TrimSpace(*req.CoverImageURL)
+		next.CoverImageURL = coverImageURL
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.DetailImageURL != nil {
+		// 定义并初始化当前变量。
+		detailImageURL, detailErr := normalizeSafeURL(*req.DetailImageURL, true)
+		// 判断条件并进入对应分支逻辑。
+		if detailErr != nil {
+			// 调用utils.JSONError完成当前处理。
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid detail_image_url")
+			// 返回当前处理结果。
+			return
+		}
 		// 更新当前变量或字段值。
-		next.DetailImageURL = strings.TrimSpace(*req.DetailImageURL)
+		next.DetailImageURL = detailImageURL
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.DrawCode != nil {
@@ -542,8 +606,17 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.PlaybackURL != nil {
+		// 定义并初始化当前变量。
+		playbackURL, playbackErr := normalizeSafeURL(*req.PlaybackURL, true)
+		// 判断条件并进入对应分支逻辑。
+		if playbackErr != nil {
+			// 调用utils.JSONError完成当前处理。
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid playback_url")
+			// 返回当前处理结果。
+			return
+		}
 		// 更新当前变量或字段值。
-		next.PlaybackURL = strings.TrimSpace(*req.PlaybackURL)
+		next.PlaybackURL = playbackURL
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.LikesCount != nil {
@@ -610,7 +683,7 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if resolveErr != nil {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusBadRequest, resolveErr.Error())
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, resolveErr.Error())
 			// 返回当前处理结果。
 			return
 		}
@@ -643,7 +716,7 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 			// 判断条件并进入对应分支逻辑。
 			if drawErr != nil {
 				// 调用utils.JSONError完成当前处理。
-				utils.JSONError(c, http.StatusBadRequest, drawErr.Error())
+				commonresp.GinError(c, constants.AdminBizInvalidRequest, drawErr.Error())
 				// 返回当前处理结果。
 				return
 			}
@@ -675,7 +748,7 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 	// 再次校验基础必填。
 	if strings.TrimSpace(next.Issue) == "" || strings.TrimSpace(next.Title) == "" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "issue/title required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "issue/title required")
 		// 返回当前处理结果。
 		return
 	}
@@ -735,12 +808,12 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 	// 更新时同样维护“每彩种唯一当前期”约束。
 	if err := bc.svc.UpdateLotteryInfo(c.Request.Context(), id, updates, updateOptions, optionNames, next.SpecialLotteryID, next.IsCurrent); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // DeleteLotteryInfo 删除图库内容。
@@ -750,19 +823,19 @@ func (bc *BizConfigController) DeleteLotteryInfo(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.DeleteLotteryInfo(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // normalizeAndMergeDrawNumbers 归一化 6+1 开奖号码，并输出兼容字段 draw_result。

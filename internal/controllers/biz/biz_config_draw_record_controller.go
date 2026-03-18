@@ -2,15 +2,16 @@ package biz
 
 import (
 	"errors"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"go-admin-full/internal/constants"
 	"go-admin-full/internal/models"
 	bizsvc "go-admin-full/internal/services/biz"
-	"go-admin-full/internal/utils"
+	commonresp "tk-common/utils/httpresp"
+
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -106,12 +107,12 @@ func (bc *BizConfigController) ListDrawRecords(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"items": items})
+	commonresp.GinOK(c, gin.H{"items": items})
 }
 
 // CreateDrawRecord 新增开奖区开奖记录。
@@ -121,14 +122,14 @@ func (bc *BizConfigController) CreateDrawRecord(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
 	// 开奖区记录必须具备彩种ID和期号。
 	if req.SpecialLotteryID == nil || *req.SpecialLotteryID == 0 || strings.TrimSpace(safeString(req.Issue)) == "" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "special_lottery_id/issue required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "special_lottery_id/issue required")
 		// 返回当前处理结果。
 		return
 	}
@@ -145,7 +146,7 @@ func (bc *BizConfigController) CreateDrawRecord(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, err.Error())
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, err.Error())
 		// 返回当前处理结果。
 		return
 	}
@@ -161,6 +162,15 @@ func (bc *BizConfigController) CreateDrawRecord(c *gin.Context) {
 
 	// 标签为空时自动按号码生成默认“生肖/五行”标签，并同步拆分出独立属相/五行字段。
 	labels, zodiacLabels, wuxingLabels := normalizeDrawLabels(safeString(req.DrawLabels), mergedRaw)
+	// 定义并初始化当前变量。
+	playbackURL, err := normalizeSafeURL(safeString(req.PlaybackURL), true)
+	// 判断条件并进入对应分支逻辑。
+	if err != nil {
+		// 调用utils.JSONError完成当前处理。
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid playback_url")
+		// 返回当前处理结果。
+		return
+	}
 
 	// 自动计算开奖结果详情指标（当请求未填写时兜底）。
 	stats := deriveDrawStats(mergedRaw)
@@ -187,8 +197,8 @@ func (bc *BizConfigController) CreateDrawRecord(c *gin.Context) {
 		ZodiacLabels: zodiacLabels,
 		// 处理当前语句逻辑。
 		WuxingLabels: wuxingLabels,
-		// 调用safeString完成当前处理。
-		PlaybackURL: safeString(req.PlaybackURL),
+		// 处理当前语句逻辑。
+		PlaybackURL: playbackURL,
 		// 调用valueOrAuto完成当前处理。
 		SpecialSingleDouble: valueOrAuto(req.SpecialSingleDouble, stats.SpecialSingleDouble),
 		// 调用valueOrAuto完成当前处理。
@@ -232,13 +242,13 @@ func (bc *BizConfigController) CreateDrawRecord(c *gin.Context) {
 	// 同一彩种只允许一条当前期记录。
 	if err := bc.svc.CreateDrawRecord(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, item)
+	commonresp.GinOK(c, item)
 }
 
 // UpdateDrawRecord 编辑开奖区开奖记录。
@@ -248,7 +258,7 @@ func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
@@ -257,7 +267,7 @@ func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
@@ -269,19 +279,19 @@ func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusNotFound, "draw record not found")
+			commonresp.GinError(c, constants.AdminBizResourceNotFound, "draw record not found")
 			// 返回当前处理结果。
 			return
 		}
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if current == nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusNotFound, "draw record not found")
+		commonresp.GinError(c, constants.AdminBizResourceNotFound, "draw record not found")
 		// 返回当前处理结果。
 		return
 	}
@@ -310,8 +320,17 @@ func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.PlaybackURL != nil {
+		// 定义并初始化当前变量。
+		playbackURL, playbackErr := normalizeSafeURL(*req.PlaybackURL, true)
+		// 判断条件并进入对应分支逻辑。
+		if playbackErr != nil {
+			// 调用utils.JSONError完成当前处理。
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid playback_url")
+			// 返回当前处理结果。
+			return
+		}
 		// 更新当前变量或字段值。
-		next.PlaybackURL = strings.TrimSpace(*req.PlaybackURL)
+		next.PlaybackURL = playbackURL
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.RecommendSix != nil {
@@ -393,7 +412,7 @@ func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if drawErr != nil {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusBadRequest, drawErr.Error())
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, drawErr.Error())
 			// 返回当前处理结果。
 			return
 		}
@@ -433,7 +452,7 @@ func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
 	// 5) 核心字段二次校验。
 	if next.SpecialLotteryID == 0 || strings.TrimSpace(next.Issue) == "" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "special_lottery_id/issue required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "special_lottery_id/issue required")
 		// 返回当前处理结果。
 		return
 	}
@@ -505,12 +524,12 @@ func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
 	// 6) 写库并维护“同彩种唯一当前期”约束。
 	if err := bc.svc.UpdateDrawRecord(c.Request.Context(), id, updates, next.SpecialLotteryID, next.IsCurrent); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // DeleteDrawRecord 删除开奖区开奖记录。
@@ -520,19 +539,19 @@ func (bc *BizConfigController) DeleteDrawRecord(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.DeleteDrawRecord(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, 500, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // drawStats 开奖详情自动计算结果。

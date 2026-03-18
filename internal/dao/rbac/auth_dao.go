@@ -3,8 +3,8 @@ package rbac
 import (
 	"context"
 	"go-admin-full/internal/models"
-	"go-admin-full/internal/utils"
 	"gorm.io/gorm"
+	gormx "tk-common/utils/dbx/gormx"
 )
 
 // AuthDao 认证相关数据访问层。
@@ -26,7 +26,7 @@ func (d *AuthDao) GetUserByUsername(ctx context.Context, username string) (*mode
 	// 判断条件并进入对应分支逻辑。
 	if ctx != nil {
 		// 优先使用上下文中的数据库连接，确保中间件注入事务/连接时可透传。
-		if ctxDB := utils.DBFromContext(ctx); ctxDB != nil {
+		if ctxDB := gormx.DBFromContext(ctx); ctxDB != nil {
 			// 更新当前变量或字段值。
 			db = ctxDB
 		}

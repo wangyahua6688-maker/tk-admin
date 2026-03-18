@@ -1,12 +1,13 @@
 package biz
 
 import (
-	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"go-admin-full/internal/constants"
 	"go-admin-full/internal/models"
-	"go-admin-full/internal/utils"
+	commonresp "tk-common/utils/httpresp"
+
+	"github.com/gin-gonic/gin"
 )
 
 // -------------------- 短信通道配置 --------------------
@@ -21,12 +22,12 @@ func (bc *BizConfigController) ListSMSChannels(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"items": items})
+	commonresp.GinOK(c, gin.H{"items": items})
 }
 
 // CreateSMSChannel 新增短信通道配置。
@@ -64,7 +65,7 @@ func (bc *BizConfigController) CreateSMSChannel(c *gin.Context) {
 	// 绑定请求体并进行基础校验。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
@@ -81,7 +82,7 @@ func (bc *BizConfigController) CreateSMSChannel(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if channelName == "" {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "channel_name required")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "channel_name required")
 		// 返回当前处理结果。
 		return
 	}
@@ -144,12 +145,12 @@ func (bc *BizConfigController) CreateSMSChannel(c *gin.Context) {
 	// 落库并返回。
 	if err := bc.svc.CreateSMSChannel(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, item)
+	commonresp.GinOK(c, item)
 }
 
 // UpdateSMSChannel 更新短信通道配置。
@@ -159,7 +160,7 @@ func (bc *BizConfigController) UpdateSMSChannel(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
@@ -197,7 +198,7 @@ func (bc *BizConfigController) UpdateSMSChannel(c *gin.Context) {
 	// 解析请求体。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid request")
 		// 返回当前处理结果。
 		return
 	}
@@ -223,7 +224,7 @@ func (bc *BizConfigController) UpdateSMSChannel(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if channelName == "" {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusBadRequest, "channel_name required")
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "channel_name required")
 			// 返回当前处理结果。
 			return
 		}
@@ -265,7 +266,7 @@ func (bc *BizConfigController) UpdateSMSChannel(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if *req.DailyLimit <= 0 {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusBadRequest, "daily_limit must > 0")
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "daily_limit must > 0")
 			// 返回当前处理结果。
 			return
 		}
@@ -277,7 +278,7 @@ func (bc *BizConfigController) UpdateSMSChannel(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if *req.MinuteLimit <= 0 {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusBadRequest, "minute_limit must > 0")
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "minute_limit must > 0")
 			// 返回当前处理结果。
 			return
 		}
@@ -289,7 +290,7 @@ func (bc *BizConfigController) UpdateSMSChannel(c *gin.Context) {
 		// 判断条件并进入对应分支逻辑。
 		if *req.CodeTTLSeconds <= 0 {
 			// 调用utils.JSONError完成当前处理。
-			utils.JSONError(c, http.StatusBadRequest, "code_ttl_seconds must > 0")
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "code_ttl_seconds must > 0")
 			// 返回当前处理结果。
 			return
 		}
@@ -309,7 +310,7 @@ func (bc *BizConfigController) UpdateSMSChannel(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if len(updates) == 0 {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "empty updates")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "empty updates")
 		// 返回当前处理结果。
 		return
 	}
@@ -317,12 +318,12 @@ func (bc *BizConfigController) UpdateSMSChannel(c *gin.Context) {
 	// 执行更新并返回。
 	if err := bc.svc.UpdateSMSChannel(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }
 
 // DeleteSMSChannel 删除短信通道配置。
@@ -332,17 +333,17 @@ func (bc *BizConfigController) DeleteSMSChannel(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid id")
 		// 返回当前处理结果。
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.DeleteSMSChannel(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
-		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
 		return
 	}
 	// 调用utils.JSONOK完成当前处理。
-	utils.JSONOK(c, gin.H{"id": id})
+	commonresp.GinOK(c, gin.H{"id": id})
 }

@@ -5,10 +5,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	rbacdao "go-admin-full/internal/dao/rbac"
 	"go-admin-full/internal/models"
 	rbacsvc "go-admin-full/internal/services/rbac"
+
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
