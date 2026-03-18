@@ -16,90 +16,146 @@ import (
 
 // drawRecordUpsertRequest 开奖区记录新增/编辑请求结构。
 type drawRecordUpsertRequest struct {
-	SpecialLotteryID    *uint   `json:"special_lottery_id"`
-	Issue               *string `json:"issue"`
-	Year                *int    `json:"year"`
-	DrawAt              *string `json:"draw_at"`
-	NormalDrawResult    *string `json:"normal_draw_result"`
-	SpecialDrawResult   *string `json:"special_draw_result"`
-	DrawResult          *string `json:"draw_result"`
-	DrawLabels          *string `json:"draw_labels"`
-	PlaybackURL         *string `json:"playback_url"`
+	// 处理当前语句逻辑。
+	SpecialLotteryID *uint `json:"special_lottery_id"`
+	// 处理当前语句逻辑。
+	Issue *string `json:"issue"`
+	// 处理当前语句逻辑。
+	Year *int `json:"year"`
+	// 处理当前语句逻辑。
+	DrawAt *string `json:"draw_at"`
+	// 处理当前语句逻辑。
+	NormalDrawResult *string `json:"normal_draw_result"`
+	// 处理当前语句逻辑。
+	SpecialDrawResult *string `json:"special_draw_result"`
+	// 处理当前语句逻辑。
+	DrawResult *string `json:"draw_result"`
+	// 处理当前语句逻辑。
+	DrawLabels *string `json:"draw_labels"`
+	// 处理当前语句逻辑。
+	PlaybackURL *string `json:"playback_url"`
+	// 处理当前语句逻辑。
 	SpecialSingleDouble *string `json:"special_single_double"`
-	SpecialBigSmall     *string `json:"special_big_small"`
-	SumSingleDouble     *string `json:"sum_single_double"`
-	SumBigSmall         *string `json:"sum_big_small"`
-	RecommendSix        *string `json:"recommend_six"`
-	RecommendFour       *string `json:"recommend_four"`
-	RecommendOne        *string `json:"recommend_one"`
-	RecommendTen        *string `json:"recommend_ten"`
-	SpecialCode         *string `json:"special_code"`
-	NormalCode          *string `json:"normal_code"`
-	Zheng1              *string `json:"zheng1"`
-	Zheng2              *string `json:"zheng2"`
-	Zheng3              *string `json:"zheng3"`
-	Zheng4              *string `json:"zheng4"`
-	Zheng5              *string `json:"zheng5"`
-	Zheng6              *string `json:"zheng6"`
-	IsCurrent           *int8   `json:"is_current"`
-	Status              *int8   `json:"status"`
-	Sort                *int    `json:"sort"`
+	// 处理当前语句逻辑。
+	SpecialBigSmall *string `json:"special_big_small"`
+	// 处理当前语句逻辑。
+	SumSingleDouble *string `json:"sum_single_double"`
+	// 处理当前语句逻辑。
+	SumBigSmall *string `json:"sum_big_small"`
+	// 处理当前语句逻辑。
+	RecommendSix *string `json:"recommend_six"`
+	// 处理当前语句逻辑。
+	RecommendFour *string `json:"recommend_four"`
+	// 处理当前语句逻辑。
+	RecommendOne *string `json:"recommend_one"`
+	// 处理当前语句逻辑。
+	RecommendTen *string `json:"recommend_ten"`
+	// 处理当前语句逻辑。
+	SpecialCode *string `json:"special_code"`
+	// 处理当前语句逻辑。
+	NormalCode *string `json:"normal_code"`
+	// 处理当前语句逻辑。
+	Zheng1 *string `json:"zheng1"`
+	// 处理当前语句逻辑。
+	Zheng2 *string `json:"zheng2"`
+	// 处理当前语句逻辑。
+	Zheng3 *string `json:"zheng3"`
+	// 处理当前语句逻辑。
+	Zheng4 *string `json:"zheng4"`
+	// 处理当前语句逻辑。
+	Zheng5 *string `json:"zheng5"`
+	// 处理当前语句逻辑。
+	Zheng6 *string `json:"zheng6"`
+	// 处理当前语句逻辑。
+	IsCurrent *int8 `json:"is_current"`
+	// 处理当前语句逻辑。
+	Status *int8 `json:"status"`
+	// 处理当前语句逻辑。
+	Sort *int `json:"sort"`
 }
 
 // ListDrawRecords 查询开奖区开奖记录列表。
 func (bc *BizConfigController) ListDrawRecords(c *gin.Context) {
 	// 1) 读取筛选参数（彩种ID + 关键字）。
 	specialLotteryID := strings.TrimSpace(c.Query("special_lottery_id"))
+	// 定义并初始化当前变量。
 	keyword := strings.TrimSpace(c.Query("keyword"))
+	// 定义并初始化当前变量。
 	limit := parseIntWithDefault(c.Query("limit"), 300)
+	// 判断条件并进入对应分支逻辑。
 	if limit <= 0 || limit > 1000 {
+		// 更新当前变量或字段值。
 		limit = 300
 	}
 
 	// 2) 组装查询条件并调用服务层。
 	filter := bizsvc.DrawRecordFilter{
-		Limit:   limit,
+		// 处理当前语句逻辑。
+		Limit: limit,
+		// 处理当前语句逻辑。
 		Keyword: keyword,
 	}
+	// 判断条件并进入对应分支逻辑。
 	if sid, err := strconv.Atoi(specialLotteryID); err == nil && sid > 0 {
+		// 更新当前变量或字段值。
 		filter.SpecialLotteryID = uint(sid)
 	}
 
 	// 3) 执行查询并返回。
 	items, err := bc.svc.ListDrawRecords(c.Request.Context(), filter)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, 500, err.Error())
+		// 返回当前处理结果。
 		return
 	}
+	// 调用utils.JSONOK完成当前处理。
 	utils.JSONOK(c, gin.H{"items": items})
 }
 
 // CreateDrawRecord 新增开奖区开奖记录。
 func (bc *BizConfigController) CreateDrawRecord(c *gin.Context) {
+	// 声明当前变量。
 	var req drawRecordUpsertRequest
+	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		// 返回当前处理结果。
 		return
 	}
 	// 开奖区记录必须具备彩种ID和期号。
 	if req.SpecialLotteryID == nil || *req.SpecialLotteryID == 0 || strings.TrimSpace(safeString(req.Issue)) == "" {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusBadRequest, "special_lottery_id/issue required")
+		// 返回当前处理结果。
 		return
 	}
 
 	// 6+1 开奖号码为必填，并统一生成兼容字段 draw_result。
 	normalRaw, specialRaw, mergedRaw, err := normalizeAndMergeDrawNumbers(
+		// 调用safeString完成当前处理。
 		safeString(req.NormalDrawResult),
+		// 调用safeString完成当前处理。
 		safeString(req.SpecialDrawResult),
+		// 调用safeString完成当前处理。
 		safeString(req.DrawResult),
 	)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusBadRequest, err.Error())
+		// 返回当前处理结果。
 		return
 	}
+	// 定义并初始化当前变量。
 	drawAt := parseDateTimeOrDefault(safeString(req.DrawAt), time.Now())
+	// 定义并初始化当前变量。
 	year := drawAt.Year()
+	// 判断条件并进入对应分支逻辑。
 	if req.Year != nil && *req.Year > 0 {
+		// 更新当前变量或字段值。
 		year = *req.Year
 	}
 
@@ -109,258 +165,430 @@ func (bc *BizConfigController) CreateDrawRecord(c *gin.Context) {
 	// 自动计算开奖结果详情指标（当请求未填写时兜底）。
 	stats := deriveDrawStats(mergedRaw)
 
+	// 定义并初始化当前变量。
 	item := models.WDrawRecord{
-		SpecialLotteryID:    *req.SpecialLotteryID,
-		Issue:               strings.TrimSpace(safeString(req.Issue)),
-		Year:                year,
-		DrawAt:              drawAt,
-		NormalDrawResult:    normalRaw,
-		SpecialDrawResult:   specialRaw,
-		DrawResult:          mergedRaw,
-		DrawLabels:          labels,
-		ZodiacLabels:        zodiacLabels,
-		WuxingLabels:        wuxingLabels,
-		PlaybackURL:         safeString(req.PlaybackURL),
+		// 处理当前语句逻辑。
+		SpecialLotteryID: *req.SpecialLotteryID,
+		// 调用strings.TrimSpace完成当前处理。
+		Issue: strings.TrimSpace(safeString(req.Issue)),
+		// 处理当前语句逻辑。
+		Year: year,
+		// 处理当前语句逻辑。
+		DrawAt: drawAt,
+		// 处理当前语句逻辑。
+		NormalDrawResult: normalRaw,
+		// 处理当前语句逻辑。
+		SpecialDrawResult: specialRaw,
+		// 处理当前语句逻辑。
+		DrawResult: mergedRaw,
+		// 处理当前语句逻辑。
+		DrawLabels: labels,
+		// 处理当前语句逻辑。
+		ZodiacLabels: zodiacLabels,
+		// 处理当前语句逻辑。
+		WuxingLabels: wuxingLabels,
+		// 调用safeString完成当前处理。
+		PlaybackURL: safeString(req.PlaybackURL),
+		// 调用valueOrAuto完成当前处理。
 		SpecialSingleDouble: valueOrAuto(req.SpecialSingleDouble, stats.SpecialSingleDouble),
-		SpecialBigSmall:     valueOrAuto(req.SpecialBigSmall, stats.SpecialBigSmall),
-		SumSingleDouble:     valueOrAuto(req.SumSingleDouble, stats.SumSingleDouble),
-		SumBigSmall:         valueOrAuto(req.SumBigSmall, stats.SumBigSmall),
-		RecommendSix:        safeString(req.RecommendSix),
-		RecommendFour:       safeString(req.RecommendFour),
-		RecommendOne:        safeString(req.RecommendOne),
-		RecommendTen:        safeString(req.RecommendTen),
-		SpecialCode:         valueOrAuto(req.SpecialCode, stats.SpecialCode),
-		NormalCode:          valueOrAuto(req.NormalCode, stats.NormalCode),
-		Zheng1:              safeString(req.Zheng1),
-		Zheng2:              safeString(req.Zheng2),
-		Zheng3:              safeString(req.Zheng3),
-		Zheng4:              safeString(req.Zheng4),
-		Zheng5:              safeString(req.Zheng5),
-		Zheng6:              safeString(req.Zheng6),
-		IsCurrent:           safeInt8(req.IsCurrent, 0),
-		Status:              safeInt8(req.Status, 1),
-		Sort:                safeInt(req.Sort, 0),
+		// 调用valueOrAuto完成当前处理。
+		SpecialBigSmall: valueOrAuto(req.SpecialBigSmall, stats.SpecialBigSmall),
+		// 调用valueOrAuto完成当前处理。
+		SumSingleDouble: valueOrAuto(req.SumSingleDouble, stats.SumSingleDouble),
+		// 调用valueOrAuto完成当前处理。
+		SumBigSmall: valueOrAuto(req.SumBigSmall, stats.SumBigSmall),
+		// 调用safeString完成当前处理。
+		RecommendSix: safeString(req.RecommendSix),
+		// 调用safeString完成当前处理。
+		RecommendFour: safeString(req.RecommendFour),
+		// 调用safeString完成当前处理。
+		RecommendOne: safeString(req.RecommendOne),
+		// 调用safeString完成当前处理。
+		RecommendTen: safeString(req.RecommendTen),
+		// 调用valueOrAuto完成当前处理。
+		SpecialCode: valueOrAuto(req.SpecialCode, stats.SpecialCode),
+		// 调用valueOrAuto完成当前处理。
+		NormalCode: valueOrAuto(req.NormalCode, stats.NormalCode),
+		// 调用safeString完成当前处理。
+		Zheng1: safeString(req.Zheng1),
+		// 调用safeString完成当前处理。
+		Zheng2: safeString(req.Zheng2),
+		// 调用safeString完成当前处理。
+		Zheng3: safeString(req.Zheng3),
+		// 调用safeString完成当前处理。
+		Zheng4: safeString(req.Zheng4),
+		// 调用safeString完成当前处理。
+		Zheng5: safeString(req.Zheng5),
+		// 调用safeString完成当前处理。
+		Zheng6: safeString(req.Zheng6),
+		// 调用safeInt8完成当前处理。
+		IsCurrent: safeInt8(req.IsCurrent, 0),
+		// 调用safeInt8完成当前处理。
+		Status: safeInt8(req.Status, 1),
+		// 调用safeInt完成当前处理。
+		Sort: safeInt(req.Sort, 0),
 	}
 
 	// 同一彩种只允许一条当前期记录。
 	if err := bc.svc.CreateDrawRecord(c.Request.Context(), &item); err != nil {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, 500, err.Error())
+		// 返回当前处理结果。
 		return
 	}
 
+	// 调用utils.JSONOK完成当前处理。
 	utils.JSONOK(c, item)
 }
 
 // UpdateDrawRecord 编辑开奖区开奖记录。
 func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
+	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		// 返回当前处理结果。
 		return
 	}
+	// 声明当前变量。
 	var req drawRecordUpsertRequest
+	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusBadRequest, "invalid request")
+		// 返回当前处理结果。
 		return
 	}
 
+	// 定义并初始化当前变量。
 	current, err := bc.svc.GetDrawRecordByID(c.Request.Context(), id)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 判断条件并进入对应分支逻辑。
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 调用utils.JSONError完成当前处理。
 			utils.JSONError(c, http.StatusNotFound, "draw record not found")
+			// 返回当前处理结果。
 			return
 		}
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		// 返回当前处理结果。
 		return
 	}
+	// 判断条件并进入对应分支逻辑。
 	if current == nil {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusNotFound, "draw record not found")
+		// 返回当前处理结果。
 		return
 	}
 
 	// 1) 基于当前值做增量合并。
 	next := *current
+	// 判断条件并进入对应分支逻辑。
 	if req.SpecialLotteryID != nil && *req.SpecialLotteryID > 0 {
+		// 更新当前变量或字段值。
 		next.SpecialLotteryID = *req.SpecialLotteryID
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.Issue != nil {
+		// 更新当前变量或字段值。
 		next.Issue = strings.TrimSpace(*req.Issue)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.DrawAt != nil {
+		// 更新当前变量或字段值。
 		next.DrawAt = parseDateTimeOrDefault(*req.DrawAt, next.DrawAt)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.Year != nil && *req.Year > 0 {
+		// 更新当前变量或字段值。
 		next.Year = *req.Year
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.PlaybackURL != nil {
+		// 更新当前变量或字段值。
 		next.PlaybackURL = strings.TrimSpace(*req.PlaybackURL)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.RecommendSix != nil {
+		// 更新当前变量或字段值。
 		next.RecommendSix = strings.TrimSpace(*req.RecommendSix)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.RecommendFour != nil {
+		// 更新当前变量或字段值。
 		next.RecommendFour = strings.TrimSpace(*req.RecommendFour)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.RecommendOne != nil {
+		// 更新当前变量或字段值。
 		next.RecommendOne = strings.TrimSpace(*req.RecommendOne)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.RecommendTen != nil {
+		// 更新当前变量或字段值。
 		next.RecommendTen = strings.TrimSpace(*req.RecommendTen)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.Zheng1 != nil {
+		// 更新当前变量或字段值。
 		next.Zheng1 = strings.TrimSpace(*req.Zheng1)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.Zheng2 != nil {
+		// 更新当前变量或字段值。
 		next.Zheng2 = strings.TrimSpace(*req.Zheng2)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.Zheng3 != nil {
+		// 更新当前变量或字段值。
 		next.Zheng3 = strings.TrimSpace(*req.Zheng3)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.Zheng4 != nil {
+		// 更新当前变量或字段值。
 		next.Zheng4 = strings.TrimSpace(*req.Zheng4)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.Zheng5 != nil {
+		// 更新当前变量或字段值。
 		next.Zheng5 = strings.TrimSpace(*req.Zheng5)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.Zheng6 != nil {
+		// 更新当前变量或字段值。
 		next.Zheng6 = strings.TrimSpace(*req.Zheng6)
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.IsCurrent != nil {
+		// 更新当前变量或字段值。
 		next.IsCurrent = *req.IsCurrent
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.Status != nil {
+		// 更新当前变量或字段值。
 		next.Status = *req.Status
 	}
+	// 判断条件并进入对应分支逻辑。
 	if req.Sort != nil {
+		// 更新当前变量或字段值。
 		next.Sort = *req.Sort
 	}
 
 	// 2) 号码字段变更时，重新校验并重建 draw_result。
 	if req.NormalDrawResult != nil || req.SpecialDrawResult != nil || req.DrawResult != nil {
+		// 定义并初始化当前变量。
 		normalRaw, specialRaw, mergedRaw, drawErr := normalizeAndMergeDrawNumbers(
+			// 调用safeString完成当前处理。
 			safeString(valueOrCurrentString(req.NormalDrawResult, next.NormalDrawResult)),
+			// 调用safeString完成当前处理。
 			safeString(valueOrCurrentString(req.SpecialDrawResult, next.SpecialDrawResult)),
+			// 调用safeString完成当前处理。
 			safeString(valueOrCurrentString(req.DrawResult, next.DrawResult)),
 		)
+		// 判断条件并进入对应分支逻辑。
 		if drawErr != nil {
+			// 调用utils.JSONError完成当前处理。
 			utils.JSONError(c, http.StatusBadRequest, drawErr.Error())
+			// 返回当前处理结果。
 			return
 		}
+		// 更新当前变量或字段值。
 		next.NormalDrawResult = normalRaw
+		// 更新当前变量或字段值。
 		next.SpecialDrawResult = specialRaw
+		// 更新当前变量或字段值。
 		next.DrawResult = mergedRaw
 	}
 
 	// 3) 标签字段：传值按传值；未传值时基于最新号码自动生成，并同步独立属相/五行字段。
 	if req.DrawLabels != nil {
+		// 更新当前变量或字段值。
 		next.DrawLabels, next.ZodiacLabels, next.WuxingLabels = normalizeDrawLabels(strings.TrimSpace(*req.DrawLabels), next.DrawResult)
+		// 进入新的代码块进行处理。
 	} else {
+		// 更新当前变量或字段值。
 		next.DrawLabels, next.ZodiacLabels, next.WuxingLabels = normalizeDrawLabels(next.DrawLabels, next.DrawResult)
 	}
 
 	// 4) 自动补齐开奖详情基础指标。
 	stats := deriveDrawStats(next.DrawResult)
+	// 更新当前变量或字段值。
 	next.SpecialSingleDouble = valueOrKeep(req.SpecialSingleDouble, next.SpecialSingleDouble, stats.SpecialSingleDouble)
+	// 更新当前变量或字段值。
 	next.SpecialBigSmall = valueOrKeep(req.SpecialBigSmall, next.SpecialBigSmall, stats.SpecialBigSmall)
+	// 更新当前变量或字段值。
 	next.SumSingleDouble = valueOrKeep(req.SumSingleDouble, next.SumSingleDouble, stats.SumSingleDouble)
+	// 更新当前变量或字段值。
 	next.SumBigSmall = valueOrKeep(req.SumBigSmall, next.SumBigSmall, stats.SumBigSmall)
+	// 更新当前变量或字段值。
 	next.SpecialCode = valueOrKeep(req.SpecialCode, next.SpecialCode, stats.SpecialCode)
+	// 更新当前变量或字段值。
 	next.NormalCode = valueOrKeep(req.NormalCode, next.NormalCode, stats.NormalCode)
 
 	// 5) 核心字段二次校验。
 	if next.SpecialLotteryID == 0 || strings.TrimSpace(next.Issue) == "" {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusBadRequest, "special_lottery_id/issue required")
+		// 返回当前处理结果。
 		return
 	}
 
+	// 定义并初始化当前变量。
 	updates := map[string]interface{}{
-		"special_lottery_id":    next.SpecialLotteryID,
-		"issue":                 next.Issue,
-		"year":                  next.Year,
-		"draw_at":               next.DrawAt,
-		"normal_draw_result":    next.NormalDrawResult,
-		"special_draw_result":   next.SpecialDrawResult,
-		"draw_result":           next.DrawResult,
-		"draw_labels":           next.DrawLabels,
-		"zodiac_labels":         next.ZodiacLabels,
-		"wuxing_labels":         next.WuxingLabels,
-		"playback_url":          next.PlaybackURL,
+		// 处理当前语句逻辑。
+		"special_lottery_id": next.SpecialLotteryID,
+		// 处理当前语句逻辑。
+		"issue": next.Issue,
+		// 处理当前语句逻辑。
+		"year": next.Year,
+		// 处理当前语句逻辑。
+		"draw_at": next.DrawAt,
+		// 处理当前语句逻辑。
+		"normal_draw_result": next.NormalDrawResult,
+		// 处理当前语句逻辑。
+		"special_draw_result": next.SpecialDrawResult,
+		// 处理当前语句逻辑。
+		"draw_result": next.DrawResult,
+		// 处理当前语句逻辑。
+		"draw_labels": next.DrawLabels,
+		// 处理当前语句逻辑。
+		"zodiac_labels": next.ZodiacLabels,
+		// 处理当前语句逻辑。
+		"wuxing_labels": next.WuxingLabels,
+		// 处理当前语句逻辑。
+		"playback_url": next.PlaybackURL,
+		// 处理当前语句逻辑。
 		"special_single_double": next.SpecialSingleDouble,
-		"special_big_small":     next.SpecialBigSmall,
-		"sum_single_double":     next.SumSingleDouble,
-		"sum_big_small":         next.SumBigSmall,
-		"recommend_six":         next.RecommendSix,
-		"recommend_four":        next.RecommendFour,
-		"recommend_one":         next.RecommendOne,
-		"recommend_ten":         next.RecommendTen,
-		"special_code":          next.SpecialCode,
-		"normal_code":           next.NormalCode,
-		"zheng1":                next.Zheng1,
-		"zheng2":                next.Zheng2,
-		"zheng3":                next.Zheng3,
-		"zheng4":                next.Zheng4,
-		"zheng5":                next.Zheng5,
-		"zheng6":                next.Zheng6,
-		"is_current":            next.IsCurrent,
-		"status":                next.Status,
-		"sort":                  next.Sort,
+		// 处理当前语句逻辑。
+		"special_big_small": next.SpecialBigSmall,
+		// 处理当前语句逻辑。
+		"sum_single_double": next.SumSingleDouble,
+		// 处理当前语句逻辑。
+		"sum_big_small": next.SumBigSmall,
+		// 处理当前语句逻辑。
+		"recommend_six": next.RecommendSix,
+		// 处理当前语句逻辑。
+		"recommend_four": next.RecommendFour,
+		// 处理当前语句逻辑。
+		"recommend_one": next.RecommendOne,
+		// 处理当前语句逻辑。
+		"recommend_ten": next.RecommendTen,
+		// 处理当前语句逻辑。
+		"special_code": next.SpecialCode,
+		// 处理当前语句逻辑。
+		"normal_code": next.NormalCode,
+		// 处理当前语句逻辑。
+		"zheng1": next.Zheng1,
+		// 处理当前语句逻辑。
+		"zheng2": next.Zheng2,
+		// 处理当前语句逻辑。
+		"zheng3": next.Zheng3,
+		// 处理当前语句逻辑。
+		"zheng4": next.Zheng4,
+		// 处理当前语句逻辑。
+		"zheng5": next.Zheng5,
+		// 处理当前语句逻辑。
+		"zheng6": next.Zheng6,
+		// 处理当前语句逻辑。
+		"is_current": next.IsCurrent,
+		// 处理当前语句逻辑。
+		"status": next.Status,
+		// 处理当前语句逻辑。
+		"sort": next.Sort,
 	}
 
 	// 6) 写库并维护“同彩种唯一当前期”约束。
 	if err := bc.svc.UpdateDrawRecord(c.Request.Context(), id, updates, next.SpecialLotteryID, next.IsCurrent); err != nil {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, 500, err.Error())
+		// 返回当前处理结果。
 		return
 	}
+	// 调用utils.JSONOK完成当前处理。
 	utils.JSONOK(c, gin.H{"id": id})
 }
 
 // DeleteDrawRecord 删除开奖区开奖记录。
 func (bc *BizConfigController) DeleteDrawRecord(c *gin.Context) {
+	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusBadRequest, "invalid id")
+		// 返回当前处理结果。
 		return
 	}
+	// 判断条件并进入对应分支逻辑。
 	if err := bc.svc.DeleteDrawRecord(c.Request.Context(), id); err != nil {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, 500, err.Error())
+		// 返回当前处理结果。
 		return
 	}
+	// 调用utils.JSONOK完成当前处理。
 	utils.JSONOK(c, gin.H{"id": id})
 }
 
 // drawStats 开奖详情自动计算结果。
 type drawStats struct {
+	// 处理当前语句逻辑。
 	SpecialSingleDouble string
-	SpecialBigSmall     string
-	SumSingleDouble     string
-	SumBigSmall         string
-	SpecialCode         string
-	NormalCode          string
+	// 处理当前语句逻辑。
+	SpecialBigSmall string
+	// 处理当前语句逻辑。
+	SumSingleDouble string
+	// 处理当前语句逻辑。
+	SumBigSmall string
+	// 处理当前语句逻辑。
+	SpecialCode string
+	// 处理当前语句逻辑。
+	NormalCode string
 }
 
 // deriveDrawStats 根据 6+1 开奖号码计算详情页基础字段。
 func deriveDrawStats(drawResult string) drawStats {
+	// 定义并初始化当前变量。
 	nums, err := parseDrawNumbers(drawResult)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil || len(nums) < 7 {
+		// 返回当前处理结果。
 		return drawStats{}
 	}
+	// 定义并初始化当前变量。
 	special := nums[6]
+	// 定义并初始化当前变量。
 	sum := 0
+	// 循环处理当前数据集合。
 	for _, n := range nums {
+		// 更新当前变量或字段值。
 		sum += n
 	}
+	// 返回当前处理结果。
 	return drawStats{
+		// 调用oddEvenCN完成当前处理。
 		SpecialSingleDouble: oddEvenCN(special),
-		SpecialBigSmall:     bigSmallCN(special, 24),
-		SumSingleDouble:     oddEvenCN(sum),
-		SumBigSmall:         bigSmallCN(sum, 175),
-		SpecialCode:         strconv.Itoa(special),
-		NormalCode:          joinIntCSV(nums[:6]),
+		// 调用bigSmallCN完成当前处理。
+		SpecialBigSmall: bigSmallCN(special, 24),
+		// 调用oddEvenCN完成当前处理。
+		SumSingleDouble: oddEvenCN(sum),
+		// 调用bigSmallCN完成当前处理。
+		SumBigSmall: bigSmallCN(sum, 175),
+		// 调用strconv.Itoa完成当前处理。
+		SpecialCode: strconv.Itoa(special),
+		// 调用joinIntCSV完成当前处理。
+		NormalCode: joinIntCSV(nums[:6]),
 	}
 }
 
 // oddEvenCN 返回中文单双。
 func oddEvenCN(v int) string {
+	// 判断条件并进入对应分支逻辑。
 	if v%2 == 0 {
 		return "双"
 	}
@@ -369,6 +597,7 @@ func oddEvenCN(v int) string {
 
 // bigSmallCN 按阈值返回中文大小（> threshold 为大）。
 func bigSmallCN(v, threshold int) string {
+	// 判断条件并进入对应分支逻辑。
 	if v > threshold {
 		return "大"
 	}
@@ -377,15 +606,23 @@ func bigSmallCN(v, threshold int) string {
 
 // normalizeDrawLabels 清洗开奖标签；标签缺失时自动生成 7 个默认标签，并输出独立属相/五行串。
 func normalizeDrawLabels(raw, drawResult string) (string, string, string) {
+	// 定义并初始化当前变量。
 	labels := parseLabelCSV(raw)
+	// 判断条件并进入对应分支逻辑。
 	if len(labels) == 7 {
+		// 返回当前处理结果。
 		return buildSplitLabelResult(labels, drawResult)
 	}
+	// 定义并初始化当前变量。
 	nums, err := parseDrawNumbers(drawResult)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil || len(nums) != 7 {
+		// 定义并初始化当前变量。
 		joined := strings.Join(labels, ",")
+		// 返回当前处理结果。
 		return joined, joined, ""
 	}
+	// 返回当前处理结果。
 	return buildSplitLabelResult(buildDefaultDrawLabels(nums), drawResult)
 }
 
@@ -393,11 +630,17 @@ func normalizeDrawLabels(raw, drawResult string) (string, string, string) {
 func buildSplitLabelResult(labels []string, drawResult string) (string, string, string) {
 	// 1) 预先准备号码默认标签，防止人工只填属相不填五行导致数据不完整。
 	defaultPairs := map[int]string{}
+	// 定义并初始化当前变量。
 	nums := numsOrEmpty(drawResult)
+	// 判断条件并进入对应分支逻辑。
 	if len(nums) == 7 {
+		// 定义并初始化当前变量。
 		pairs := buildDefaultDrawLabels(nums)
+		// 循环处理当前数据集合。
 		for idx, n := range nums {
+			// 判断条件并进入对应分支逻辑。
 			if idx < len(pairs) {
+				// 更新当前变量或字段值。
 				defaultPairs[n] = pairs[idx]
 			}
 		}
@@ -405,120 +648,184 @@ func buildSplitLabelResult(labels []string, drawResult string) (string, string, 
 
 	// 2) 按顺序拆分每个标签的属相/五行。
 	drawOut := make([]string, 0, len(labels))
+	// 定义并初始化当前变量。
 	zodiacOut := make([]string, 0, len(labels))
+	// 定义并初始化当前变量。
 	wuxingOut := make([]string, 0, len(labels))
+	// 循环处理当前数据集合。
 	for idx, item := range labels {
+		// 定义并初始化当前变量。
 		raw := strings.TrimSpace(item)
+		// 判断条件并进入对应分支逻辑。
 		if raw == "" {
+			// 更新当前变量或字段值。
 			raw = fallbackPairByIndex(defaultPairs, nums, idx)
 		}
+		// 定义并初始化当前变量。
 		zodiac, wuxing := splitPair(raw)
+		// 判断条件并进入对应分支逻辑。
 		if wuxing == "" {
 			// 3) 缺五行时回退默认映射，保证开奖记录字段完整。
 			fallback := fallbackPairByIndex(defaultPairs, nums, idx)
+			// 定义并初始化当前变量。
 			fz, fw := splitPair(fallback)
+			// 判断条件并进入对应分支逻辑。
 			if zodiac == "" {
+				// 更新当前变量或字段值。
 				zodiac = fz
 			}
+			// 更新当前变量或字段值。
 			wuxing = fw
 		}
+		// 判断条件并进入对应分支逻辑。
 		if zodiac == "" {
+			// 更新当前变量或字段值。
 			zodiac = raw
 		}
+		// 定义并初始化当前变量。
 		drawLabel := zodiac
+		// 判断条件并进入对应分支逻辑。
 		if wuxing != "" {
+			// 更新当前变量或字段值。
 			drawLabel = strings.TrimSpace(zodiac + "/" + wuxing)
 		}
+		// 更新当前变量或字段值。
 		drawOut = append(drawOut, drawLabel)
+		// 更新当前变量或字段值。
 		zodiacOut = append(zodiacOut, zodiac)
+		// 更新当前变量或字段值。
 		wuxingOut = append(wuxingOut, wuxing)
 	}
+	// 返回当前处理结果。
 	return strings.Join(drawOut, ","), strings.Join(zodiacOut, ","), strings.Join(wuxingOut, ",")
 }
 
 // splitPair 将“属相/五行”标签拆成两个片段。
 func splitPair(raw string) (string, string) {
+	// 定义并初始化当前变量。
 	parts := strings.SplitN(strings.TrimSpace(raw), "/", 2)
+	// 判断条件并进入对应分支逻辑。
 	if len(parts) == 2 {
+		// 返回当前处理结果。
 		return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
 	}
+	// 返回当前处理结果。
 	return strings.TrimSpace(raw), ""
 }
 
 // numsOrEmpty 解析 drawResult，失败则返回空切片。
 func numsOrEmpty(drawResult string) []int {
+	// 定义并初始化当前变量。
 	nums, err := parseDrawNumbers(drawResult)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return []int{}
 	}
+	// 返回当前处理结果。
 	return nums
 }
 
 // fallbackPairByIndex 根据号码顺序取默认“属相/五行”标签。
 func fallbackPairByIndex(pairMap map[int]string, nums []int, idx int) string {
+	// 判断条件并进入对应分支逻辑。
 	if idx < 0 || idx >= len(nums) {
+		// 返回当前处理结果。
 		return ""
 	}
+	// 返回当前处理结果。
 	return pairMap[nums[idx]]
 }
 
 // parseLabelCSV 解析标签字符串（逗号/空格/换行分隔）。
 func parseLabelCSV(raw string) []string {
+	// 定义并初始化当前变量。
 	tokens := strings.FieldsFunc(strings.TrimSpace(raw), func(r rune) bool {
+		// 返回当前处理结果。
 		return r == ',' || r == '|' || r == ';' || r == '\n' || r == '\r' || r == '\t'
 	})
+	// 定义并初始化当前变量。
 	out := make([]string, 0, len(tokens))
+	// 循环处理当前数据集合。
 	for _, t := range tokens {
+		// 定义并初始化当前变量。
 		v := strings.TrimSpace(t)
+		// 判断条件并进入对应分支逻辑。
 		if v == "" {
+			// 处理当前语句逻辑。
 			continue
 		}
+		// 更新当前变量或字段值。
 		out = append(out, v)
 	}
+	// 返回当前处理结果。
 	return out
 }
 
 // buildDefaultDrawLabels 基于号码生成默认“生肖/五行”标签。
 func buildDefaultDrawLabels(nums []int) []string {
+	// 定义并初始化当前变量。
 	zodiacs := []string{"鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"}
+	// 定义并初始化当前变量。
 	elements := []string{"金", "木", "水", "火", "土"}
+	// 定义并初始化当前变量。
 	out := make([]string, 0, len(nums))
+	// 循环处理当前数据集合。
 	for _, n := range nums {
+		// 定义并初始化当前变量。
 		zodiac := zodiacs[(n-1)%len(zodiacs)]
+		// 定义并初始化当前变量。
 		element := elements[(n-1)%len(elements)]
+		// 更新当前变量或字段值。
 		out = append(out, zodiac+"/"+element)
 	}
+	// 返回当前处理结果。
 	return out
 }
 
 // valueOrAuto 请求传值优先，否则回退自动计算值。
 func valueOrAuto(v *string, auto string) string {
+	// 定义并初始化当前变量。
 	manual := safeString(v)
+	// 判断条件并进入对应分支逻辑。
 	if manual != "" {
+		// 返回当前处理结果。
 		return manual
 	}
+	// 返回当前处理结果。
 	return auto
 }
 
 // valueOrKeep 请求传值优先；否则保留当前值；当前值为空时回退自动值。
 func valueOrKeep(v *string, current, auto string) string {
+	// 判断条件并进入对应分支逻辑。
 	if v != nil {
+		// 定义并初始化当前变量。
 		manual := strings.TrimSpace(*v)
+		// 判断条件并进入对应分支逻辑。
 		if manual != "" {
+			// 返回当前处理结果。
 			return manual
 		}
 	}
+	// 判断条件并进入对应分支逻辑。
 	if strings.TrimSpace(current) != "" {
+		// 返回当前处理结果。
 		return current
 	}
+	// 返回当前处理结果。
 	return auto
 }
 
 // parseIntWithDefault 将字符串解析为整数，失败时回退默认值。
 func parseIntWithDefault(raw string, def int) int {
+	// 定义并初始化当前变量。
 	v, err := strconv.Atoi(strings.TrimSpace(raw))
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return def
 	}
+	// 返回当前处理结果。
 	return v
 }

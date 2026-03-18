@@ -12,10 +12,15 @@ type Config struct {
 
 // DefaultConfig returns a safe default (must replace SigningKey in production).
 func DefaultConfig() *Config {
+	// 返回当前处理结果。
 	return &Config{
-		SigningKey:    "change-this-secret",
-		AccessExpire:  15 * time.Minute,
+		// 处理当前语句逻辑。
+		SigningKey: "change-this-secret",
+		// 处理当前语句逻辑。
+		AccessExpire: 1 * time.Hour,
+		// 处理当前语句逻辑。
 		RefreshExpire: 7 * 24 * time.Hour,
-		Issuer:        "go-admin-full",
+		// 处理当前语句逻辑。
+		Issuer: "go-admin-full",
 	}
 }

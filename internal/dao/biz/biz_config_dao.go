@@ -10,5 +10,6 @@ type BizConfigDAO struct {
 
 // NewBizConfigDAO 创建业务配置 DAO。
 func NewBizConfigDAO(db *gorm.DB) *BizConfigDAO {
+	// 返回当前处理结果。
 	return &BizConfigDAO{db: db}
 }

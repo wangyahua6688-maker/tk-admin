@@ -17,7 +17,9 @@ type AuditController struct {
 	loginLogSvc *rbacsvc.LoginLogService // 登录日志服务
 }
 
+// NewAuditController 创建AuditController实例。
 func NewAuditController(db *gorm.DB) *AuditController {
+	// 返回当前处理结果。
 	return &AuditController{
 		loginLogSvc: rbacsvc.NewLoginLogService(rbacdao.NewLoginLogDao(db)), // 注入登录日志服务
 	}
@@ -29,27 +31,40 @@ func (ac *AuditController) ListLoginLogs(c *gin.Context) {
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20")) // 每页数量
 	username := strings.TrimSpace(c.Query("username"))             // 用户名筛选
 
+	// 判断条件并进入对应分支逻辑。
 	if page < 1 {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusBadRequest, "page必须大于0")
+		// 返回当前处理结果。
 		return
 	}
+	// 判断条件并进入对应分支逻辑。
 	if pageSize < 1 || pageSize > 100 {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusBadRequest, "page_size范围必须在1-100")
+		// 返回当前处理结果。
 		return
 	}
 
 	// 查询登录日志
 	logs, total, err := ac.loginLogSvc.ListLoginLogs(c.Request.Context(), page, pageSize, username)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 调用utils.JSONError完成当前处理。
 		utils.JSONError(c, http.StatusInternalServerError, err.Error())
+		// 返回当前处理结果。
 		return
 	}
 
 	// 返回分页数据
 	utils.JSONOK(c, gin.H{
-		"list":      logs,
-		"total":     total,
-		"page":      page,
+		// 处理当前语句逻辑。
+		"list": logs,
+		// 处理当前语句逻辑。
+		"total": total,
+		// 处理当前语句逻辑。
+		"page": page,
+		// 处理当前语句逻辑。
 		"page_size": pageSize,
 	})
 }

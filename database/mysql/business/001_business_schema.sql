@@ -3,6 +3,8 @@
 -- 1. 本脚本仅包含业务域表，不包含 RBAC 系统表；
 -- 2. 执行前请先选择目标数据库：USE your_db;
 
+SET NAMES utf8mb4;
+
 CREATE TABLE IF NOT EXISTS tk_users (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   username VARCHAR(64) NOT NULL COMMENT '用户名（唯一）',
@@ -299,3 +301,218 @@ CREATE TABLE IF NOT EXISTS tk_sms_channel (
   PRIMARY KEY (id),
   KEY idx_tk_sms_channel_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='短信通道配置表';
+
+-- =========================================================
+-- 兼容升级区（可重复执行）
+-- 目标：将历史 tk_* 结构升级到当前业务代码所需结构
+-- =========================================================
+
+-- ---------- tk_users 补齐手机号/密码/注册来源/最后登录时间 ----------
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_users ADD COLUMN phone VARCHAR(20) NOT NULL DEFAULT '''' COMMENT ''手机号（用于验证码登录，唯一）'' AFTER username',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_users' AND COLUMN_NAME = 'phone'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_users ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT '''' COMMENT ''密码哈希（bcrypt）'' AFTER avatar',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_users' AND COLUMN_NAME = 'password_hash'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_users ADD COLUMN register_source VARCHAR(20) NOT NULL DEFAULT ''password'' COMMENT ''注册来源：password/sms/admin/import'' AFTER password_hash',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_users' AND COLUMN_NAME = 'register_source'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_users ADD COLUMN last_login_at DATETIME(3) NULL COMMENT ''最近登录时间'' AFTER register_source',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_users' AND COLUMN_NAME = 'last_login_at'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 若 phone 上不存在唯一索引，先修复空值与重复值，再补唯一索引。
+SET @ddl = (
+  SELECT IF(
+    (
+      SELECT COUNT(1)
+      FROM information_schema.STATISTICS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'tk_users'
+        AND COLUMN_NAME = 'phone'
+        AND NON_UNIQUE = 0
+    ) > 0,
+    'SELECT 1',
+    'UPDATE tk_users
+     SET phone = CONCAT(''legacy_'', RIGHT(MD5(CAST(id AS CHAR)), 12))
+     WHERE COALESCE(TRIM(phone), '''') = '''''
+  )
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(
+    (
+      SELECT COUNT(1)
+      FROM information_schema.STATISTICS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'tk_users'
+        AND COLUMN_NAME = 'phone'
+        AND NON_UNIQUE = 0
+    ) > 0,
+    'SELECT 1',
+    'UPDATE tk_users t
+     JOIN (
+       SELECT phone, MIN(id) AS keep_id
+       FROM tk_users
+       WHERE COALESCE(TRIM(phone), '''') <> ''''
+       GROUP BY phone
+       HAVING COUNT(1) > 1
+     ) d ON d.phone = t.phone AND t.id <> d.keep_id
+     SET t.phone = CONCAT(''legacy_'', RIGHT(MD5(CONCAT(''dup_'', CAST(t.id AS CHAR))), 12))'
+  )
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(
+    (
+      SELECT COUNT(1)
+      FROM information_schema.STATISTICS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'tk_users'
+        AND COLUMN_NAME = 'phone'
+        AND NON_UNIQUE = 0
+    ) > 0,
+    'SELECT 1',
+    'ALTER TABLE tk_users ADD UNIQUE KEY uk_tk_users_phone (phone)'
+  )
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- ---------- tk_lottery_info 历史字段补齐 ----------
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_lottery_info ADD COLUMN category_id BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT ''图库分类ID（关联tk_lottery_category.id）'' AFTER special_lottery_id',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_lottery_info' AND COLUMN_NAME = 'category_id'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_lottery_info ADD COLUMN normal_draw_result VARCHAR(64) NOT NULL DEFAULT '''' COMMENT ''普通号码（6个，逗号分隔）'' AFTER draw_code',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_lottery_info' AND COLUMN_NAME = 'normal_draw_result'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_lottery_info ADD COLUMN special_draw_result VARCHAR(16) NOT NULL DEFAULT '''' COMMENT ''特别号码（1个）'' AFTER normal_draw_result',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_lottery_info' AND COLUMN_NAME = 'special_draw_result'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_lottery_info ADD COLUMN playback_url VARCHAR(255) NOT NULL DEFAULT '''' COMMENT ''直播回放地址（直播结束后录入）'' AFTER draw_at',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_lottery_info' AND COLUMN_NAME = 'playback_url'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_lottery_info ADD KEY idx_tk_lottery_info_category_id (category_id)',
+    'SELECT 1')
+  FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_lottery_info' AND INDEX_NAME = 'idx_tk_lottery_info_category_id'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_lottery_info ADD KEY idx_tk_lottery_info_category_tag (category_tag)',
+    'SELECT 1')
+  FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_lottery_info' AND INDEX_NAME = 'idx_tk_lottery_info_category_tag'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 基于 category_tag 回填 category_id（旧数据兼容）。
+UPDATE tk_lottery_info li
+LEFT JOIN tk_lottery_category lc
+  ON lc.category_key COLLATE utf8mb4_general_ci = li.category_tag COLLATE utf8mb4_general_ci
+  OR lc.name COLLATE utf8mb4_general_ci = li.category_tag COLLATE utf8mb4_general_ci
+SET li.category_id = CASE
+  WHEN li.category_id > 0 THEN li.category_id
+  WHEN lc.id IS NOT NULL THEN lc.id
+  ELSE 0
+END;
+
+-- 基于 draw_result 回填 6+1 字段（旧数据兼容）。
+UPDATE tk_lottery_info
+SET
+  normal_draw_result = CASE
+    WHEN TRIM(IFNULL(normal_draw_result, '')) <> '' THEN normal_draw_result
+    ELSE TRIM(BOTH ',' FROM SUBSTRING_INDEX(REPLACE(IFNULL(draw_result, ''), ' ', ''), ',', 6))
+  END,
+  special_draw_result = CASE
+    WHEN TRIM(IFNULL(special_draw_result, '')) <> '' THEN special_draw_result
+    ELSE TRIM(BOTH ',' FROM SUBSTRING_INDEX(REPLACE(IFNULL(draw_result, ''), ' ', ''), ',', -1))
+  END
+WHERE TRIM(IFNULL(draw_result, '')) <> '';
+
+-- 统一兼容字段 draw_result（普通6个+特别号）。
+UPDATE tk_lottery_info
+SET draw_result = CONCAT_WS(',',
+  NULLIF(TRIM(IFNULL(normal_draw_result, '')), ''),
+  NULLIF(TRIM(IFNULL(special_draw_result, '')), '')
+)
+WHERE TRIM(IFNULL(normal_draw_result, '')) <> '' OR TRIM(IFNULL(special_draw_result, '')) <> '';
+
+-- ---------- tk_draw_record 历史字段补齐 ----------
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN zodiac_labels VARCHAR(255) NOT NULL DEFAULT '''' COMMENT ''号码对应属相标签（与号码一一对应，示例：羊,蛇,马）'' AFTER draw_labels',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'zodiac_labels'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN wuxing_labels VARCHAR(255) NOT NULL DEFAULT '''' COMMENT ''号码对应五行标签（与号码一一对应，示例：土,金,火）'' AFTER zodiac_labels',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'wuxing_labels'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 语义注释对齐。
+ALTER TABLE tk_lottery_info
+  MODIFY COLUMN special_lottery_id BIGINT UNSIGNED NOT NULL
+  COMMENT '所属彩种ID（关联tk_special_lottery.id，0表示不绑定彩种）';
+
+ALTER TABLE tk_lottery_info
+  COMMENT = '图库图纸内容与竞猜配置表（不承载开奖区历史主数据）';

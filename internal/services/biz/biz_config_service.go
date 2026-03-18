@@ -14,8 +14,11 @@ type BizConfigService struct {
 
 // NewBizConfigService 创建业务配置服务。
 func NewBizConfigService(db *gorm.DB) *BizConfigService {
+	// 返回当前处理结果。
 	return &BizConfigService{
+		// 调用bizdao.NewBizConfigDAO完成当前处理。
 		dao: bizdao.NewBizConfigDAO(db),
-		db:  db,
+		// 处理当前语句逻辑。
+		db: db,
 	}
 }

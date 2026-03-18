@@ -9,10 +9,14 @@ import (
 
 // ListHomePopups 查询首屏弹窗列表。
 func (s *BizConfigService) ListHomePopups(ctx context.Context, position string, limit int) ([]models.WHomePopup, error) {
+	// 更新当前变量或字段值。
 	position = strings.TrimSpace(position)
+	// 判断条件并进入对应分支逻辑。
 	if position == "" {
+		// 更新当前变量或字段值。
 		position = "home"
 	}
+	// 返回当前处理结果。
 	return s.dao.ListHomePopups(ctx, position, limit)
 }
 

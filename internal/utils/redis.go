@@ -22,45 +22,42 @@ type RedisConfig struct {
 
 // DefaultRedisConfig 默认Redis配置
 func DefaultRedisConfig() RedisConfig {
+	// 定义并初始化当前变量。
 	cfg := redisx.DefaultConfig()
+	// 返回当前处理结果。
 	return RedisConfig{
-		PoolSize:     cfg.PoolSize,
+		// 处理当前语句逻辑。
+		PoolSize: cfg.PoolSize,
+		// 处理当前语句逻辑。
 		MinIdleConns: cfg.MinIdleConns,
-		DialTimeout:  cfg.DialTimeout,
-		ReadTimeout:  cfg.ReadTimeout,
+		// 处理当前语句逻辑。
+		DialTimeout: cfg.DialTimeout,
+		// 处理当前语句逻辑。
+		ReadTimeout: cfg.ReadTimeout,
+		// 处理当前语句逻辑。
 		WriteTimeout: cfg.WriteTimeout,
 	}
 }
 
 // NewRedisClient 初始化Redis客户端
 func NewRedisClient(cfg RedisConfig) (*redis.Client, error) {
+	// 返回当前处理结果。
 	return redisx.NewClient(context.Background(), redisx.Config{
-		Addr:         cfg.Addr,
-		Password:     cfg.Password,
-		DB:           cfg.DB,
-		PoolSize:     cfg.PoolSize,
+		// 处理当前语句逻辑。
+		Addr: cfg.Addr,
+		// 处理当前语句逻辑。
+		Password: cfg.Password,
+		// 处理当前语句逻辑。
+		DB: cfg.DB,
+		// 处理当前语句逻辑。
+		PoolSize: cfg.PoolSize,
+		// 处理当前语句逻辑。
 		MinIdleConns: cfg.MinIdleConns,
-		DialTimeout:  cfg.DialTimeout,
-		ReadTimeout:  cfg.ReadTimeout,
+		// 处理当前语句逻辑。
+		DialTimeout: cfg.DialTimeout,
+		// 处理当前语句逻辑。
+		ReadTimeout: cfg.ReadTimeout,
+		// 处理当前语句逻辑。
 		WriteTimeout: cfg.WriteTimeout,
 	})
-}
-
-// NewRedisClientWithContext 创建带上下文的Redis客户端
-func NewRedisClientWithContext(ctx context.Context, cfg RedisConfig) (*redis.Client, error) {
-	return redisx.NewClient(ctx, redisx.Config{
-		Addr:         cfg.Addr,
-		Password:     cfg.Password,
-		DB:           cfg.DB,
-		PoolSize:     cfg.PoolSize,
-		MinIdleConns: cfg.MinIdleConns,
-		DialTimeout:  cfg.DialTimeout,
-		ReadTimeout:  cfg.ReadTimeout,
-		WriteTimeout: cfg.WriteTimeout,
-	})
-}
-
-// RedisFromContext 从上下文中获取Redis客户端（需提前设置）
-func RedisFromContext(ctx context.Context) *redis.Client {
-	return redisx.RedisFromContext(ctx, "redis")
 }

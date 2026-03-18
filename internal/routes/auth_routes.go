@@ -20,17 +20,23 @@ func AuthRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager, allowPublicRe
 	// 公共路由组：不走 JWT 中间件。
 	public := r.Group("/auth")
 	{
+		// 调用public.POST完成当前处理。
 		public.POST("/login", auth.Login)
+		// 判断条件并进入对应分支逻辑。
 		if allowPublicRegister {
+			// 调用public.POST完成当前处理。
 			public.POST("/register", auth.Register)
 		}
+		// 调用public.POST完成当前处理。
 		public.POST("/refresh", auth.Refresh)
 	}
 
 	// 受保护路由组：统一挂载 JWT 中间件。
 	protected := r.Group("/auth")
+	// 调用protected.Use完成当前处理。
 	protected.Use(middleware.NewJWTMiddleware(mgr))
 	{
+		// 调用protected.POST完成当前处理。
 		protected.POST("/logout", auth.Logout)
 	}
 }

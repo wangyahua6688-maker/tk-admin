@@ -18,6 +18,8 @@ type BizConfigController struct {
 	svc *bizsvc.BizConfigService // 业务配置服务聚合
 }
 
+// NewBizConfigController 创建BizConfigController实例。
 func NewBizConfigController(db *gorm.DB) *BizConfigController {
+	// 返回当前处理结果。
 	return &BizConfigController{svc: bizsvc.NewBizConfigService(db)}
 }

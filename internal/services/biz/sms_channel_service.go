@@ -12,9 +12,13 @@ import (
 func (s *BizConfigService) ListSMSChannels(ctx context.Context, status string, limit int) ([]models.WSMSChannel, error) {
 	// 将字符串状态转换为可选筛选值。
 	var statusFilter *int
+	// 定义并初始化当前变量。
 	trimmed := strings.TrimSpace(status)
+	// 判断条件并进入对应分支逻辑。
 	if trimmed == "0" || trimmed == "1" {
+		// 定义并初始化当前变量。
 		v, _ := strconv.Atoi(trimmed)
+		// 更新当前变量或字段值。
 		statusFilter = &v
 	}
 	// 调用 DAO 执行查询。

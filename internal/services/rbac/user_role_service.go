@@ -14,6 +14,7 @@ type UserRoleService struct {
 
 // NewUserRoleService 创建用户角色服务。
 func NewUserRoleService(d *rbacdao.UserRoleDao) *UserRoleService {
+	// 返回当前处理结果。
 	return &UserRoleService{dao: d}
 }
 
@@ -21,22 +22,28 @@ func NewUserRoleService(d *rbacdao.UserRoleDao) *UserRoleService {
 func (s *UserRoleService) BindRoles(ctx context.Context, userID uint, roleIDs []uint) error {
 	// 校验用户是否存在
 	user, err := s.dao.FindUser(ctx, userID)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return err
 	}
 
 	// 允许传空数组：表示清空用户角色绑定。
 	if len(roleIDs) == 0 {
+		// 返回当前处理结果。
 		return s.dao.ReplaceRoles(ctx, user, []models.Role{})
 	}
 
 	// 查询角色集合
 	roles, err := s.dao.FindRoles(ctx, roleIDs)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return err
 	}
 	// 校验角色数量是否匹配，防止无效 ID 混入
 	if len(roles) != len(uniqueUint(roleIDs)) {
+		// 返回当前处理结果。
 		return errors.New("存在无效角色ID")
 	}
 
@@ -48,22 +55,28 @@ func (s *UserRoleService) BindRoles(ctx context.Context, userID uint, roleIDs []
 func (s *UserRoleService) AddRoles(ctx context.Context, userID uint, roleIDs []uint) error {
 	// 角色列表为空直接返回错误
 	if len(roleIDs) == 0 {
+		// 返回当前处理结果。
 		return errors.New("role_ids不能为空")
 	}
 
 	// 校验用户是否存在
 	user, err := s.dao.FindUser(ctx, userID)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return err
 	}
 
 	// 查询角色集合
 	roles, err := s.dao.FindRoles(ctx, roleIDs)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return err
 	}
 	// 校验角色数量是否匹配
 	if len(roles) != len(uniqueUint(roleIDs)) {
+		// 返回当前处理结果。
 		return errors.New("存在无效角色ID")
 	}
 
@@ -75,22 +88,28 @@ func (s *UserRoleService) AddRoles(ctx context.Context, userID uint, roleIDs []u
 func (s *UserRoleService) RemoveRoles(ctx context.Context, userID uint, roleIDs []uint) error {
 	// 角色列表为空直接返回错误
 	if len(roleIDs) == 0 {
+		// 返回当前处理结果。
 		return errors.New("role_ids不能为空")
 	}
 
 	// 校验用户是否存在
 	user, err := s.dao.FindUser(ctx, userID)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return err
 	}
 
 	// 查询角色集合
 	roles, err := s.dao.FindRoles(ctx, roleIDs)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return err
 	}
 	// 校验角色数量是否匹配
 	if len(roles) != len(uniqueUint(roleIDs)) {
+		// 返回当前处理结果。
 		return errors.New("存在无效角色ID")
 	}
 
@@ -100,6 +119,7 @@ func (s *UserRoleService) RemoveRoles(ctx context.Context, userID uint, roleIDs 
 
 // GetUserRoles 查询用户角色并预加载权限。
 func (s *UserRoleService) GetUserRoles(ctx context.Context, userID uint) ([]models.Role, error) {
+	// 返回当前处理结果。
 	return s.dao.GetUserRolesWithPermissions(ctx, userID)
 }
 
@@ -107,13 +127,20 @@ func (s *UserRoleService) GetUserRoles(ctx context.Context, userID uint) ([]mode
 func uniqueUint(in []uint) []uint {
 	// 使用 map 去重
 	set := make(map[uint]struct{}, len(in))
+	// 定义并初始化当前变量。
 	out := make([]uint, 0, len(in))
+	// 循环处理当前数据集合。
 	for _, v := range in {
+		// 判断条件并进入对应分支逻辑。
 		if _, ok := set[v]; ok {
+			// 处理当前语句逻辑。
 			continue
 		}
+		// 更新当前变量或字段值。
 		set[v] = struct{}{}
+		// 更新当前变量或字段值。
 		out = append(out, v)
 	}
+	// 返回当前处理结果。
 	return out
 }

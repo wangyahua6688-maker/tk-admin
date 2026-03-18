@@ -34,6 +34,7 @@ func (s *BizConfigService) CreateDrawRecord(ctx context.Context, item *models.WD
 		if item.IsCurrent == 1 {
 			// 先清除同彩种其它记录的 current 标识。
 			if err := s.dao.ResetCurrentDrawRecordTx(tx, item.SpecialLotteryID, 0); err != nil {
+				// 返回当前处理结果。
 				return err
 			}
 		}
@@ -50,6 +51,7 @@ func (s *BizConfigService) UpdateDrawRecord(ctx context.Context, id uint, update
 		if isCurrent == 1 && specialLotteryID > 0 {
 			// 排除当前记录，避免将自身清零。
 			if err := s.dao.ResetCurrentDrawRecordTx(tx, specialLotteryID, id); err != nil {
+				// 返回当前处理结果。
 				return err
 			}
 		}

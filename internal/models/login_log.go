@@ -2,13 +2,21 @@ package models
 
 import "time"
 
+// LoginLog 定义LoginLog相关结构。
 type LoginLog struct {
-	ID        uint `gorm:"primaryKey"`
-	UserID    uint
-	Username  string
-	IP        string
-	Device    string
-	Status    int
+	// 处理当前语句逻辑。
+	ID uint `gorm:"primaryKey"`
+	// 处理当前语句逻辑。
+	UserID uint
+	// 处理当前语句逻辑。
+	Username string
+	// 处理当前语句逻辑。
+	IP string
+	// 处理当前语句逻辑。
+	Device string
+	// 处理当前语句逻辑。
+	Status int
+	// 处理当前语句逻辑。
 	CreatedAt time.Time
 }
 

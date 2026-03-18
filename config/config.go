@@ -7,126 +7,126 @@ import (
 	"github.com/spf13/viper"
 )
 
-// config/config.go
+// Config 定义后台服务的统一配置结构。
 type Config struct {
-	Server struct {
-		Host string `yaml:"host"`
-		Port int    `yaml:"port"`
-	} `yaml:"server"`
+	Server struct { // 服务监听分组。
+		Host string `yaml:"host"` // HTTP 监听地址。
+		Port int    `yaml:"port"` // HTTP 监听端口。
+	} `yaml:"server"` // 服务监听配置。
 
-	Database struct {
-		DSN      string `yaml:"dsn"`
-		LogLevel string `yaml:"log_level"`
-	} `yaml:"database"`
+	Database struct { // 数据库分组。
+		DSN      string `yaml:"dsn"`       // MySQL 连接串。
+		LogLevel string `yaml:"log_level"` // GORM 日志级别。
+	} `yaml:"database"` // 数据库配置。
 
-	Redis struct {
-		Addr     string `yaml:"addr"`
-		Password string `yaml:"password"`
-		DB       int    `yaml:"db"`
-	} `yaml:"redis"`
+	Redis struct { // Redis 分组。
+		Addr     string `yaml:"addr"`     // Redis 地址。
+		Password string `yaml:"password"` // Redis 密码。
+		DB       int    `yaml:"db"`       // Redis 分库编号。
+	} `yaml:"redis"` // Redis 配置。
 
-	JWT struct {
-		SigningKey               string `yaml:"signing_key"`
-		AccessExpire             int    `yaml:"access_expire"`
-		RefreshExpire            int    `yaml:"refresh_expire"`
-		AllowInsecureMemoryStore bool   `yaml:"allow_insecure_memory_store"`
-	} `yaml:"jwt"`
+	JWT struct { // 鉴权分组。
+		SigningKey               string `yaml:"signing_key"`                 // JWT 签名密钥。
+		AccessExpire             int    `yaml:"access_expire"`               // AccessToken 过期秒数。
+		RefreshExpire            int    `yaml:"refresh_expire"`              // RefreshToken 过期秒数。
+		AllowInsecureMemoryStore bool   `yaml:"allow_insecure_memory_store"` // 是否允许内存 token 存储。
+	} `yaml:"jwt"` // JWT 鉴权配置。
 
-	CORS struct {
-		AllowedOrigins   []string `yaml:"allowed_origins"`
-		AllowCredentials bool     `yaml:"allow_credentials"`
-	} `yaml:"cors"`
+	CORS struct { // 跨域分组。
+		AllowedOrigins   []string `yaml:"allowed_origins"`   // 允许跨域来源。
+		AllowCredentials bool     `yaml:"allow_credentials"` // 是否允许携带凭据。
+	} `yaml:"cors"` // CORS 配置。
 
-	Auth struct {
-		AllowPublicRegister bool `yaml:"allow_public_register"`
-	} `yaml:"auth"`
+	Auth struct { // 认证分组。
+		AllowPublicRegister bool `yaml:"allow_public_register"` // 是否允许公开注册。
+	} `yaml:"auth"` // 认证配置。
 
-	Log struct {
-		Level    string `yaml:"level"`
-		FilePath string `yaml:"file_path"`
-	} `yaml:"log"`
+	Log struct { // 日志分组。
+		Level    string `yaml:"level"`     // 日志级别。
+		FilePath string `yaml:"file_path"` // 日志文件路径。
+	} `yaml:"log"` // 日志配置。
 
-	Upload struct {
-		SavePath string `yaml:"save_path"`
-		BaseURL  string `yaml:"base_url"`
-	} `yaml:"upload"`
+	Upload struct { // 上传分组。
+		SavePath string `yaml:"save_path"` // 上传文件保存目录。
+		BaseURL  string `yaml:"base_url"`  // 上传资源访问前缀。
+	} `yaml:"upload"` // 上传配置。
 }
 
-var cfg Config
+var cfg Config // 全局配置实例。
 
+// Init 初始化并加载配置。
 func Init(path string) {
-	viper.SetConfigFile(path)
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-	viper.SetEnvPrefix("godash")
-	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetConfigFile(path)                              // 指定配置文件路径。
+	viper.SetConfigType("yaml")                            // 指定配置格式。
+	viper.AddConfigPath(".")                               // 增加当前目录作为配置搜索路径。
+	viper.SetEnvPrefix("godash")                           // 指定环境变量前缀。
+	viper.AutomaticEnv()                                   // 启用环境变量覆盖。
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // 支持配置键与环境变量键映射。
 
-	viper.SetDefault("server.host", "0.0.0.0")
-	viper.SetDefault("server.port", 8080)
-	viper.SetDefault("jwt.signing_key", "")
-	viper.SetDefault("jwt.access_expire", 900)
-	viper.SetDefault("jwt.refresh_expire", 604800)
-	viper.SetDefault("jwt.allow_insecure_memory_store", false)
-	viper.SetDefault("database.dsn", "")
-	viper.SetDefault("database.log_level", "warn")
-	viper.SetDefault("redis.addr", "")
-	viper.SetDefault("redis.password", "")
-	viper.SetDefault("redis.db", 0)
-	viper.SetDefault("cors.allowed_origins", []string{"http://localhost:3000"})
-	viper.SetDefault("cors.allow_credentials", false)
-	viper.SetDefault("auth.allow_public_register", false)
-	viper.SetDefault("log.level", "info")
-	viper.SetDefault("log.file_path", "")
-	viper.SetDefault("upload.save_path", "uploads")
-	viper.SetDefault("upload.base_url", "/uploads")
+	viper.SetDefault("server.host", "0.0.0.0")                                  // 默认监听地址。
+	viper.SetDefault("server.port", 8080)                                       // 默认监听端口。
+	viper.SetDefault("jwt.signing_key", "")                                     // 默认签名密钥（需外部注入）。
+	viper.SetDefault("jwt.access_expire", 3600)                                 // 默认 access token 1 小时。
+	viper.SetDefault("jwt.refresh_expire", 604800)                              // 默认 refresh token 7 天。
+	viper.SetDefault("jwt.allow_insecure_memory_store", false)                  // 默认禁止不安全内存存储。
+	viper.SetDefault("database.dsn", "")                                        // 默认数据库连接串为空。
+	viper.SetDefault("database.log_level", "warn")                              // 默认数据库日志级别。
+	viper.SetDefault("redis.addr", "")                                          // 默认 Redis 地址为空。
+	viper.SetDefault("redis.password", "")                                      // 默认 Redis 密码为空。
+	viper.SetDefault("redis.db", 0)                                             // 默认 Redis DB 0。
+	viper.SetDefault("cors.allowed_origins", []string{"http://localhost:3000"}) // 默认允许本地前端来源。
+	viper.SetDefault("cors.allow_credentials", false)                           // 默认不允许跨域凭据。
+	viper.SetDefault("auth.allow_public_register", false)                       // 默认关闭公开注册。
+	viper.SetDefault("log.level", "info")                                       // 默认日志级别 info。
+	viper.SetDefault("log.file_path", "")                                       // 默认输出到标准输出。
+	viper.SetDefault("upload.save_path", "uploads")                             // 默认上传目录。
+	viper.SetDefault("upload.base_url", "/uploads")                             // 默认上传访问前缀。
 
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("未找到配置文件，使用默认配置: %v\n", err)
-	} else {
-		fmt.Println("加载配置文件:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil { // 尝试读取配置文件。
+		fmt.Printf("未找到配置文件，使用默认配置: %v\n", err) // 未读取到配置时打印提示。
+	} else { // 配置文件读取成功。
+		fmt.Println("加载配置文件:", viper.ConfigFileUsed()) // 输出实际加载的配置文件路径。
 	}
 
-	cfg.Server.Host = viper.GetString("server.host")
-	cfg.Server.Port = viper.GetInt("server.port")
-
-	// Backward compatibility: old keys jwt.secret / jwt.expireHour / jwt.refreshHour
-	cfg.JWT.SigningKey = viper.GetString("jwt.signing_key")
-	if cfg.JWT.SigningKey == "" {
-		cfg.JWT.SigningKey = viper.GetString("jwt.secret")
+	cfg.Server.Host = viper.GetString("server.host")        // 读取监听地址。
+	cfg.Server.Port = viper.GetInt("server.port")           // 读取监听端口。
+	cfg.JWT.SigningKey = viper.GetString("jwt.signing_key") // 读取签名密钥。
+	if cfg.JWT.SigningKey == "" {                           // 兼容旧配置键。
+		cfg.JWT.SigningKey = viper.GetString("jwt.secret") // 回退读取旧签名键。
 	}
 
-	cfg.JWT.AccessExpire = viper.GetInt("jwt.access_expire")
-	if cfg.JWT.AccessExpire <= 0 {
-		oldHour := viper.GetInt("jwt.expireHour")
-		if oldHour > 0 {
-			cfg.JWT.AccessExpire = oldHour * 3600
+	cfg.JWT.AccessExpire = viper.GetInt("jwt.access_expire") // 读取 access 过期时间。
+	if cfg.JWT.AccessExpire <= 0 {                           // 兼容旧小时制配置。
+		oldHour := viper.GetInt("jwt.expireHour") // 读取旧配置小时值。
+		if oldHour > 0 {                          // 旧值有效才转换。
+			cfg.JWT.AccessExpire = oldHour * 3600 // 小时转换为秒。
 		}
 	}
 
-	cfg.JWT.RefreshExpire = viper.GetInt("jwt.refresh_expire")
-	if cfg.JWT.RefreshExpire <= 0 {
-		oldHour := viper.GetInt("jwt.refreshHour")
-		if oldHour > 0 {
-			cfg.JWT.RefreshExpire = oldHour * 3600
+	cfg.JWT.RefreshExpire = viper.GetInt("jwt.refresh_expire") // 读取 refresh 过期时间。
+	if cfg.JWT.RefreshExpire <= 0 {                            // 兼容旧小时制配置。
+		oldHour := viper.GetInt("jwt.refreshHour") // 读取旧 refresh 小时值。
+		if oldHour > 0 {                           // 旧值有效才转换。
+			cfg.JWT.RefreshExpire = oldHour * 3600 // 小时转换为秒。
 		}
 	}
-	cfg.JWT.AllowInsecureMemoryStore = viper.GetBool("jwt.allow_insecure_memory_store")
 
-	cfg.Database.DSN = viper.GetString("database.dsn")
-	cfg.Database.LogLevel = viper.GetString("database.log_level")
-	cfg.Redis.Addr = viper.GetString("redis.addr")
-	cfg.Redis.Password = viper.GetString("redis.password")
-	cfg.Redis.DB = viper.GetInt("redis.db")
-	cfg.CORS.AllowedOrigins = viper.GetStringSlice("cors.allowed_origins")
-	cfg.CORS.AllowCredentials = viper.GetBool("cors.allow_credentials")
-	cfg.Auth.AllowPublicRegister = viper.GetBool("auth.allow_public_register")
-	cfg.Log.Level = viper.GetString("log.level")
-	cfg.Log.FilePath = viper.GetString("log.file_path")
-	cfg.Upload.SavePath = viper.GetString("upload.save_path")
-	cfg.Upload.BaseURL = viper.GetString("upload.base_url")
+	cfg.JWT.AllowInsecureMemoryStore = viper.GetBool("jwt.allow_insecure_memory_store") // 读取内存存储开关。
+	cfg.Database.DSN = viper.GetString("database.dsn")                                  // 读取数据库连接串。
+	cfg.Database.LogLevel = viper.GetString("database.log_level")                       // 读取数据库日志级别。
+	cfg.Redis.Addr = viper.GetString("redis.addr")                                      // 读取 Redis 地址。
+	cfg.Redis.Password = viper.GetString("redis.password")                              // 读取 Redis 密码。
+	cfg.Redis.DB = viper.GetInt("redis.db")                                             // 读取 Redis 分库。
+	cfg.CORS.AllowedOrigins = viper.GetStringSlice("cors.allowed_origins")              // 读取跨域来源列表。
+	cfg.CORS.AllowCredentials = viper.GetBool("cors.allow_credentials")                 // 读取跨域凭据开关。
+	cfg.Auth.AllowPublicRegister = viper.GetBool("auth.allow_public_register")          // 读取公开注册开关。
+	cfg.Log.Level = viper.GetString("log.level")                                        // 读取日志级别。
+	cfg.Log.FilePath = viper.GetString("log.file_path")                                 // 读取日志文件路径。
+	cfg.Upload.SavePath = viper.GetString("upload.save_path")                           // 读取上传保存目录。
+	cfg.Upload.BaseURL = viper.GetString("upload.base_url")                             // 读取上传访问前缀。
 }
 
+// GetConfig 返回已初始化配置。
 func GetConfig() Config {
-	return cfg
+	return cfg // 返回全局配置快照。
 }

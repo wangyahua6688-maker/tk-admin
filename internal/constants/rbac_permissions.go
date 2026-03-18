@@ -3,62 +3,94 @@ package constants
 // RBAC 权限码常量。
 // 说明：统一定义权限码，避免在路由层硬编码字符串导致拼写错误。
 const (
-	PermRoleList           = "sys:role:list"
-	PermRoleCreate         = "sys:role:create"
-	PermRoleView           = "sys:role:view"
-	PermRoleUpdate         = "sys:role:update"
-	PermRoleDelete         = "sys:role:delete"
+	// 更新当前变量或字段值。
+	PermRoleList = "sys:role:list"
+	// 更新当前变量或字段值。
+	PermRoleCreate = "sys:role:create"
+	// 更新当前变量或字段值。
+	PermRoleView = "sys:role:view"
+	// 更新当前变量或字段值。
+	PermRoleUpdate = "sys:role:update"
+	// 更新当前变量或字段值。
+	PermRoleDelete = "sys:role:delete"
+	// 更新当前变量或字段值。
 	PermRolePermissionView = "sys:role_permission:view"
+	// 更新当前变量或字段值。
 	PermRolePermissionBind = "sys:role_permission:bind"
 
-	PermPermissionList   = "sys:permission:list"
+	// 更新当前变量或字段值。
+	PermPermissionList = "sys:permission:list"
+	// 更新当前变量或字段值。
 	PermPermissionCreate = "sys:permission:create"
-	PermPermissionView   = "sys:permission:view"
+	// 更新当前变量或字段值。
+	PermPermissionView = "sys:permission:view"
+	// 更新当前变量或字段值。
 	PermPermissionUpdate = "sys:permission:update"
+	// 更新当前变量或字段值。
 	PermPermissionDelete = "sys:permission:delete"
 
-	PermMenuList           = "sys:menu:list"
-	PermMenuCreate         = "sys:menu:create"
-	PermMenuView           = "sys:menu:view"
-	PermMenuUpdate         = "sys:menu:update"
-	PermMenuDelete         = "sys:menu:delete"
-	PermMenuFrontendTree   = "sys:menu:frontend"
+	// 更新当前变量或字段值。
+	PermMenuList = "sys:menu:list"
+	// 更新当前变量或字段值。
+	PermMenuCreate = "sys:menu:create"
+	// 更新当前变量或字段值。
+	PermMenuView = "sys:menu:view"
+	// 更新当前变量或字段值。
+	PermMenuUpdate = "sys:menu:update"
+	// 更新当前变量或字段值。
+	PermMenuDelete = "sys:menu:delete"
+	// 更新当前变量或字段值。
+	PermMenuFrontendTree = "sys:menu:frontend"
+	// 更新当前变量或字段值。
 	PermMenuPermissionView = "sys:menu_permission:view"
+	// 更新当前变量或字段值。
 	PermMenuPermissionBind = "sys:menu_permission:bind"
 
-	PermUserList    = "sys:user:list"
-	PermUserCreate  = "sys:user:create"
-	PermUserView    = "sys:user:view"
-	PermUserUpdate  = "sys:user:update"
-	PermUserDelete  = "sys:user:delete"
+	// 更新当前变量或字段值。
+	PermUserList = "sys:user:list"
+	// 更新当前变量或字段值。
+	PermUserCreate = "sys:user:create"
+	// 更新当前变量或字段值。
+	PermUserView = "sys:user:view"
+	// 更新当前变量或字段值。
+	PermUserUpdate = "sys:user:update"
+	// 更新当前变量或字段值。
+	PermUserDelete = "sys:user:delete"
+	// 更新当前变量或字段值。
 	PermUserProfile = "sys:user:profile"
 
-	PermUserRoleView      = "sys:user_role:view"
-	PermUserRoleBind      = "sys:user_role:bind"
-	PermUserRoleAdd       = "sys:user_role:add"
-	PermUserRoleRemove    = "sys:user_role:remove"
+	// 更新当前变量或字段值。
+	PermUserRoleView = "sys:user_role:view"
+	// 更新当前变量或字段值。
+	PermUserRoleBind = "sys:user_role:bind"
+	// 更新当前变量或字段值。
+	PermUserRoleAdd = "sys:user_role:add"
+	// 更新当前变量或字段值。
+	PermUserRoleRemove = "sys:user_role:remove"
+	// 更新当前变量或字段值。
 	PermAuditLoginLogList = "sys:audit:login_log:list"
 
-	PermMessageList    = "sys:message:list"
-	PermMessageRead    = "sys:message:read"
-	PermMessageReadAll = "sys:message:read_all"
-
-	PermBizClientView  = "biz:client:view"
-	PermBizForumView   = "biz:forum:view"
-	PermBizLotteryView = "biz:lottery:view"
-	PermBizDrawView    = "biz:draw:view"
-	PermBizLiveView    = "biz:live:view"
-
-	PermClientUserList       = "client:user:list"
-	PermClientPostList       = "client:post:list"
+	// 更新当前变量或字段值。
+	PermClientUserList = "client:user:list"
+	// 更新当前变量或字段值。
+	PermClientPostList = "client:post:list"
+	// 更新当前变量或字段值。
 	PermClientHotCommentList = "client:comment:hot:list"
 
-	PermBizBannerList         = "biz:banner:list"
-	PermBizBroadcastList      = "biz:broadcast:list"
+	// 更新当前变量或字段值。
+	PermBizBannerList = "biz:banner:list"
+	// 更新当前变量或字段值。
+	PermBizBroadcastList = "biz:broadcast:list"
+	// 更新当前变量或字段值。
 	PermBizSpecialLotteryList = "biz:special_lottery:list"
-	PermBizLotteryInfoList    = "biz:lottery_info:list"
-	PermBizOfficialPostList   = "biz:official_post:list"
-	PermBizExternalLinkList   = "biz:external_link:list"
-	PermBizHomePopupList      = "biz:home_popup:list"
-	PermBizSMSChannelList     = "biz:sms_channel:list"
+	// 更新当前变量或字段值。
+	PermBizLotteryInfoList = "biz:lottery_info:list"
+	// 更新当前变量或字段值。
+	PermBizOfficialPostList = "biz:official_post:list"
+	// 更新当前变量或字段值。
+	PermBizExternalLinkList = "biz:external_link:list"
+	// 更新当前变量或字段值。
+	PermBizHomePopupList = "biz:home_popup:list"
+	// 更新当前变量或字段值。
+	PermBizSMSChannelList = "biz:sms_channel:list"
 )

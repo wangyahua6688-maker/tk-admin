@@ -2,12 +2,19 @@ package models
 
 import "time"
 
+// RefreshTokenRecord 定义RefreshTokenRecord相关结构。
 type RefreshTokenRecord struct {
-	ID        uint `gorm:"primaryKey"`
-	UserID    uint
-	DeviceID  string
-	Token     string
+	// 处理当前语句逻辑。
+	ID uint `gorm:"primaryKey"`
+	// 处理当前语句逻辑。
+	UserID uint
+	// 处理当前语句逻辑。
+	DeviceID string
+	// 处理当前语句逻辑。
+	Token string
+	// 处理当前语句逻辑。
 	ExpiresAt time.Time
+	// 处理当前语句逻辑。
 	CreatedAt time.Time
 }
 

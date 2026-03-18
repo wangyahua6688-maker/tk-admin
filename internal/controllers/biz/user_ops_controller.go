@@ -14,6 +14,8 @@ type UserOpsController struct {
 	svc *bizsvc.UserOpsService // 用户运营服务聚合
 }
 
+// NewUserOpsController 创建UserOpsController实例。
 func NewUserOpsController(db *gorm.DB) *UserOpsController {
+	// 返回当前处理结果。
 	return &UserOpsController{svc: bizsvc.NewUserOpsService(db)}
 }

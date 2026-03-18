@@ -4,7 +4,7 @@ server:
 
 jwt:
   signing_key: "dev-local-signing-key-change-in-production-123456"
-  access_expire: 900
+  access_expire: 3600
   refresh_expire: 604800
   allow_insecure_memory_store: true
 

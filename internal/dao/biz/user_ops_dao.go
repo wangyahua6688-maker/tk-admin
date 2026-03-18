@@ -10,5 +10,6 @@ type UserOpsDAO struct {
 
 // NewUserOpsDAO 创建用户运营 DAO。
 func NewUserOpsDAO(db *gorm.DB) *UserOpsDAO {
+	// 返回当前处理结果。
 	return &UserOpsDAO{db: db}
 }

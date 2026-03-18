@@ -14,23 +14,30 @@ func (d *BizConfigDAO) ListDrawRecords(ctx context.Context, specialLotteryID uin
 	query := d.db.WithContext(ctx).Model(&models.WDrawRecord{}).Order("draw_at DESC, id DESC")
 	// 限制数量，防止一次性拉取过多数据。
 	if limit > 0 {
+		// 更新当前变量或字段值。
 		query = query.Limit(limit)
 	}
 	// 彩种筛选。
 	if specialLotteryID > 0 {
+		// 更新当前变量或字段值。
 		query = query.Where("special_lottery_id = ?", specialLotteryID)
 	}
 	// 关键字筛选（期号模糊匹配）。
 	keyword = strings.TrimSpace(keyword)
+	// 判断条件并进入对应分支逻辑。
 	if keyword != "" {
+		// 更新当前变量或字段值。
 		query = query.Where("issue LIKE ?", "%"+keyword+"%")
 	}
 
 	// 执行查询。
 	items := make([]models.WDrawRecord, 0)
+	// 判断条件并进入对应分支逻辑。
 	if err := query.Find(&items).Error; err != nil {
+		// 返回当前处理结果。
 		return nil, err
 	}
+	// 返回当前处理结果。
 	return items, nil
 }
 
@@ -38,9 +45,12 @@ func (d *BizConfigDAO) ListDrawRecords(ctx context.Context, specialLotteryID uin
 func (d *BizConfigDAO) GetDrawRecordByID(ctx context.Context, id uint) (*models.WDrawRecord, error) {
 	// 查询单条记录。
 	var item models.WDrawRecord
+	// 判断条件并进入对应分支逻辑。
 	if err := d.db.WithContext(ctx).First(&item, id).Error; err != nil {
+		// 返回当前处理结果。
 		return nil, err
 	}
+	// 返回当前处理结果。
 	return &item, nil
 }
 
@@ -60,9 +70,12 @@ func (d *BizConfigDAO) UpdateDrawRecordTx(tx *gorm.DB, id uint, updates map[stri
 func (d *BizConfigDAO) ResetCurrentDrawRecordTx(tx *gorm.DB, specialLotteryID uint, excludeID uint) error {
 	// 清理同彩种的 current 标识（排除当前记录）。
 	query := tx.Model(&models.WDrawRecord{}).Where("special_lottery_id = ?", specialLotteryID)
+	// 判断条件并进入对应分支逻辑。
 	if excludeID > 0 {
+		// 更新当前变量或字段值。
 		query = query.Where("id <> ?", excludeID)
 	}
+	// 返回当前处理结果。
 	return query.Update("is_current", 0).Error
 }
 

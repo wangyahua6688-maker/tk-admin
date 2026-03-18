@@ -4,9 +4,13 @@ import "gorm.io/gorm"
 
 // Role 角色模型
 type Role struct {
+	// 处理当前语句逻辑。
 	gorm.Model
-	Name        string       `gorm:"size:100;uniqueIndex" json:"name"`
-	Code        string       `gorm:"size:100;uniqueIndex" json:"code"`
+	// 处理当前语句逻辑。
+	Name string `gorm:"size:100;uniqueIndex" json:"name"`
+	// 处理当前语句逻辑。
+	Code string `gorm:"size:100;uniqueIndex" json:"code"`
+	// 处理当前语句逻辑。
 	Permissions []Permission `gorm:"many2many:sys_role_permissions;" json:"permissions"`
 }
 

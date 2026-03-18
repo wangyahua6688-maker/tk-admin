@@ -14,6 +14,7 @@ type MenuPermissionDao struct {
 
 // NewMenuPermissionDao 创建菜单权限 DAO。
 func NewMenuPermissionDao(db *gorm.DB) *MenuPermissionDao {
+	// 返回当前处理结果。
 	return &MenuPermissionDao{db: db}
 }
 
@@ -21,9 +22,12 @@ func NewMenuPermissionDao(db *gorm.DB) *MenuPermissionDao {
 func (d *MenuPermissionDao) FindMenu(ctx context.Context, id uint) (*models.Menu, error) {
 	// 仅查一条菜单记录
 	var m models.Menu
+	// 判断条件并进入对应分支逻辑。
 	if err := d.db.WithContext(ctx).First(&m, id).Error; err != nil {
+		// 返回当前处理结果。
 		return nil, err
 	}
+	// 返回当前处理结果。
 	return &m, nil
 }
 
@@ -31,9 +35,12 @@ func (d *MenuPermissionDao) FindMenu(ctx context.Context, id uint) (*models.Menu
 func (d *MenuPermissionDao) FindPermissions(ctx context.Context, ids []uint) ([]models.Permission, error) {
 	// 批量查询权限
 	var perms []models.Permission
+	// 判断条件并进入对应分支逻辑。
 	if err := d.db.WithContext(ctx).Find(&perms, ids).Error; err != nil {
+		// 返回当前处理结果。
 		return nil, err
 	}
+	// 返回当前处理结果。
 	return perms, nil
 }
 
@@ -47,8 +54,11 @@ func (d *MenuPermissionDao) ReplacePermissions(ctx context.Context, menu *models
 func (d *MenuPermissionDao) GetPermissions(ctx context.Context, menuID uint) ([]models.Permission, error) {
 	// 预加载权限关联
 	var menu models.Menu
+	// 判断条件并进入对应分支逻辑。
 	if err := d.db.WithContext(ctx).Preload("Permissions").First(&menu, menuID).Error; err != nil {
+		// 返回当前处理结果。
 		return nil, err
 	}
+	// 返回当前处理结果。
 	return menu.Permissions, nil
 }

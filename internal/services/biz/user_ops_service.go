@@ -13,8 +13,11 @@ type UserOpsService struct {
 
 // NewUserOpsService 创建用户运营服务。
 func NewUserOpsService(db *gorm.DB) *UserOpsService {
+	// 返回当前处理结果。
 	return &UserOpsService{
+		// 调用bizdao.NewUserOpsDAO完成当前处理。
 		dao: bizdao.NewUserOpsDAO(db),
-		db:  db,
+		// 处理当前语句逻辑。
+		db: db,
 	}
 }

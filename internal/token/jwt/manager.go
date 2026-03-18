@@ -13,33 +13,34 @@ import (
 	gjwt "github.com/golang-jwt/jwt/v5"
 )
 
+// 声明当前常量。
 const (
 	// TokenTypeAccess 用于接口访问鉴权，生命周期较短。
 	TokenTypeAccess = "access"
 	// TokenTypeRefresh 用于换发新的 access token，生命周期较长。
 	TokenTypeRefresh = "refresh"
-	defaultDeviceID  = "default"
+	// 更新当前变量或字段值。
+	defaultDeviceID = "default"
 )
 
 // Manager 统一封装 JWT 的签发、校验、刷新和撤销逻辑。
 type Manager struct {
+	// 处理当前语句逻辑。
 	Config *Config
-	Store  storepkg.Store
+	// 处理当前语句逻辑。
+	Store storepkg.Store
 }
 
 // NewManager 创建 token 管理器。
 // store 可选：传入后可启用 refresh token 持久化、access token 黑名单等能力。
 func NewManager(cfg *Config, store storepkg.Store) *Manager {
+	// 返回当前处理结果。
 	return &Manager{
+		// 处理当前语句逻辑。
 		Config: cfg,
-		Store:  store,
+		// 处理当前语句逻辑。
+		Store: store,
 	}
-}
-
-// GenerateTokens 为指定用户生成 access/refresh 一对 token。
-// 默认使用 defaultDeviceID，当你不关心设备粒度时可直接调用。
-func (m *Manager) GenerateTokens(userID uint) (access string, refresh string, err error) {
-	return m.GenerateTokensWithDevice(userID, defaultDeviceID)
 }
 
 // GenerateTokensWithDevice 按设备粒度生成 access/refresh token。
@@ -47,68 +48,96 @@ func (m *Manager) GenerateTokens(userID uint) (access string, refresh string, er
 // - 同一账号可以多端登录；
 // - 登出时只失效“当前设备”的 refresh token，而不是全部设备。
 func (m *Manager) GenerateTokensWithDevice(userID uint, deviceID string) (access string, refresh string, err error) {
+	// 定义并初始化当前变量。
 	now := time.Now()
+	// 更新当前变量或字段值。
 	deviceID = normalizeDeviceID(deviceID)
 
 	// 1) 生成 access token（短期凭证）。
 	accessJTI, err := newJTI()
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return "", "", fmt.Errorf("%w: %v", constants.ErrSigningToken, err)
 	}
 
+	// 定义并初始化当前变量。
 	accessClaims := Claims{
-		UserID:    userID,
+		// 处理当前语句逻辑。
+		UserID: userID,
+		// 处理当前语句逻辑。
 		TokenType: TokenTypeAccess,
-		DeviceID:  deviceID,
+		// 处理当前语句逻辑。
+		DeviceID: deviceID,
+		// 进入新的代码块进行处理。
 		RegisteredClaims: gjwt.RegisteredClaims{
-			Issuer:    m.Config.Issuer,
-			ID:        accessJTI,
-			IssuedAt:  gjwt.NewNumericDate(now),
+			// 处理当前语句逻辑。
+			Issuer: m.Config.Issuer,
+			// 处理当前语句逻辑。
+			ID: accessJTI,
+			// 调用gjwt.NewNumericDate完成当前处理。
+			IssuedAt: gjwt.NewNumericDate(now),
+			// 调用gjwt.NewNumericDate完成当前处理。
 			ExpiresAt: gjwt.NewNumericDate(now.Add(m.Config.AccessExpire)),
 		},
 	}
+	// 更新当前变量或字段值。
 	access, err = m.signClaims(accessClaims)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return "", "", fmt.Errorf("%w: %v", constants.ErrSigningToken, err)
 	}
 
 	// 2) 生成 refresh token（长期凭证）。
 	refreshJTI, err := newJTI()
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return "", "", fmt.Errorf("%w: %v", constants.ErrSigningToken, err)
 	}
 
+	// 定义并初始化当前变量。
 	refreshClaims := Claims{
-		UserID:    userID,
+		// 处理当前语句逻辑。
+		UserID: userID,
+		// 处理当前语句逻辑。
 		TokenType: TokenTypeRefresh,
-		DeviceID:  deviceID,
+		// 处理当前语句逻辑。
+		DeviceID: deviceID,
+		// 进入新的代码块进行处理。
 		RegisteredClaims: gjwt.RegisteredClaims{
-			Issuer:    m.Config.Issuer,
-			ID:        refreshJTI,
-			IssuedAt:  gjwt.NewNumericDate(now),
+			// 处理当前语句逻辑。
+			Issuer: m.Config.Issuer,
+			// 处理当前语句逻辑。
+			ID: refreshJTI,
+			// 调用gjwt.NewNumericDate完成当前处理。
+			IssuedAt: gjwt.NewNumericDate(now),
+			// 调用gjwt.NewNumericDate完成当前处理。
 			ExpiresAt: gjwt.NewNumericDate(now.Add(m.Config.RefreshExpire)),
 		},
 	}
+	// 更新当前变量或字段值。
 	refresh, err = m.signClaims(refreshClaims)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return "", "", fmt.Errorf("%w: %v", constants.ErrSigningToken, err)
 	}
 
 	// 3) 将 refresh token 持久化（若有 Store）。
 	// key 维度：user_id + device_id。
 	if m.Store != nil {
+		// 定义并初始化当前变量。
 		key := m.getRefreshTokenKey(userID, deviceID)
+		// 判断条件并进入对应分支逻辑。
 		if serr := m.Store.Set(key, refresh, m.Config.RefreshExpire); serr != nil {
+			// 返回当前处理结果。
 			return "", "", constants.ErrTokenStoreFailed
 		}
 	}
+	// 返回当前处理结果。
 	return access, refresh, nil
-}
-
-// RefreshToken 仅返回新的 access token（兼容旧调用方式）。
-func (m *Manager) RefreshToken(refreshToken string) (string, error) {
-	access, _, err := m.RefreshTokenPair(refreshToken)
-	return access, err
 }
 
 // RefreshTokenPair 校验并轮换 refresh token，返回新的 access+refresh。
@@ -117,121 +146,186 @@ func (m *Manager) RefreshToken(refreshToken string) (string, error) {
 // - 强制 issuer 匹配；
 // - 与 Store 中保存值比对，防止伪造或被旧值重放。
 func (m *Manager) RefreshTokenPair(refreshToken string) (string, string, error) {
+	// 定义并初始化当前变量。
 	claims, err := ParseTokenClaims(refreshToken, m.Config.SigningKey)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return "", "", err
 	}
+	// 判断条件并进入对应分支逻辑。
 	if claims.TokenType != TokenTypeRefresh {
+		// 返回当前处理结果。
 		return "", "", constants.ErrInvalidToken
 	}
+	// 判断条件并进入对应分支逻辑。
 	if m.Config.Issuer != "" && claims.Issuer != m.Config.Issuer {
+		// 返回当前处理结果。
 		return "", "", constants.ErrInvalidToken
 	}
 
+	// 定义并初始化当前变量。
 	deviceID := normalizeDeviceID(claims.DeviceID)
+	// 判断条件并进入对应分支逻辑。
 	if m.Store != nil {
+		// 定义并初始化当前变量。
 		key := m.getRefreshTokenKey(claims.UserID, deviceID)
+		// 定义并初始化当前变量。
 		stored, err := m.Store.Get(key)
+		// 判断条件并进入对应分支逻辑。
 		if err != nil {
+			// 返回当前处理结果。
 			return "", "", constants.ErrTokenNotFound
 		}
+		// 判断条件并进入对应分支逻辑。
 		if stored != refreshToken {
+			// 返回当前处理结果。
 			return "", "", constants.ErrInvalidToken
 		}
 	}
 
+	// 定义并初始化当前变量。
 	access, refresh, err := m.GenerateTokensWithDevice(claims.UserID, deviceID)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return "", "", err
 	}
+	// 返回当前处理结果。
 	return access, refresh, nil
 }
 
 // ValidateAccessToken 校验 access token，并检查是否在黑名单。
 // 黑名单用于“主动失效”场景（如用户登出后立即让 access token 无效）。
 func (m *Manager) ValidateAccessToken(accessToken string) (*Claims, error) {
+	// 定义并初始化当前变量。
 	claims, err := ParseTokenClaims(accessToken, m.Config.SigningKey)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return nil, err
 	}
+	// 判断条件并进入对应分支逻辑。
 	if claims.TokenType != TokenTypeAccess {
+		// 返回当前处理结果。
 		return nil, constants.ErrInvalidToken
 	}
+	// 判断条件并进入对应分支逻辑。
 	if m.Config.Issuer != "" && claims.Issuer != m.Config.Issuer {
+		// 返回当前处理结果。
 		return nil, constants.ErrInvalidToken
 	}
 
+	// 判断条件并进入对应分支逻辑。
 	if claims.ID == "" {
+		// 返回当前处理结果。
 		return nil, constants.ErrInvalidToken
 	}
 
+	// 判断条件并进入对应分支逻辑。
 	if m.Store != nil {
+		// 判断条件并进入对应分支逻辑。
 		if _, err := m.Store.Get(m.getAccessBlacklistKey(claims.ID)); err == nil {
+			// 返回当前处理结果。
 			return nil, constants.ErrInvalidToken
+			// 进入新的代码块进行处理。
 		} else if err != constants.ErrTokenNotFound {
+			// 返回当前处理结果。
 			return nil, constants.ErrInvalidToken
 		}
 	}
 
+	// 返回当前处理结果。
 	return claims, nil
 }
 
 // RevokeAccessToken 将 access token 的 jti 写入黑名单，TTL 为 token 剩余生命周期。
 func (m *Manager) RevokeAccessToken(accessToken string) error {
+	// 判断条件并进入对应分支逻辑。
 	if m.Store == nil {
+		// 返回当前处理结果。
 		return nil
 	}
+	// 定义并初始化当前变量。
 	claims, err := ParseTokenClaims(accessToken, m.Config.SigningKey)
+	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		// 返回当前处理结果。
 		return err
 	}
+	// 判断条件并进入对应分支逻辑。
 	if claims.TokenType != TokenTypeAccess || claims.ID == "" || claims.ExpiresAt == nil {
+		// 返回当前处理结果。
 		return constants.ErrInvalidToken
 	}
 
+	// 定义并初始化当前变量。
 	ttl := time.Until(claims.ExpiresAt.Time)
+	// 判断条件并进入对应分支逻辑。
 	if ttl <= 0 {
+		// 返回当前处理结果。
 		return nil
 	}
 
+	// 返回当前处理结果。
 	return m.Store.Set(m.getAccessBlacklistKey(claims.ID), "1", ttl)
 }
 
 // InvalidateRefresh 使某个用户某个设备的 refresh token 失效（用于登出）。
 func (m *Manager) InvalidateRefresh(userID uint, deviceID string) error {
+	// 判断条件并进入对应分支逻辑。
 	if m.Store == nil {
+		// 返回当前处理结果。
 		return nil
 	}
+	// 返回当前处理结果。
 	return m.Store.Delete(m.getRefreshTokenKey(userID, normalizeDeviceID(deviceID)))
 }
 
+// signClaims 处理signClaims相关逻辑。
 func (m *Manager) signClaims(c Claims) (string, error) {
+	// 定义并初始化当前变量。
 	token := gjwt.NewWithClaims(gjwt.SigningMethodHS256, c)
+	// 返回当前处理结果。
 	return token.SignedString([]byte(m.Config.SigningKey))
 }
 
+// getRefreshTokenKey 处理getRefreshTokenKey相关逻辑。
 func (m *Manager) getRefreshTokenKey(userID uint, deviceID string) string {
+	// 返回当前处理结果。
 	return fmt.Sprintf("refresh_token:%d:%s", userID, deviceID)
 }
 
+// getAccessBlacklistKey 处理getAccessBlacklistKey相关逻辑。
 func (m *Manager) getAccessBlacklistKey(jti string) string {
+	// 返回当前处理结果。
 	return fmt.Sprintf("blacklist:access:%s", jti)
 }
 
+// normalizeDeviceID 处理normalizeDeviceID相关逻辑。
 func normalizeDeviceID(deviceID string) string {
+	// 定义并初始化当前变量。
 	trimmed := strings.TrimSpace(deviceID)
+	// 判断条件并进入对应分支逻辑。
 	if trimmed == "" {
+		// 返回当前处理结果。
 		return defaultDeviceID
 	}
 	// 对 device 标识做哈希，避免把原始 UA/设备信息直接作为 Redis key 暴露。
 	sum := sha256.Sum256([]byte(trimmed))
+	// 返回当前处理结果。
 	return hex.EncodeToString(sum[:16])
 }
 
+// newJTI 处理newJTI相关逻辑。
 func newJTI() (string, error) {
+	// 定义并初始化当前变量。
 	buf := make([]byte, 16)
+	// 判断条件并进入对应分支逻辑。
 	if _, err := rand.Read(buf); err != nil {
+		// 返回当前处理结果。
 		return "", err
 	}
+	// 返回当前处理结果。
 	return hex.EncodeToString(buf), nil
 }

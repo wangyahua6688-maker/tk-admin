@@ -13,35 +13,36 @@ type PermissionService struct {
 
 // NewPermissionService 创建权限服务。
 func NewPermissionService(dao rbacdao.PermissionDAO) *PermissionService {
+	// 返回当前处理结果。
 	return &PermissionService{dao: dao}
 }
 
 // Create 新增权限。
 func (s *PermissionService) Create(ctx context.Context, p *models.Permission) error {
+	// 返回当前处理结果。
 	return s.dao.Create(ctx, p)
 }
 
 // Update 更新权限。
 func (s *PermissionService) Update(ctx context.Context, p *models.Permission) error {
+	// 返回当前处理结果。
 	return s.dao.Update(ctx, p)
 }
 
 // List 查询权限列表。
 func (s *PermissionService) List(ctx context.Context) ([]models.Permission, error) {
+	// 返回当前处理结果。
 	return s.dao.List(ctx)
 }
 
 // Get 获取单个权限。
 func (s *PermissionService) Get(ctx context.Context, id uint) (*models.Permission, error) {
+	// 返回当前处理结果。
 	return s.dao.Get(ctx, id)
 }
 
 // Delete 删除权限。
 func (s *PermissionService) Delete(ctx context.Context, id uint) error {
+	// 返回当前处理结果。
 	return s.dao.Delete(ctx, id)
-}
-
-// GetPermissionsByRoleIDs 根据角色 ID 批量获取权限。
-func (s *PermissionService) GetPermissionsByRoleIDs(ctx context.Context, roleIDs []uint) ([]models.Permission, error) {
-	return s.dao.GetByRoleIDs(ctx, roleIDs)
 }
