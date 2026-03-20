@@ -2,6 +2,7 @@ package biz
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -77,8 +78,12 @@ func (bc *BizConfigController) CreateSpecialLottery(c *gin.Context) {
 		// 返回当前处理结果。
 		return
 	}
-	// 下期开奖时间无法解析时，兜底当前时间，避免写入空值。
-	next := parseDateTimeOrDefault(req.NextDrawAt, time.Now())
+	// 下期开奖时间按“每天固定时刻”解析，前端只需要传 HH:mm:ss。
+	next, parseErr := parseDailyDrawTime(req.NextDrawAt, lotteryNowInEast8())
+	if parseErr != nil {
+		commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid next_draw_at, expected HH:mm:ss")
+		return
+	}
 	// 定义并初始化当前变量。
 	item := models.WSpecialLottery{
 		// 调用strings.TrimSpace完成当前处理。
@@ -189,8 +194,13 @@ func (bc *BizConfigController) UpdateSpecialLottery(c *gin.Context) {
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.NextDrawAt != nil {
+		next, parseErr := parseDailyDrawTime(*req.NextDrawAt, lotteryNowInEast8())
+		if parseErr != nil {
+			commonresp.GinError(c, constants.AdminBizInvalidRequest, "invalid next_draw_at, expected HH:mm:ss")
+			return
+		}
 		// 更新当前变量或字段值。
-		updates["next_draw_at"] = parseDateTimeOrDefault(*req.NextDrawAt, time.Now())
+		updates["next_draw_at"] = next
 	}
 	// 判断条件并进入对应分支逻辑。
 	if req.LiveEnabled != nil {
@@ -1012,6 +1022,118 @@ func parseDateTimeOrDefault(raw string, fallback time.Time) time.Time {
 	}
 	// 返回当前处理结果。
 	return fallback
+}
+
+// parseDailyDrawTime 解析“每天开奖时刻”。
+// 1) 支持 HH:mm / HH:mm:ss；
+// 2) 兼容历史 datetime/RFC3339 输入；
+// 3) 最终仅保留“时分秒”，日期统一使用 fallback 当天，避免每天手动改日期。
+// 4) 输入无效时返回错误，避免错误值静默回退到当前时间。
+func parseDailyDrawTime(raw string, fallback time.Time) (time.Time, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return time.Time{}, fmt.Errorf("empty next_draw_at")
+	}
+	loc := fallback.Location()
+	// 先直接提取时分秒，避免 datetime 时区转换导致“东京填 21:30 被转成 20:30”。
+	if h, m, s, ok := extractClockFromText(raw); ok {
+		return time.Date(
+			fallback.Year(),
+			fallback.Month(),
+			fallback.Day(),
+			h,
+			m,
+			s,
+			0,
+			loc,
+		), nil
+	}
+	for _, layout := range []string{"15:04:05", "15:04"} {
+		if t, err := time.ParseInLocation(layout, raw, loc); err == nil {
+			return time.Date(
+				fallback.Year(),
+				fallback.Month(),
+				fallback.Day(),
+				t.Hour(),
+				t.Minute(),
+				t.Second(),
+				0,
+				loc,
+			), nil
+		}
+	}
+	parsed := time.Time{}
+	parsedOK := false
+	if t, err := time.Parse(time.RFC3339, raw); err == nil {
+		parsed = t
+		parsedOK = true
+	} else {
+		for _, layout := range []string{
+			time.RFC3339Nano,
+			"2006-01-02 15:04:05",
+			"2006-01-02 15:04",
+			"2006-01-02T15:04:05",
+			"2006-01-02T15:04:05.000Z07:00",
+			"2006-01-02T15:04:05.000Z",
+		} {
+			if dt, dtErr := time.ParseInLocation(layout, raw, loc); dtErr == nil {
+				parsed = dt
+				parsedOK = true
+				break
+			}
+		}
+	}
+	if !parsedOK {
+		return time.Time{}, fmt.Errorf("invalid next_draw_at format")
+	}
+	return time.Date(
+		fallback.Year(),
+		fallback.Month(),
+		fallback.Day(),
+		parsed.Hour(),
+		parsed.Minute(),
+		parsed.Second(),
+		0,
+		loc,
+	), nil
+}
+
+var dailyClockMatcher = regexp.MustCompile(`(\d{1,2}):(\d{2})(?::(\d{2}))?`)
+
+// extractClockFromText 从任意时间文本中提取时分秒（忽略日期与时区部分）。
+func extractClockFromText(raw string) (int, int, int, bool) {
+	matched := dailyClockMatcher.FindStringSubmatch(strings.TrimSpace(raw))
+	if len(matched) < 3 {
+		return 0, 0, 0, false
+	}
+	h, hErr := strconv.Atoi(matched[1])
+	m, mErr := strconv.Atoi(matched[2])
+	s := 0
+	var sErr error
+	if len(matched) >= 4 && strings.TrimSpace(matched[3]) != "" {
+		s, sErr = strconv.Atoi(matched[3])
+	}
+	if hErr != nil || mErr != nil || sErr != nil {
+		return 0, 0, 0, false
+	}
+	if h < 0 || h > 23 || m < 0 || m > 59 || s < 0 || s > 59 {
+		return 0, 0, 0, false
+	}
+	return h, m, s, true
+}
+
+// lotteryNowInEast8 返回当前东八区时间，作为开奖配置统一时区基准。
+func lotteryNowInEast8() time.Time {
+	return time.Now().In(lotteryLocationEast8())
+}
+
+// lotteryLocationEast8 返回开奖业务使用的固定时区（东八区）。
+func lotteryLocationEast8() *time.Location {
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err == nil {
+		return loc
+	}
+	return time.FixedZone("UTC+8", 8*3600)
 }
 
 // safeString 读取可空字符串指针并做空格裁剪。

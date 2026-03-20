@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS tk_special_lottery (
   name VARCHAR(64) NOT NULL COMMENT '彩种名称',
   code VARCHAR(32) NOT NULL COMMENT '彩种编码（唯一）',
   current_issue VARCHAR(32) NOT NULL DEFAULT '' COMMENT '当前期号',
-  next_draw_at DATETIME(3) NOT NULL COMMENT '下期开奖时间',
+  next_draw_at DATETIME(3) NOT NULL COMMENT '下期开奖时间（每天固定时刻，按东八区解释）',
   live_enabled TINYINT NOT NULL DEFAULT 0 COMMENT '直播开关：1开启；0关闭',
   live_status VARCHAR(16) NOT NULL DEFAULT 'pending' COMMENT '直播状态：pending未开始；live直播中；ended已结束',
   live_stream_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '外部直播流地址',

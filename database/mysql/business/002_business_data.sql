@@ -71,6 +71,49 @@ WHERE NOT EXISTS (
   WHERE position = 'home_kingkong' AND (name = '开奖现场' OR group_key = 'live_scene')
 );
 
+-- 5) 首页主题背景与左右浮动广告（若不存在则插入）。
+INSERT INTO tk_external_link (
+  name, url, position, icon_url, group_key, status, sort, created_at, updated_at
+)
+SELECT
+  '首页主题背景', '/forum', 'home_theme_bg',
+  'https://jmz.jlidesign.com:4949/unite49files/amyd/2026/02/15/20260215221804-115979298.jpg',
+  'home_theme', 1, 1, NOW(3), NOW(3)
+FROM DUAL
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM tk_external_link
+  WHERE position = 'home_theme_bg'
+);
+
+INSERT INTO tk_external_link (
+  name, url, position, icon_url, group_key, status, sort, created_at, updated_at
+)
+SELECT
+  '左侧活动广告', '/forum', 'home_float_left',
+  'https://tk.jlidesign.com:4949/m/col/25/xbpgb.jpg',
+  'home_float', 1, 1, NOW(3), NOW(3)
+FROM DUAL
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM tk_external_link
+  WHERE position = 'home_float_left'
+);
+
+INSERT INTO tk_external_link (
+  name, url, position, icon_url, group_key, status, sort, created_at, updated_at
+)
+SELECT
+  '右侧活动广告', '/lottery/categories', 'home_float_right',
+  'https://amo.jlidesign.com:4949/m/col/63/ampgt.jpg',
+  'home_float', 1, 1, NOW(3), NOW(3)
+FROM DUAL
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM tk_external_link
+  WHERE position = 'home_float_right'
+);
+
 -- =========================================================
 -- B. 可选迁移：w_* -> tk_*（自动检测源表）
 -- =========================================================
@@ -214,3 +257,38 @@ CALL migrate_w_to_tk_if_exists() $$
 DROP PROCEDURE migrate_w_to_tk_if_exists $$
 
 DELIMITER ;
+
+-- =========================================================
+-- C. 清理历史遗留字段（幂等）
+-- =========================================================
+-- 说明：
+-- 1) 倒计时配置统一放在 tk_special_lottery.next_draw_at；
+-- 2) tk_draw_record 仅保存“已开奖结果查询”，不再承载倒计时配置；
+-- 3) 字段存在才删除，兼容旧库。
+
+DROP PROCEDURE IF EXISTS tk_drop_col_if_exists;
+DELIMITER $$
+CREATE PROCEDURE tk_drop_col_if_exists(IN p_table VARCHAR(64), IN p_column VARCHAR(64))
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = p_table
+      AND column_name = p_column
+  ) THEN
+    SET @ddl = CONCAT('ALTER TABLE `', p_table, '` DROP COLUMN `', p_column, '`');
+    PREPARE stmt FROM @ddl;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+  END IF;
+END $$
+DELIMITER ;
+
+CALL tk_drop_col_if_exists('tk_draw_record', 'next_draw_at');
+CALL tk_drop_col_if_exists('tk_draw_record', 'countdown_sec');
+CALL tk_drop_col_if_exists('tk_draw_record', 'countdown_seconds');
+CALL tk_drop_col_if_exists('tk_draw_record', 'draw_countdown_sec');
+CALL tk_drop_col_if_exists('tk_draw_record', 'draw_countdown_seconds');
+
+DROP PROCEDURE IF EXISTS tk_drop_col_if_exists;
