@@ -24,34 +24,34 @@ func UserOpsRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
 	group.Use(middleware.NewJWTMiddleware(mgr))
 	{
 		// 调用group.GET完成当前处理。
-		group.GET("/client-users", middleware.PermissionRequired(constants.PermClientUserList, userRoleSvc), ctrl.ListClientUsers)
+		group.GET("/client-users", middleware.PermissionRequired(constants.PermClientUserList, userRoleSvc, mgr), ctrl.ListClientUsers)
 		// 调用group.POST完成当前处理。
-		group.POST("/client-users", middleware.PermissionRequired(constants.PermClientUserList, userRoleSvc), ctrl.CreateClientUser)
+		group.POST("/client-users", middleware.PermissionRequired(constants.PermClientUserList, userRoleSvc, mgr), ctrl.CreateClientUser)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/client-users/:id", middleware.PermissionRequired(constants.PermClientUserList, userRoleSvc), ctrl.UpdateClientUser)
+		group.PUT("/client-users/:id", middleware.PermissionRequired(constants.PermClientUserList, userRoleSvc, mgr), ctrl.UpdateClientUser)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/client-users/:id", middleware.PermissionRequired(constants.PermClientUserList, userRoleSvc), ctrl.DeleteClientUser)
+		group.DELETE("/client-users/:id", middleware.PermissionRequired(constants.PermClientUserList, userRoleSvc, mgr), ctrl.DeleteClientUser)
 
 		// 调用group.GET完成当前处理。
-		group.GET("/post-articles", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc), ctrl.ListPostArticles)
+		group.GET("/post-articles", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc, mgr), ctrl.ListPostArticles)
 		// 调用group.POST完成当前处理。
-		group.POST("/post-articles", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc), ctrl.CreatePostArticle)
+		group.POST("/post-articles", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc, mgr), ctrl.CreatePostArticle)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/post-articles/:id", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc), ctrl.UpdatePostArticle)
+		group.PUT("/post-articles/:id", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc, mgr), ctrl.UpdatePostArticle)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/post-articles/:id", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc), ctrl.DeletePostArticle)
+		group.DELETE("/post-articles/:id", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc, mgr), ctrl.DeletePostArticle)
 		// 调用group.GET完成当前处理。
-		group.GET("/post-articles/:id/comments", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc), ctrl.ListPostComments)
+		group.GET("/post-articles/:id/comments", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc, mgr), ctrl.ListPostComments)
 		// 调用group.POST完成当前处理。
-		group.POST("/post-articles/:id/comments", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc), ctrl.CreatePostComment)
+		group.POST("/post-articles/:id/comments", middleware.PermissionRequired(constants.PermClientPostList, userRoleSvc, mgr), ctrl.CreatePostComment)
 
 		// 调用group.GET完成当前处理。
-		group.GET("/hot-comments", middleware.PermissionRequired(constants.PermClientHotCommentList, userRoleSvc), ctrl.ListHotComments)
+		group.GET("/hot-comments", middleware.PermissionRequired(constants.PermClientHotCommentList, userRoleSvc, mgr), ctrl.ListHotComments)
 		// 调用group.POST完成当前处理。
-		group.POST("/hot-comments", middleware.PermissionRequired(constants.PermClientHotCommentList, userRoleSvc), ctrl.CreateHotComment)
+		group.POST("/hot-comments", middleware.PermissionRequired(constants.PermClientHotCommentList, userRoleSvc, mgr), ctrl.CreateHotComment)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/hot-comments/:id", middleware.PermissionRequired(constants.PermClientHotCommentList, userRoleSvc), ctrl.UpdateHotComment)
+		group.PUT("/hot-comments/:id", middleware.PermissionRequired(constants.PermClientHotCommentList, userRoleSvc, mgr), ctrl.UpdateHotComment)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/hot-comments/:id", middleware.PermissionRequired(constants.PermClientHotCommentList, userRoleSvc), ctrl.DeleteHotComment)
+		group.DELETE("/hot-comments/:id", middleware.PermissionRequired(constants.PermClientHotCommentList, userRoleSvc, mgr), ctrl.DeleteHotComment)
 	}
 }

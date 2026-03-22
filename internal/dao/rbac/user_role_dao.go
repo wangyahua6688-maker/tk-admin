@@ -61,6 +61,21 @@ func (d *UserRoleDao) RemoveRoles(ctx context.Context, user *models.User, roles 
 	return d.db.WithContext(ctx).Model(user).Association("Roles").Delete(&roles)
 }
 
+// GetUserIDsByRoleID 查询拥有指定角色的所有用户 ID。
+// 用于角色权限变更后批量清除 Redis 权限缓存，保证下次请求时重新加载最新权限。
+func (d *UserRoleDao) GetUserIDsByRoleID(ctx context.Context, roleID uint) ([]uint, error) {
+	var userIDs []uint
+	// 直接查关联表，只取 user_id，避免加载完整用户对象造成不必要的内存开销
+	err := d.db.WithContext(ctx).
+		Table("sys_user_roles").
+		Where("role_id = ?", roleID).
+		Pluck("user_id", &userIDs).Error
+	if err != nil {
+		return nil, err
+	}
+	return userIDs, nil
+}
+
 // GetUserRolesWithPermissions 查询用户角色并预加载权限。
 func (d *UserRoleDao) GetUserRolesWithPermissions(ctx context.Context, id uint) ([]models.Role, error) {
 	// 声明当前变量。

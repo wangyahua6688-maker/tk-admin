@@ -13,8 +13,8 @@ import (
 
 // RoleRoutes 处理RoleRoutes相关逻辑。
 func RoleRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
-	// 定义并初始化当前变量。
-	rc := rbac.NewRoleController(db)
+	// 注入 mgr 使 RoleController 能在权限变更后清除 Redis 权限缓存
+	rc := rbac.NewRoleController(db, mgr)
 	// 定义并初始化当前变量。
 	userRoleSvc := rbacsvc.NewUserRoleService(rbacdao.NewUserRoleDao(db))
 
@@ -24,18 +24,18 @@ func RoleRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
 	rg.Use(middleware.NewJWTMiddleware(mgr))
 	{
 		// 调用rg.GET完成当前处理。
-		rg.GET("/", middleware.PermissionRequired(constants.PermRoleList, userRoleSvc), rc.List)
+		rg.GET("/", middleware.PermissionRequired(constants.PermRoleList, userRoleSvc, mgr), rc.List)
 		// 调用rg.POST完成当前处理。
-		rg.POST("/", middleware.PermissionRequired(constants.PermRoleCreate, userRoleSvc), rc.Create)
+		rg.POST("/", middleware.PermissionRequired(constants.PermRoleCreate, userRoleSvc, mgr), rc.Create)
 		// 调用rg.PUT完成当前处理。
-		rg.PUT("/:id", middleware.PermissionRequired(constants.PermRoleUpdate, userRoleSvc), rc.Update)
+		rg.PUT("/:id", middleware.PermissionRequired(constants.PermRoleUpdate, userRoleSvc, mgr), rc.Update)
 		// 调用rg.GET完成当前处理。
-		rg.GET("/:id", middleware.PermissionRequired(constants.PermRoleView, userRoleSvc), rc.Get)
+		rg.GET("/:id", middleware.PermissionRequired(constants.PermRoleView, userRoleSvc, mgr), rc.Get)
 		// 调用rg.DELETE完成当前处理。
-		rg.DELETE("/:id", middleware.PermissionRequired(constants.PermRoleDelete, userRoleSvc), rc.Delete)
+		rg.DELETE("/:id", middleware.PermissionRequired(constants.PermRoleDelete, userRoleSvc, mgr), rc.Delete)
 		// 角色权限管理
-		rg.GET("/:id/permissions", middleware.PermissionRequired(constants.PermRolePermissionView, userRoleSvc), rc.GetPermissions)
+		rg.GET("/:id/permissions", middleware.PermissionRequired(constants.PermRolePermissionView, userRoleSvc, mgr), rc.GetPermissions)
 		// 调用rg.PUT完成当前处理。
-		rg.PUT("/:id/permissions", middleware.PermissionRequired(constants.PermRolePermissionBind, userRoleSvc), rc.BindPermissions)
+		rg.PUT("/:id/permissions", middleware.PermissionRequired(constants.PermRolePermissionBind, userRoleSvc, mgr), rc.BindPermissions)
 	}
 }

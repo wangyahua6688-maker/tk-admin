@@ -13,8 +13,8 @@ import (
 
 // UserRoleRoutes 处理UserRoleRoutes相关逻辑。
 func UserRoleRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
-	// 用户角色管理：绑定/新增/移除/查询。
-	userRoleCtrl := rbac.NewUserRoleController(db)
+	// 注入 mgr 使控制器能在角色变更后清除 Redis 权限缓存
+	userRoleCtrl := rbac.NewUserRoleController(db, mgr)
 	// 定义并初始化当前变量。
 	userRoleSvc := rbacsvc.NewUserRoleService(rbacdao.NewUserRoleDao(db))
 
@@ -24,12 +24,12 @@ func UserRoleRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
 	userRoleGroup.Use(middleware.NewJWTMiddleware(mgr))
 	{
 		// 调用userRoleGroup.POST完成当前处理。
-		userRoleGroup.POST("/bind", middleware.PermissionRequired(constants.PermUserRoleBind, userRoleSvc), userRoleCtrl.BindRoles)
+		userRoleGroup.POST("/bind", middleware.PermissionRequired(constants.PermUserRoleBind, userRoleSvc, mgr), userRoleCtrl.BindRoles)
 		// 调用userRoleGroup.POST完成当前处理。
-		userRoleGroup.POST("/add", middleware.PermissionRequired(constants.PermUserRoleAdd, userRoleSvc), userRoleCtrl.AddRoles)
+		userRoleGroup.POST("/add", middleware.PermissionRequired(constants.PermUserRoleAdd, userRoleSvc, mgr), userRoleCtrl.AddRoles)
 		// 调用userRoleGroup.POST完成当前处理。
-		userRoleGroup.POST("/remove", middleware.PermissionRequired(constants.PermUserRoleRemove, userRoleSvc), userRoleCtrl.RemoveRoles)
+		userRoleGroup.POST("/remove", middleware.PermissionRequired(constants.PermUserRoleRemove, userRoleSvc, mgr), userRoleCtrl.RemoveRoles)
 		// 调用userRoleGroup.GET完成当前处理。
-		userRoleGroup.GET("/:id", middleware.PermissionRequired(constants.PermUserRoleView, userRoleSvc), userRoleCtrl.GetUserRoles)
+		userRoleGroup.GET("/:id", middleware.PermissionRequired(constants.PermUserRoleView, userRoleSvc, mgr), userRoleCtrl.GetUserRoles)
 	}
 }

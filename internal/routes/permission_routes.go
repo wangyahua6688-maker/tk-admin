@@ -24,14 +24,14 @@ func PermissionRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
 	pr.Use(middleware.NewJWTMiddleware(mgr))
 	{
 		// 调用pr.GET完成当前处理。
-		pr.GET("/", middleware.PermissionRequired(constants.PermPermissionList, userRoleSvc), pc.List)
+		pr.GET("/", middleware.PermissionRequired(constants.PermPermissionList, userRoleSvc, mgr), pc.List)
 		// 调用pr.POST完成当前处理。
-		pr.POST("/", middleware.PermissionRequired(constants.PermPermissionCreate, userRoleSvc), pc.Create)
+		pr.POST("/", middleware.PermissionRequired(constants.PermPermissionCreate, userRoleSvc, mgr), pc.Create)
 		// 调用pr.PUT完成当前处理。
-		pr.PUT("/:id", middleware.PermissionRequired(constants.PermPermissionUpdate, userRoleSvc), pc.Update)
+		pr.PUT("/:id", middleware.PermissionRequired(constants.PermPermissionUpdate, userRoleSvc, mgr), pc.Update)
 		// 调用pr.GET完成当前处理。
-		pr.GET("/:id", middleware.PermissionRequired(constants.PermPermissionView, userRoleSvc), pc.Get)
+		pr.GET("/:id", middleware.PermissionRequired(constants.PermPermissionView, userRoleSvc, mgr), pc.Get)
 		// 调用pr.DELETE完成当前处理。
-		pr.DELETE("/:id", middleware.PermissionRequired(constants.PermPermissionDelete, userRoleSvc), pc.Delete)
+		pr.DELETE("/:id", middleware.PermissionRequired(constants.PermPermissionDelete, userRoleSvc, mgr), pc.Delete)
 	}
 }

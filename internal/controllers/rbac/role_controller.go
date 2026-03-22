@@ -7,8 +7,10 @@ import (
 	"strings"
 
 	rbacdao "go-admin-full/internal/dao/rbac"
+	"go-admin-full/internal/middleware"
 	"go-admin-full/internal/models"
 	rbacsvc "go-admin-full/internal/services/rbac"
+	tokenjwt "go-admin-full/internal/token/jwt"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -16,9 +18,11 @@ import (
 
 // RoleController 负责角色管理及角色权限绑定。
 type RoleController struct {
+	db          *gorm.DB                       // 数据库连接（供权限缓存失效时按需构建 DAO）
 	svc         *rbacsvc.RoleService           // 角色业务服务
 	rolePermSvc *rbacsvc.RolePermissionService // 角色-权限绑定服务
 	msgSvc      *rbacsvc.SystemMessageService  // 系统消息推送服务
+	tokenMgr    *tokenjwt.Manager              // Token 管理器（用于权限缓存失效）
 }
 
 // roleUpsertReq 定义角色新增/更新的请求载体。
@@ -30,21 +34,24 @@ type roleUpsertReq struct {
 }
 
 // NewRoleController 构造角色控制器并注入依赖。
-func NewRoleController(db *gorm.DB) *RoleController {
+func NewRoleController(db *gorm.DB, mgr ...*tokenjwt.Manager) *RoleController {
 	// 初始化角色服务
 	svc := rbacsvc.NewRoleService(rbacdao.NewRoleDAO(db))
 	// 初始化角色权限绑定服务
 	rolePermSvc := rbacsvc.NewRolePermissionService(rbacdao.NewRolePermissionDao(db))
 	// 初始化系统消息服务
 	msgSvc := rbacsvc.NewSystemMessageService(rbacdao.NewSystemMessageDao(db))
-	// 返回当前处理结果。
+	// 可选注入 tokenMgr（用于权限缓存失效，不影响现有调用方式）
+	var tokenMgr *tokenjwt.Manager
+	if len(mgr) > 0 {
+		tokenMgr = mgr[0]
+	}
 	return &RoleController{
-		// 处理当前语句逻辑。
-		svc: svc,
-		// 处理当前语句逻辑。
+		db:          db,
+		svc:         svc,
 		rolePermSvc: rolePermSvc,
-		// 处理当前语句逻辑。
-		msgSvc: msgSvc,
+		msgSvc:      msgSvc,
+		tokenMgr:    tokenMgr,
 	}
 }
 
@@ -314,6 +321,17 @@ func (rc *RoleController) BindPermissions(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		// 返回当前处理结果。
 		return
+	}
+
+	// 权限变更后，清除该角色下所有用户的 RBAC 权限缓存。
+	// 使用 UserRoleDao 查询该角色的所有用户，逐一清除缓存，保证下次请求时重新从 DB 加载。
+	if rc.tokenMgr != nil {
+		userRoleDao := rbacdao.NewUserRoleDao(rc.db)
+		if userIDs, queryErr := userRoleDao.GetUserIDsByRoleID(c.Request.Context(), uint(id)); queryErr == nil {
+			for _, uid := range userIDs {
+				middleware.InvalidateUserPermCache(rc.tokenMgr, uid)
+			}
+		}
 	}
 
 	// 绑定完成后通知该角色的所有用户

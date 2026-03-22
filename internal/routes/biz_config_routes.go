@@ -24,93 +24,93 @@ func BizConfigRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
 	group.Use(middleware.NewJWTMiddleware(mgr))
 	{
 		// 调用group.GET完成当前处理。
-		group.GET("/banners", middleware.PermissionRequired(constants.PermBizBannerList, userRoleSvc), ctrl.ListBanners)
+		group.GET("/banners", middleware.PermissionRequired(constants.PermBizBannerList, userRoleSvc, mgr), ctrl.ListBanners)
 		// 调用group.POST完成当前处理。
-		group.POST("/banners", middleware.PermissionRequired(constants.PermBizBannerList, userRoleSvc), ctrl.CreateBanner)
+		group.POST("/banners", middleware.PermissionRequired(constants.PermBizBannerList, userRoleSvc, mgr), ctrl.CreateBanner)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/banners/:id", middleware.PermissionRequired(constants.PermBizBannerList, userRoleSvc), ctrl.UpdateBanner)
+		group.PUT("/banners/:id", middleware.PermissionRequired(constants.PermBizBannerList, userRoleSvc, mgr), ctrl.UpdateBanner)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/banners/:id", middleware.PermissionRequired(constants.PermBizBannerList, userRoleSvc), ctrl.DeleteBanner)
+		group.DELETE("/banners/:id", middleware.PermissionRequired(constants.PermBizBannerList, userRoleSvc, mgr), ctrl.DeleteBanner)
 
 		// 调用group.GET完成当前处理。
-		group.GET("/broadcasts", middleware.PermissionRequired(constants.PermBizBroadcastList, userRoleSvc), ctrl.ListBroadcasts)
+		group.GET("/broadcasts", middleware.PermissionRequired(constants.PermBizBroadcastList, userRoleSvc, mgr), ctrl.ListBroadcasts)
 		// 调用group.POST完成当前处理。
-		group.POST("/broadcasts", middleware.PermissionRequired(constants.PermBizBroadcastList, userRoleSvc), ctrl.CreateBroadcast)
+		group.POST("/broadcasts", middleware.PermissionRequired(constants.PermBizBroadcastList, userRoleSvc, mgr), ctrl.CreateBroadcast)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/broadcasts/:id", middleware.PermissionRequired(constants.PermBizBroadcastList, userRoleSvc), ctrl.UpdateBroadcast)
+		group.PUT("/broadcasts/:id", middleware.PermissionRequired(constants.PermBizBroadcastList, userRoleSvc, mgr), ctrl.UpdateBroadcast)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/broadcasts/:id", middleware.PermissionRequired(constants.PermBizBroadcastList, userRoleSvc), ctrl.DeleteBroadcast)
+		group.DELETE("/broadcasts/:id", middleware.PermissionRequired(constants.PermBizBroadcastList, userRoleSvc, mgr), ctrl.DeleteBroadcast)
 
 		// 调用group.GET完成当前处理。
-		group.GET("/special-lotteries", middleware.PermissionRequired(constants.PermBizSpecialLotteryList, userRoleSvc), ctrl.ListSpecialLotteries)
+		group.GET("/special-lotteries", middleware.PermissionRequired(constants.PermBizSpecialLotteryList, userRoleSvc, mgr), ctrl.ListSpecialLotteries)
 		// 调用group.POST完成当前处理。
-		group.POST("/special-lotteries", middleware.PermissionRequired(constants.PermBizSpecialLotteryList, userRoleSvc), ctrl.CreateSpecialLottery)
+		group.POST("/special-lotteries", middleware.PermissionRequired(constants.PermBizSpecialLotteryList, userRoleSvc, mgr), ctrl.CreateSpecialLottery)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/special-lotteries/:id", middleware.PermissionRequired(constants.PermBizSpecialLotteryList, userRoleSvc), ctrl.UpdateSpecialLottery)
+		group.PUT("/special-lotteries/:id", middleware.PermissionRequired(constants.PermBizSpecialLotteryList, userRoleSvc, mgr), ctrl.UpdateSpecialLottery)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/special-lotteries/:id", middleware.PermissionRequired(constants.PermBizSpecialLotteryList, userRoleSvc), ctrl.DeleteSpecialLottery)
+		group.DELETE("/special-lotteries/:id", middleware.PermissionRequired(constants.PermBizSpecialLotteryList, userRoleSvc, mgr), ctrl.DeleteSpecialLottery)
 
 		// 调用group.GET完成当前处理。
-		group.GET("/lottery-infos", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.ListLotteryInfos)
+		group.GET("/lottery-infos", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.ListLotteryInfos)
 		// 调用group.POST完成当前处理。
-		group.POST("/lottery-infos", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.CreateLotteryInfo)
+		group.POST("/lottery-infos", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.CreateLotteryInfo)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/lottery-infos/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.UpdateLotteryInfo)
+		group.PUT("/lottery-infos/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.UpdateLotteryInfo)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/lottery-infos/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.DeleteLotteryInfo)
+		group.DELETE("/lottery-infos/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.DeleteLotteryInfo)
 
 		// 调用group.GET完成当前处理。
-		group.GET("/draw-records", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.ListDrawRecords)
+		group.GET("/draw-records", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.ListDrawRecords)
 		// 调用group.POST完成当前处理。
-		group.POST("/draw-records", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.CreateDrawRecord)
+		group.POST("/draw-records", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.CreateDrawRecord)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/draw-records/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.UpdateDrawRecord)
+		group.PUT("/draw-records/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.UpdateDrawRecord)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/draw-records/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.DeleteDrawRecord)
+		group.DELETE("/draw-records/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.DeleteDrawRecord)
 
 		// 调用group.GET完成当前处理。
-		group.GET("/lottery-categories", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.ListLotteryCategories)
+		group.GET("/lottery-categories", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.ListLotteryCategories)
 		// 调用group.POST完成当前处理。
-		group.POST("/lottery-categories", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.CreateLotteryCategory)
+		group.POST("/lottery-categories", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.CreateLotteryCategory)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/lottery-categories/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.UpdateLotteryCategory)
+		group.PUT("/lottery-categories/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.UpdateLotteryCategory)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/lottery-categories/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc), ctrl.DeleteLotteryCategory)
+		group.DELETE("/lottery-categories/:id", middleware.PermissionRequired(constants.PermBizLotteryInfoList, userRoleSvc, mgr), ctrl.DeleteLotteryCategory)
 
 		// 调用group.GET完成当前处理。
-		group.GET("/official-posts", middleware.PermissionRequired(constants.PermBizOfficialPostList, userRoleSvc), ctrl.ListOfficialPosts)
+		group.GET("/official-posts", middleware.PermissionRequired(constants.PermBizOfficialPostList, userRoleSvc, mgr), ctrl.ListOfficialPosts)
 		// 调用group.POST完成当前处理。
-		group.POST("/official-posts", middleware.PermissionRequired(constants.PermBizOfficialPostList, userRoleSvc), ctrl.CreateOfficialPost)
+		group.POST("/official-posts", middleware.PermissionRequired(constants.PermBizOfficialPostList, userRoleSvc, mgr), ctrl.CreateOfficialPost)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/official-posts/:id", middleware.PermissionRequired(constants.PermBizOfficialPostList, userRoleSvc), ctrl.UpdateOfficialPost)
+		group.PUT("/official-posts/:id", middleware.PermissionRequired(constants.PermBizOfficialPostList, userRoleSvc, mgr), ctrl.UpdateOfficialPost)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/official-posts/:id", middleware.PermissionRequired(constants.PermBizOfficialPostList, userRoleSvc), ctrl.DeleteOfficialPost)
+		group.DELETE("/official-posts/:id", middleware.PermissionRequired(constants.PermBizOfficialPostList, userRoleSvc, mgr), ctrl.DeleteOfficialPost)
 
 		// 调用group.GET完成当前处理。
-		group.GET("/external-links", middleware.PermissionRequired(constants.PermBizExternalLinkList, userRoleSvc), ctrl.ListExternalLinks)
+		group.GET("/external-links", middleware.PermissionRequired(constants.PermBizExternalLinkList, userRoleSvc, mgr), ctrl.ListExternalLinks)
 		// 调用group.POST完成当前处理。
-		group.POST("/external-links", middleware.PermissionRequired(constants.PermBizExternalLinkList, userRoleSvc), ctrl.CreateExternalLink)
+		group.POST("/external-links", middleware.PermissionRequired(constants.PermBizExternalLinkList, userRoleSvc, mgr), ctrl.CreateExternalLink)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/external-links/:id", middleware.PermissionRequired(constants.PermBizExternalLinkList, userRoleSvc), ctrl.UpdateExternalLink)
+		group.PUT("/external-links/:id", middleware.PermissionRequired(constants.PermBizExternalLinkList, userRoleSvc, mgr), ctrl.UpdateExternalLink)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/external-links/:id", middleware.PermissionRequired(constants.PermBizExternalLinkList, userRoleSvc), ctrl.DeleteExternalLink)
+		group.DELETE("/external-links/:id", middleware.PermissionRequired(constants.PermBizExternalLinkList, userRoleSvc, mgr), ctrl.DeleteExternalLink)
 
 		// 调用group.GET完成当前处理。
-		group.GET("/home-popups", middleware.PermissionRequired(constants.PermBizHomePopupList, userRoleSvc), ctrl.ListHomePopups)
+		group.GET("/home-popups", middleware.PermissionRequired(constants.PermBizHomePopupList, userRoleSvc, mgr), ctrl.ListHomePopups)
 		// 调用group.POST完成当前处理。
-		group.POST("/home-popups", middleware.PermissionRequired(constants.PermBizHomePopupList, userRoleSvc), ctrl.CreateHomePopup)
+		group.POST("/home-popups", middleware.PermissionRequired(constants.PermBizHomePopupList, userRoleSvc, mgr), ctrl.CreateHomePopup)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/home-popups/:id", middleware.PermissionRequired(constants.PermBizHomePopupList, userRoleSvc), ctrl.UpdateHomePopup)
+		group.PUT("/home-popups/:id", middleware.PermissionRequired(constants.PermBizHomePopupList, userRoleSvc, mgr), ctrl.UpdateHomePopup)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/home-popups/:id", middleware.PermissionRequired(constants.PermBizHomePopupList, userRoleSvc), ctrl.DeleteHomePopup)
+		group.DELETE("/home-popups/:id", middleware.PermissionRequired(constants.PermBizHomePopupList, userRoleSvc, mgr), ctrl.DeleteHomePopup)
 
 		// 调用group.GET完成当前处理。
-		group.GET("/sms-channels", middleware.PermissionRequired(constants.PermBizSMSChannelList, userRoleSvc), ctrl.ListSMSChannels)
+		group.GET("/sms-channels", middleware.PermissionRequired(constants.PermBizSMSChannelList, userRoleSvc, mgr), ctrl.ListSMSChannels)
 		// 调用group.POST完成当前处理。
-		group.POST("/sms-channels", middleware.PermissionRequired(constants.PermBizSMSChannelList, userRoleSvc), ctrl.CreateSMSChannel)
+		group.POST("/sms-channels", middleware.PermissionRequired(constants.PermBizSMSChannelList, userRoleSvc, mgr), ctrl.CreateSMSChannel)
 		// 调用group.PUT完成当前处理。
-		group.PUT("/sms-channels/:id", middleware.PermissionRequired(constants.PermBizSMSChannelList, userRoleSvc), ctrl.UpdateSMSChannel)
+		group.PUT("/sms-channels/:id", middleware.PermissionRequired(constants.PermBizSMSChannelList, userRoleSvc, mgr), ctrl.UpdateSMSChannel)
 		// 调用group.DELETE完成当前处理。
-		group.DELETE("/sms-channels/:id", middleware.PermissionRequired(constants.PermBizSMSChannelList, userRoleSvc), ctrl.DeleteSMSChannel)
+		group.DELETE("/sms-channels/:id", middleware.PermissionRequired(constants.PermBizSMSChannelList, userRoleSvc, mgr), ctrl.DeleteSMSChannel)
 	}
 }

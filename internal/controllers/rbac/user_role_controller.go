@@ -6,8 +6,10 @@ import (
 	"strings"
 
 	rbacdao "go-admin-full/internal/dao/rbac"
+	"go-admin-full/internal/middleware"
 	"go-admin-full/internal/models"
 	rbacsvc "go-admin-full/internal/services/rbac"
+	tokenjwt "go-admin-full/internal/token/jwt"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -15,20 +17,25 @@ import (
 
 // UserRoleController 负责用户角色绑定与变更通知。
 type UserRoleController struct {
-	svc    *rbacsvc.UserRoleService      // 用户角色关系服务
-	msgSvc *rbacsvc.SystemMessageService // 系统消息服务
+	svc      *rbacsvc.UserRoleService      // 用户角色关系服务
+	msgSvc   *rbacsvc.SystemMessageService // 系统消息服务
+	tokenMgr *tokenjwt.Manager             // Token 管理器（用于权限缓存失效）
 }
 
 // NewUserRoleController 构造控制器并注入依赖。
-func NewUserRoleController(db *gorm.DB) *UserRoleController {
+func NewUserRoleController(db *gorm.DB, mgr ...*tokenjwt.Manager) *UserRoleController {
 	// 初始化 DAO
 	d := rbacdao.NewUserRoleDao(db)
 	// 初始化 Service
 	s := rbacsvc.NewUserRoleService(d)
 	// 初始化系统消息 Service
 	msgSvc := rbacsvc.NewSystemMessageService(rbacdao.NewSystemMessageDao(db))
-	// 返回当前处理结果。
-	return &UserRoleController{svc: s, msgSvc: msgSvc}
+	// 可选注入 tokenMgr（不影响现有调用方式）
+	var tokenMgr *tokenjwt.Manager
+	if len(mgr) > 0 {
+		tokenMgr = mgr[0]
+	}
+	return &UserRoleController{svc: s, msgSvc: msgSvc, tokenMgr: tokenMgr}
 }
 
 // bindRolesReq 定义用户角色绑定/增删的请求载体。
@@ -65,6 +72,10 @@ func (uc *UserRoleController) BindRoles(c *gin.Context) {
 		// 返回当前处理结果。
 		return
 	}
+
+	// 用户角色变更后立即清除该用户的 RBAC 权限缓存，
+	// 保证用户下次请求时能加载到最新角色和权限配置。
+	middleware.InvalidateUserPermCache(uc.tokenMgr, req.UserID)
 
 	// 查询更新后的角色列表，用于消息提示
 	roles, _ := uc.svc.GetUserRoles(c.Request.Context(), req.UserID)
@@ -126,6 +137,9 @@ func (uc *UserRoleController) AddRoles(c *gin.Context) {
 		return
 	}
 
+	// 角色变更后清除权限缓存
+	middleware.InvalidateUserPermCache(uc.tokenMgr, req.UserID)
+
 	// 查询更新后的角色列表
 	roles, _ := uc.svc.GetUserRoles(c.Request.Context(), req.UserID)
 	// 通知目标用户
@@ -185,6 +199,9 @@ func (uc *UserRoleController) RemoveRoles(c *gin.Context) {
 		// 返回当前处理结果。
 		return
 	}
+
+	// 角色移除后立即清除该用户权限缓存，确保下次请求不再持有被撤销的权限
+	middleware.InvalidateUserPermCache(uc.tokenMgr, req.UserID)
 
 	// 查询更新后的角色列表
 	roles, _ := uc.svc.GetUserRoles(c.Request.Context(), req.UserID)

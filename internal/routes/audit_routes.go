@@ -24,6 +24,6 @@ func AuditRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
 	ag.Use(middleware.NewJWTMiddleware(mgr))
 	{
 		// 调用ag.GET完成当前处理。
-		ag.GET("/login-logs", middleware.PermissionRequired(constants.PermAuditLoginLogList, userRoleSvc), ac.ListLoginLogs)
+		ag.GET("/login-logs", middleware.PermissionRequired(constants.PermAuditLoginLogList, userRoleSvc, mgr), ac.ListLoginLogs)
 	}
 }

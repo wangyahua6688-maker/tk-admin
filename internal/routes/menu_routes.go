@@ -24,20 +24,20 @@ func MenuRoutes(r *gin.Engine, db *gorm.DB, mgr *tokenjwt.Manager) {
 	mr.Use(middleware.NewJWTMiddleware(mgr))
 	{
 		// 调用mr.GET完成当前处理。
-		mr.GET("/", middleware.PermissionRequired(constants.PermMenuList, userRoleSvc), mc.List)
+		mr.GET("/", middleware.PermissionRequired(constants.PermMenuList, userRoleSvc, mgr), mc.List)
 		// 调用mr.POST完成当前处理。
-		mr.POST("/", middleware.PermissionRequired(constants.PermMenuCreate, userRoleSvc), mc.Create)
+		mr.POST("/", middleware.PermissionRequired(constants.PermMenuCreate, userRoleSvc, mgr), mc.Create)
 		// 调用mr.PUT完成当前处理。
-		mr.PUT("/:id", middleware.PermissionRequired(constants.PermMenuUpdate, userRoleSvc), mc.Update)
+		mr.PUT("/:id", middleware.PermissionRequired(constants.PermMenuUpdate, userRoleSvc, mgr), mc.Update)
 		// 调用mr.GET完成当前处理。
-		mr.GET("/frontend/tree", middleware.PermissionRequired(constants.PermMenuFrontendTree, userRoleSvc), mc.FrontendTree)
+		mr.GET("/frontend/tree", middleware.PermissionRequired(constants.PermMenuFrontendTree, userRoleSvc, mgr), mc.FrontendTree)
 		// 调用mr.GET完成当前处理。
-		mr.GET("/:id/permissions", middleware.PermissionRequired(constants.PermMenuPermissionView, userRoleSvc), mc.GetPermissions)
+		mr.GET("/:id/permissions", middleware.PermissionRequired(constants.PermMenuPermissionView, userRoleSvc, mgr), mc.GetPermissions)
 		// 调用mr.PUT完成当前处理。
-		mr.PUT("/:id/permissions", middleware.PermissionRequired(constants.PermMenuPermissionBind, userRoleSvc), mc.BindPermissions)
+		mr.PUT("/:id/permissions", middleware.PermissionRequired(constants.PermMenuPermissionBind, userRoleSvc, mgr), mc.BindPermissions)
 		// 调用mr.GET完成当前处理。
-		mr.GET("/:id", middleware.PermissionRequired(constants.PermMenuView, userRoleSvc), mc.Get)
+		mr.GET("/:id", middleware.PermissionRequired(constants.PermMenuView, userRoleSvc, mgr), mc.Get)
 		// 调用mr.DELETE完成当前处理。
-		mr.DELETE("/:id", middleware.PermissionRequired(constants.PermMenuDelete, userRoleSvc), mc.Delete)
+		mr.DELETE("/:id", middleware.PermissionRequired(constants.PermMenuDelete, userRoleSvc, mgr), mc.Delete)
 	}
 }

@@ -132,6 +132,8 @@ func (bc *BizConfigController) CreateSpecialLottery(c *gin.Context) {
 		// 返回当前处理结果。
 		return
 	}
+	// 新增彩种后，首页彩种按钮/开奖区/开奖现场都可能立即受到影响，因此同步清理公开缓存。
+	_ = invalidatePublicLotteryCaches(c.Request.Context(), item.ID)
 	// 调用utils.JSONOK完成当前处理。
 	commonresp.GinOK(c, item)
 }
@@ -250,6 +252,8 @@ func (bc *BizConfigController) UpdateSpecialLottery(c *gin.Context) {
 		// 返回当前处理结果。
 		return
 	}
+	// 彩种配置更新后，首页概览与开奖看板缓存必须立刻失效，否则页面会继续显示旧时间。
+	_ = invalidatePublicLotteryCaches(c.Request.Context(), id)
 	// 调用utils.JSONOK完成当前处理。
 	commonresp.GinOK(c, gin.H{"id": id})
 }
@@ -272,6 +276,8 @@ func (bc *BizConfigController) DeleteSpecialLottery(c *gin.Context) {
 		// 返回当前处理结果。
 		return
 	}
+	// 删除彩种后也要清理首页/看板/开奖现场缓存，避免前端继续读取已删除彩种的旧数据。
+	_ = invalidatePublicLotteryCaches(c.Request.Context(), id)
 	// 调用utils.JSONOK完成当前处理。
 	commonresp.GinOK(c, gin.H{"id": id})
 }
