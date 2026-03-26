@@ -3,7 +3,7 @@ package biz
 import (
 	"context"
 
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 )
 
 // ListOfficialPosts 查询官方发帖列表。

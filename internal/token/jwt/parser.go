@@ -2,7 +2,7 @@ package jwt
 
 import (
 	"errors"
-	"go-admin-full/internal/constants"
+	"go-admin/internal/constants"
 
 	gjwt "github.com/golang-jwt/jwt/v5"
 )

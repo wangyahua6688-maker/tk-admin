@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"go-admin-full/config"
-	"go-admin-full/internal/models"
-	tokenjwt "go-admin-full/internal/token/jwt"
-	tokenstore "go-admin-full/internal/token/store"
+	"go-admin/config"
+	"go-admin/internal/models"
+	tokenjwt "go-admin/internal/token/jwt"
+	tokenstore "go-admin/internal/token/store"
 
 	"github.com/go-redis/redis/v8"
 	gormx "github.com/wangyahua6688-maker/tk-common/utils/dbx/gormx"

@@ -3,7 +3,7 @@ package biz
 import (
 	"context"
 
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 )
 
 // ListBroadcasts 查询系统广播列表。

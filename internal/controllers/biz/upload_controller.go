@@ -11,8 +11,8 @@ import (
 	"time"
 
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
-	"go-admin-full/config"
-	"go-admin-full/internal/constants"
+	"go-admin/config"
+	"go-admin/internal/constants"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

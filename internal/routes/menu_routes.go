@@ -2,12 +2,12 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"go-admin-full/internal/constants"
-	rbac "go-admin-full/internal/controllers/rbac"
-	rbacdao "go-admin-full/internal/dao/rbac"
-	"go-admin-full/internal/middleware"
-	rbacsvc "go-admin-full/internal/services/rbac"
-	tokenjwt "go-admin-full/internal/token/jwt"
+	"go-admin/internal/constants"
+	rbac "go-admin/internal/controllers/rbac"
+	rbacdao "go-admin/internal/dao/rbac"
+	"go-admin/internal/middleware"
+	rbacsvc "go-admin/internal/services/rbac"
+	tokenjwt "go-admin/internal/token/jwt"
 	"gorm.io/gorm"
 )
 

@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
-	"go-admin-full/internal/constants"
-	"go-admin-full/internal/models"
+	"go-admin/internal/constants"
+	"go-admin/internal/models"
 
 	"github.com/gin-gonic/gin"
 )

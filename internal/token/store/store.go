@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
-	"go-admin-full/internal/constants"
+	"go-admin/internal/constants"
 	"sync"
 	"time"
 

@@ -3,7 +3,7 @@ package biz
 import (
 	"context"
 
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 )
 
 // ListLotteryCategories 查询图库分类列表。

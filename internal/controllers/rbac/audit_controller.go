@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
-	"go-admin-full/internal/constants"
-	rbacdao "go-admin-full/internal/dao/rbac"
-	rbacsvc "go-admin-full/internal/services/rbac"
+	"go-admin/internal/constants"
+	rbacdao "go-admin/internal/dao/rbac"
+	rbacsvc "go-admin/internal/services/rbac"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

@@ -3,8 +3,8 @@ package rbac
 import (
 	"context"
 	"errors"
-	rbacdao "go-admin-full/internal/dao/rbac"
-	"go-admin-full/internal/models"
+	rbacdao "go-admin/internal/dao/rbac"
+	"go-admin/internal/models"
 )
 
 // UserRoleService 用户角色关联业务。

@@ -3,7 +3,7 @@ package biz
 import (
 	"context"
 
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 )
 
 // ListPostArticles 查询帖子列表（按官方/网友区分）。

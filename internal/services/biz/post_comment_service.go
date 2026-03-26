@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 )
 
 // ListPostComments 查询帖子评论并补充用户信息。

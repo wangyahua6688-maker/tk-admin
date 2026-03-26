@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 )
 
 // GetActiveUserType 获取启用用户的类型。

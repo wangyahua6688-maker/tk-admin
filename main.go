@@ -1,6 +1,8 @@
 package main
 
-import "go-admin-full/cmd/godash"
+import (
+	"go-admin/cmd/godash"
+)
 
 // main 函数是程序的入口点
 // 该函数不接受任何参数，也不返回任何值

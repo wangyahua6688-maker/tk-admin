@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 )
 
 // ListHomePopups 查询首屏弹窗列表。

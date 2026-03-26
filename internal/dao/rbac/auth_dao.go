@@ -3,7 +3,7 @@ package rbac
 import (
 	"context"
 	gormx "github.com/wangyahua6688-maker/tk-common/utils/dbx/gormx"
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 	"gorm.io/gorm"
 )
 

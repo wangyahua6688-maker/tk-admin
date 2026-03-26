@@ -1,7 +1,7 @@
 package biz
 
 import (
-	"go-admin-full/internal/constants"
+	"go-admin/internal/constants"
 	"strings"
 
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"

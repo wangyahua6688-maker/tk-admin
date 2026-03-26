@@ -6,11 +6,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	gormx "github.com/wangyahua6688-maker/tk-common/utils/dbx/gormx"
-	"go-admin-full/config"
-	"go-admin-full/internal/auth/sessioncookie"
-	"go-admin-full/internal/constants"
-	"go-admin-full/internal/models"
-	tokenjwt "go-admin-full/internal/token/jwt"
+	"go-admin/config"
+	"go-admin/internal/auth/sessioncookie"
+	"go-admin/internal/constants"
+	"go-admin/internal/models"
+	tokenjwt "go-admin/internal/token/jwt"
 )
 
 // NewJWTMiddleware JWT 认证中间件。

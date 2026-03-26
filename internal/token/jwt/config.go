@@ -24,6 +24,6 @@ func DefaultConfig() *Config {
 		// 处理当前语句逻辑。
 		SessionIdleTimeout: 1 * time.Hour,
 		// 处理当前语句逻辑。
-		Issuer: "go-admin-full",
+		Issuer: "go-admin",
 	}
 }

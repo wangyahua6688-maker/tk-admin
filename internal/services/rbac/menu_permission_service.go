@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	rbacdao "go-admin-full/internal/dao/rbac"
-	"go-admin-full/internal/models"
+	rbacdao "go-admin/internal/dao/rbac"
+	"go-admin/internal/models"
 )
 
 // MenuPermissionService 菜单权限关联业务。

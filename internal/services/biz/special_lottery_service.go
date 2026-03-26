@@ -3,7 +3,7 @@ package biz
 import (
 	"context"
 
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 )
 
 // ListSpecialLotteries 查询彩种配置列表。

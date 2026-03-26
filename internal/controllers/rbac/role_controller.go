@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	rbacdao "go-admin-full/internal/dao/rbac"
-	"go-admin-full/internal/middleware"
-	"go-admin-full/internal/models"
-	rbacsvc "go-admin-full/internal/services/rbac"
-	tokenjwt "go-admin-full/internal/token/jwt"
+	rbacdao "go-admin/internal/dao/rbac"
+	"go-admin/internal/middleware"
+	"go-admin/internal/models"
+	rbacsvc "go-admin/internal/services/rbac"
+	tokenjwt "go-admin/internal/token/jwt"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

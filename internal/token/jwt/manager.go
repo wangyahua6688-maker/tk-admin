@@ -5,8 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"go-admin-full/internal/constants"
-	storepkg "go-admin-full/internal/token/store"
+	"go-admin/internal/constants"
+	storepkg "go-admin/internal/token/store"
 	"strings"
 	"time"
 

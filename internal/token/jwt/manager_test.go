@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"go-admin-full/internal/constants"
-	tokenstore "go-admin-full/internal/token/store"
+	"go-admin/internal/constants"
+	tokenstore "go-admin/internal/token/store"
 )
 
 func TestNormalizeDeviceID_IdempotentForHashedInput(t *testing.T) {

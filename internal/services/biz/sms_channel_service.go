@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 )
 
 // ListSMSChannels 查询短信通道配置列表。

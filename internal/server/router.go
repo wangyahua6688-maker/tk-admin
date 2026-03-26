@@ -3,10 +3,10 @@ package server
 import (
 	"time"
 
-	"go-admin-full/config"
-	"go-admin-full/internal/middleware"
-	"go-admin-full/internal/routes"
-	tokenjwt "go-admin-full/internal/token/jwt"
+	"go-admin/config"
+	"go-admin/internal/middleware"
+	"go-admin/internal/routes"
+	tokenjwt "go-admin/internal/token/jwt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -87,7 +87,7 @@ func SetupRouter(mgr *tokenjwt.Manager, db *gorm.DB, redisClient *redis.Client, 
 			// 处理当前语句逻辑。
 			"status": "ok",
 			// 处理当前语句逻辑。
-			"service": "go-admin-full",
+			"service": "go-admin",
 			// 调用time.Now完成当前处理。
 			"time": time.Now().Format(time.RFC3339),
 		}

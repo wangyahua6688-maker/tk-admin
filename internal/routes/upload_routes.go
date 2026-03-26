@@ -2,9 +2,9 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	biz "go-admin-full/internal/controllers/biz"
-	"go-admin-full/internal/middleware"
-	tokenjwt "go-admin-full/internal/token/jwt"
+	biz "go-admin/internal/controllers/biz"
+	"go-admin/internal/middleware"
+	tokenjwt "go-admin/internal/token/jwt"
 )
 
 // UploadRoutes 处理UploadRoutes相关逻辑。

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
-	"go-admin-full/internal/constants/rediskey"
-	rbacsvc "go-admin-full/internal/services/rbac"
-	tokenjwt "go-admin-full/internal/token/jwt"
+	"go-admin/internal/constants/rediskey"
+	rbacsvc "go-admin/internal/services/rbac"
+	tokenjwt "go-admin/internal/token/jwt"
 )
 
 // PermissionRequired 按"权限码"做 RBAC 鉴权（含 Redis 权限缓存）。

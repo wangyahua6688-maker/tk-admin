@@ -1,7 +1,7 @@
 package biz
 
 import (
-	bizsvc "go-admin-full/internal/services/biz"
+	bizsvc "go-admin/internal/services/biz"
 
 	"gorm.io/gorm"
 )

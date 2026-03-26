@@ -2,8 +2,8 @@ package rbac
 
 import (
 	"context"
-	rbacdao "go-admin-full/internal/dao/rbac"
-	"go-admin-full/internal/models"
+	rbacdao "go-admin/internal/dao/rbac"
+	"go-admin/internal/models"
 )
 
 // MenuService 提供菜单业务逻辑封装。

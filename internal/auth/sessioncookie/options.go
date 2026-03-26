@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"go-admin-full/config"
+	"go-admin/config"
 )
 
 // 默认 cookie 名称，避免配置缺失时退化到不安全或不兼容行为。

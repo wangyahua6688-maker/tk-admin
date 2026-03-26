@@ -8,13 +8,13 @@ import (
 	"time"
 
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
-	"go-admin-full/config"
-	"go-admin-full/internal/auth/sessioncookie"
-	"go-admin-full/internal/constants"
-	rbacdao "go-admin-full/internal/dao/rbac"
-	"go-admin-full/internal/models"
-	rbacsvc "go-admin-full/internal/services/rbac"
-	tokenjwt "go-admin-full/internal/token/jwt"
+	"go-admin/config"
+	"go-admin/internal/auth/sessioncookie"
+	"go-admin/internal/constants"
+	rbacdao "go-admin/internal/dao/rbac"
+	"go-admin/internal/models"
+	rbacsvc "go-admin/internal/services/rbac"
+	tokenjwt "go-admin/internal/token/jwt"
 
 	commonlogx "github.com/wangyahua6688-maker/tk-common/utils/logx"
 

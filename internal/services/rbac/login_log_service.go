@@ -3,8 +3,8 @@ package rbac
 import (
 	"context"
 
-	rbacdao "go-admin-full/internal/dao/rbac"
-	"go-admin-full/internal/models"
+	rbacdao "go-admin/internal/dao/rbac"
+	"go-admin/internal/models"
 )
 
 // LoginLogService 登录日志业务层。

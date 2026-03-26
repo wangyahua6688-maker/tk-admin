@@ -2,8 +2,8 @@ package rbac
 
 import (
 	"context"
-	rbacdao "go-admin-full/internal/dao/rbac"
-	"go-admin-full/internal/models"
+	rbacdao "go-admin/internal/dao/rbac"
+	"go-admin/internal/models"
 )
 
 // PermissionService 提供权限业务逻辑封装。

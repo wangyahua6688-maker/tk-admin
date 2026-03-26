@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	tokenjwt "go-admin-full/internal/token/jwt"
+	tokenjwt "go-admin/internal/token/jwt"
 	"gorm.io/gorm"
 )
 

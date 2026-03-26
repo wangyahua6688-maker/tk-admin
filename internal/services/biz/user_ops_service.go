@@ -1,7 +1,7 @@
 package biz
 
 import (
-	bizdao "go-admin-full/internal/dao/biz"
+	bizdao "go-admin/internal/dao/biz"
 	"gorm.io/gorm"
 )
 

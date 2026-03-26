@@ -3,8 +3,8 @@ package rbac
 import (
 	"context"
 	"errors"
-	rbacdao "go-admin-full/internal/dao/rbac"
-	"go-admin-full/internal/models"
+	rbacdao "go-admin/internal/dao/rbac"
+	"go-admin/internal/models"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"strings"

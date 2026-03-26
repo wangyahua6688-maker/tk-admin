@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	tokenjwt "go-admin-full/internal/token/jwt"
+	tokenjwt "go-admin/internal/token/jwt"
 )
 
 // RedisCheckMiddleware Redis连接检查中间件

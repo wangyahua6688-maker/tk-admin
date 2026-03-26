@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 )
 
 // ListClientUsers 查询客户端用户列表。

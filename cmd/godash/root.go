@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"go-admin-full/config"
-	"go-admin-full/internal/server"
+	"go-admin/config"
+	"go-admin/internal/server"
 )
 
 // 声明当前变量。

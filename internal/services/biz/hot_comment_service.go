@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"go-admin-full/internal/models"
+	"go-admin/internal/models"
 )
 
 // ListHotComments 查询热点评论列表。
