@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go-admin/cmd/godash"
+	"go-admin/cmd"
 )
 
 // main 函数是程序的入口点
@@ -9,5 +9,5 @@ import (
 // 主要功能是调用 godash.Execute() 函数来执行核心逻辑
 func main() {
 	// 调用godash.Execute完成当前处理。
-	godash.Execute()
+	cmd.Execute()
 }

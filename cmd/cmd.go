@@ -1,4 +1,4 @@
-package godash
+package cmd
 
 import (
 	"fmt"
