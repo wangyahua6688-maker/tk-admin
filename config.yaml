@@ -1,0 +1,49 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+
+jwt:
+  signing_key: "dev-local-signing-key-change-in-production-123456"
+  access_expire: 3600
+  refresh_expire: 604800
+  session_idle_timeout: 3600
+  allow_insecure_memory_store: true
+
+database:
+#  dsn: "root:12345678@tcp(mysql:3306)/nb_sys_001?charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai"
+  dsn: "tkuser:TkUser_Pass2026!@tcp(mysql:3306)/nb_sys_001?charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai"
+  log_level: "warn"
+
+redis:
+  addr: "redis:6379"
+  password: ""
+  db: 0
+
+cors:
+  allowed_origins:
+    - "http://localhost:5173"
+    - "http://localhost:3000"
+    - "http://3.235.102.90:8081"
+    - "http://3.235.102.90"
+  allow_credentials: true
+
+auth:
+  allow_public_register: false
+  cookie:
+    access_token_name: "tk_admin_access_token"
+    refresh_token_name: "tk_admin_refresh_token"
+    domain: ""
+    path: "/"
+    secure: false
+    http_only: true
+    same_site: "lax"
+
+log:
+  level: "info"
+  file_path: ""
+
+upload:
+#  save_path: "/Users/huazi/webWork/tk-admin-web/public/uploads"
+#  base_url: "/uploads"
+  save_path: "/app/uploads"
+  base_url: "/uploads"
