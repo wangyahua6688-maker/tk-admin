@@ -1,6 +1,7 @@
 FROM golang:1.24-alpine AS builder
 
 ENV GOPROXY=https://proxy.golang.org,direct
+ENV GOOS=linux
 ENV CGO_ENABLED=0
 
 WORKDIR /app
@@ -10,8 +11,8 @@ RUN go mod download
 
 COPY . .
 
-# ✅ 强制指定 arm64
-RUN GOARCH=arm64 GOOS=linux go build -o tk-admin-server ./cmd
+# ✅ 正确入口（根目录 main.go）
+RUN go build -o tk-admin-server .
 
 RUN chmod +x tk-admin-server
 
@@ -23,12 +24,10 @@ ENV TZ=Asia/Shanghai
 WORKDIR /app
 
 COPY --from=builder /app/tk-admin-server .
-COPY config.yaml .
+COPY config.yaml ./config.yaml
 
 RUN mkdir -p /app/uploads
 
 EXPOSE 8080
 
 CMD ["./tk-admin-server"]
-
-
