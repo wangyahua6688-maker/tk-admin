@@ -11,7 +11,7 @@ RUN go mod download
 COPY . .
 
 # ✅ 强制指定 arm64
-RUN GOARCH=arm64 GOOS=linux go build -o tk-admin-server ./cmd/godash
+RUN GOARCH=arm64 GOOS=linux go build -o tk-admin-server ./cmd
 
 RUN chmod +x tk-admin-server
 
