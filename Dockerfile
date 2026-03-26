@@ -2,7 +2,6 @@ FROM golang:1.24-alpine AS builder
 
 ENV GOPROXY=https://proxy.golang.org,direct
 ENV GOOS=linux
-ENV GOARCH=amd64
 ENV CGO_ENABLED=0
 
 WORKDIR /app
