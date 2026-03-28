@@ -2,6 +2,7 @@ package biz
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"go-admin/internal/models"
@@ -52,6 +53,9 @@ func (d *LotteryDAO) GetLotteryCategoryByID(ctx context.Context, id uint) (*mode
 	var cat models.WLotteryCategory
 	// 判断条件并进入对应分支逻辑。
 	if err := d.db.WithContext(ctx).First(&cat, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}
@@ -66,7 +70,7 @@ func (d *LotteryDAO) GetLotteryCategoryByTag(ctx context.Context, tag string) (*
 	// 判断条件并进入对应分支逻辑。
 	if tag == "" {
 		// 返回当前处理结果。
-		return nil, gorm.ErrRecordNotFound
+		return nil, nil
 	}
 	// 声明当前变量。
 	var cat models.WLotteryCategory
@@ -78,6 +82,9 @@ func (d *LotteryDAO) GetLotteryCategoryByTag(ctx context.Context, tag string) (*
 		Order("id ASC").
 		// 调用First完成当前处理。
 		First(&cat).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}

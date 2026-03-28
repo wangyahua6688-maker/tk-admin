@@ -28,6 +28,9 @@ func (s *MenuPermissionService) BindPermissions(ctx context.Context, menuID uint
 		// 返回当前处理结果。
 		return err
 	}
+	if menu == nil {
+		return errors.New("菜单不存在")
+	}
 
 	// 允许传空数组：表示清空菜单已有权限绑定。
 	if len(permIDs) == 0 {
@@ -54,7 +57,13 @@ func (s *MenuPermissionService) BindPermissions(ctx context.Context, menuID uint
 
 // GetMenuPermissions 查询菜单已绑定权限。
 func (s *MenuPermissionService) GetMenuPermissions(ctx context.Context, menuID uint) ([]models.Permission, error) {
-	// 返回当前处理结果。
+	menu, err := s.dao.FindMenu(ctx, menuID)
+	if err != nil {
+		return nil, err
+	}
+	if menu == nil {
+		return nil, errors.New("菜单不存在")
+	}
 	return s.dao.GetPermissions(ctx, menuID)
 }
 

@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	gormx "github.com/wangyahua6688-maker/tk-common/utils/dbx/gormx"
 	"go-admin/internal/models"
 	"gorm.io/gorm"
@@ -34,6 +35,9 @@ func (d *AuthDao) GetUserByUsername(ctx context.Context, username string) (*mode
 
 	// 按用户名查询
 	if err := db.WithContext(ctx).Where("username = ?", username).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}
@@ -54,6 +58,9 @@ func (d *AuthDao) GetUserByID(ctx context.Context, userID uint) (*models.User, e
 	var user models.User
 	// 按 ID 查询
 	if err := d.db.WithContext(ctx).Where("id = ?", userID).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}

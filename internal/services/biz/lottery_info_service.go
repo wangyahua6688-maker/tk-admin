@@ -71,6 +71,9 @@ func (s *LotteryService) ResolveLotteryCategory(ctx context.Context, categoryID 
 			// 返回当前处理结果。
 			return 0, "", errors.New("category_id not found")
 		}
+		if cat == nil {
+			return 0, "", errors.New("category_id not found")
+		}
 		// 返回当前处理结果。
 		return cat.ID, strings.TrimSpace(cat.CategoryKey), nil
 	}

@@ -2,6 +2,7 @@ package biz
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"go-admin/internal/models"
@@ -24,6 +25,9 @@ func (d *UserOpsLookupDAO) GetActiveUserType(ctx context.Context, userID uint) (
 	var user models.WUser
 	// 判断条件并进入对应分支逻辑。
 	if err := d.db.WithContext(ctx).Select("id,user_type,status").Where("id = ? AND status = 1", userID).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", nil
+		}
 		// 返回当前处理结果。
 		return "", err
 	}

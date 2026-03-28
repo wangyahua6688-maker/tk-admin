@@ -1,7 +1,6 @@
 package biz
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -13,7 +12,6 @@ import (
 	bizsvc "go-admin/internal/services/biz"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // ListDrawRecords 查询开奖区开奖记录列表。
@@ -184,13 +182,6 @@ func (bc *LotteryController) UpdateDrawRecord(c *gin.Context) {
 	current, err := bc.drawRecordSvc.GetDrawRecordByID(c.Request.Context(), id)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
-		// 判断条件并进入对应分支逻辑。
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// 调用utils.JSONError完成当前处理。
-			commonresp.GinError(c, constants.AdminBizResourceNotFound, "draw record not found")
-			// 返回当前处理结果。
-			return
-		}
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -373,16 +364,13 @@ func (bc *LotteryController) DeleteDrawRecord(c *gin.Context) {
 	current, err := bc.drawRecordSvc.GetDrawRecordByID(c.Request.Context(), id)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
-		// 判断条件并进入对应分支逻辑。
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// 调用utils.JSONError完成当前处理。
-			commonresp.GinError(c, constants.AdminBizResourceNotFound, "draw record not found")
-			// 返回当前处理结果。
-			return
-		}
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
+		return
+	}
+	if current == nil {
+		commonresp.GinError(c, constants.AdminBizResourceNotFound, "draw record not found")
 		return
 	}
 	// 判断条件并进入对应分支逻辑。

@@ -2,6 +2,7 @@ package biz
 
 import (
 	"context"
+	"errors"
 
 	"go-admin/internal/models"
 	"gorm.io/gorm"
@@ -33,6 +34,9 @@ func (d *LotteryDAO) GetLotteryInfoByID(ctx context.Context, id uint) (*models.W
 	var item models.WLotteryInfo
 	// 判断条件并进入对应分支逻辑。
 	if err := d.db.WithContext(ctx).First(&item, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}

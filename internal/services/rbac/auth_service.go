@@ -6,7 +6,6 @@ import (
 	rbacdao "go-admin/internal/dao/rbac"
 	"go-admin/internal/models"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 	"strings"
 )
 
@@ -35,14 +34,13 @@ func (s *AuthService) Register(ctx context.Context, username, password, email st
 
 	// 2) 检查用户名唯一性。
 	existingUser, err := s.authDao.GetUserByUsername(ctx, username)
+	if err != nil {
+		return err
+	}
 	// 判断条件并进入对应分支逻辑。
-	if err == nil && existingUser != nil {
+	if existingUser != nil {
 		// 返回当前处理结果。
 		return errors.New("用户名已存在")
-		// 进入新的代码块进行处理。
-	} else if err != nil && err != gorm.ErrRecordNotFound {
-		// 返回当前处理结果。
-		return err
 	}
 
 	// 3) 密码强度校验 + bcrypt 哈希存储（禁止明文落库）。
@@ -86,13 +84,11 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*mo
 	user, err := s.authDao.GetUserByUsername(ctx, username)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
-		// 判断条件并进入对应分支逻辑。
-		if err == gorm.ErrRecordNotFound {
-			// 返回当前处理结果。
-			return nil, errors.New("用户名或密码错误")
-		}
 		// 返回当前处理结果。
 		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("用户名或密码错误")
 	}
 
 	// 2) 比较密码哈希。
@@ -113,6 +109,12 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*mo
 
 // GetUserByID 根据 ID 查询用户，用于鉴权场景下的状态校验。
 func (s *AuthService) GetUserByID(ctx context.Context, userID uint) (*models.User, error) {
-	// 返回当前处理结果。
-	return s.authDao.GetUserByID(ctx, userID)
+	user, err := s.authDao.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("用户不存在")
+	}
+	return user, nil
 }

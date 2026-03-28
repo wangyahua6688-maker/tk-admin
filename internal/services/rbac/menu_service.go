@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	rbacdao "go-admin/internal/dao/rbac"
 	"go-admin/internal/models"
 )
@@ -37,8 +38,14 @@ func (s *MenuService) List(ctx context.Context) ([]models.Menu, error) {
 
 // Get 获取单个菜单。
 func (s *MenuService) Get(ctx context.Context, id uint) (*models.Menu, error) {
-	// 返回当前处理结果。
-	return s.dao.Get(ctx, id)
+	menu, err := s.dao.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if menu == nil {
+		return nil, errors.New("菜单不存在")
+	}
+	return menu, nil
 }
 
 // Delete 删除菜单。

@@ -27,6 +27,9 @@ func (s *UserRoleService) BindRoles(ctx context.Context, userID uint, roleIDs []
 		// 返回当前处理结果。
 		return err
 	}
+	if user == nil {
+		return errors.New("用户不存在")
+	}
 
 	// 允许传空数组：表示清空用户角色绑定。
 	if len(roleIDs) == 0 {
@@ -66,6 +69,9 @@ func (s *UserRoleService) AddRoles(ctx context.Context, userID uint, roleIDs []u
 		// 返回当前处理结果。
 		return err
 	}
+	if user == nil {
+		return errors.New("用户不存在")
+	}
 
 	// 查询角色集合
 	roles, err := s.dao.FindRoles(ctx, roleIDs)
@@ -99,6 +105,9 @@ func (s *UserRoleService) RemoveRoles(ctx context.Context, userID uint, roleIDs 
 		// 返回当前处理结果。
 		return err
 	}
+	if user == nil {
+		return errors.New("用户不存在")
+	}
 
 	// 查询角色集合
 	roles, err := s.dao.FindRoles(ctx, roleIDs)
@@ -119,7 +128,13 @@ func (s *UserRoleService) RemoveRoles(ctx context.Context, userID uint, roleIDs 
 
 // GetUserRoles 查询用户角色并预加载权限。
 func (s *UserRoleService) GetUserRoles(ctx context.Context, userID uint) ([]models.Role, error) {
-	// 返回当前处理结果。
+	user, err := s.dao.FindUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("用户不存在")
+	}
 	return s.dao.GetUserRolesWithPermissions(ctx, userID)
 }
 

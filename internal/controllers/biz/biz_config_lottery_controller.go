@@ -505,6 +505,10 @@ func (bc *LotteryController) UpdateLotteryInfo(c *gin.Context) {
 		// 返回当前处理结果。
 		return
 	}
+	if current == nil {
+		commonresp.GinError(c, constants.AdminBizResourceNotFound, "lottery info not found")
+		return
+	}
 
 	// 在“当前值”基础上叠加本次更新，保证部分更新不会丢字段。
 	next := *current

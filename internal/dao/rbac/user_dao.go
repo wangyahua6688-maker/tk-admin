@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go-admin/internal/models"
@@ -25,6 +26,9 @@ func (d *UserDao) GetByUsername(ctx context.Context, username string) (*models.U
 	var user models.User
 	// 按用户名查询
 	if err := d.db.WithContext(ctx).Where("username = ?", username).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}
@@ -44,6 +48,9 @@ func (d *UserDao) GetByID(ctx context.Context, id uint) (*models.User, error) {
 	var user models.User
 	// 按 ID 查询
 	if err := d.db.WithContext(ctx).First(&user, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}

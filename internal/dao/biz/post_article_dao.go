@@ -2,6 +2,7 @@ package biz
 
 import (
 	"context"
+	"errors"
 
 	"go-admin/internal/models"
 	"gorm.io/gorm"
@@ -61,6 +62,9 @@ func (d *PostArticleDAO) GetPostArticleByID(ctx context.Context, id uint) (*mode
 	var post models.WPostArticle
 	// 判断条件并进入对应分支逻辑。
 	if err := d.db.WithContext(ctx).Select("id,user_id,is_official,status").Where("id = ?", id).First(&post).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}

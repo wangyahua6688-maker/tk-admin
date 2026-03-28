@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	rbacdao "go-admin/internal/dao/rbac"
 	"go-admin/internal/models"
 )
@@ -37,8 +38,14 @@ func (s *PermissionService) List(ctx context.Context) ([]models.Permission, erro
 
 // Get 获取单个权限。
 func (s *PermissionService) Get(ctx context.Context, id uint) (*models.Permission, error) {
-	// 返回当前处理结果。
-	return s.dao.Get(ctx, id)
+	perm, err := s.dao.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if perm == nil {
+		return nil, errors.New("权限不存在")
+	}
+	return perm, nil
 }
 
 // Delete 删除权限。

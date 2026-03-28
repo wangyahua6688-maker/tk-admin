@@ -27,6 +27,9 @@ func (s *RolePermissionService) BindPermissions(ctx context.Context, roleID uint
 		// 返回当前处理结果。
 		return err
 	}
+	if role == nil {
+		return errors.New("角色不存在")
+	}
 
 	// 允许传空数组：表示清空角色已有权限绑定。
 	if len(permIDs) == 0 {
@@ -53,7 +56,13 @@ func (s *RolePermissionService) BindPermissions(ctx context.Context, roleID uint
 
 // GetRolePermissions 查询角色已绑定权限。
 func (s *RolePermissionService) GetRolePermissions(ctx context.Context, roleID uint) ([]models.Permission, error) {
-	// 返回当前处理结果。
+	role, err := s.dao.FindRole(ctx, roleID)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		return nil, errors.New("角色不存在")
+	}
 	return s.dao.GetPermissions(ctx, roleID)
 }
 

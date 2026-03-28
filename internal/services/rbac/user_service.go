@@ -33,8 +33,11 @@ func (s *UserService) CreateUser(ctx context.Context, username, password, email,
 
 	// 检查用户名是否存在
 	existing, err := s.userDao.GetByUsername(ctx, username)
+	if err != nil {
+		return nil, err
+	}
 	// 判断条件并进入对应分支逻辑。
-	if err == nil && existing != nil {
+	if existing != nil {
 		// 返回当前处理结果。
 		return nil, errors.New("用户名已存在")
 	}
@@ -85,8 +88,14 @@ func (s *UserService) ListAllUsers(ctx context.Context) ([]models.User, error) {
 
 // GetUserByID 查询用户基础信息。
 func (s *UserService) GetUserByID(ctx context.Context, userID uint) (*models.User, error) {
-	// 返回当前处理结果。
-	return s.userDao.GetByID(ctx, userID)
+	user, err := s.userDao.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("用户不存在")
+	}
+	return user, nil
 }
 
 // UpdateUser 更新用户资料。

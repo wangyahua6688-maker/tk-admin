@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	"go-admin/internal/models"
 	"gorm.io/gorm"
 )
@@ -23,6 +24,9 @@ func (d *UserRoleDao) FindUser(ctx context.Context, id uint) (*models.User, erro
 	var user models.User
 	// 判断条件并进入对应分支逻辑。
 	if err := d.db.WithContext(ctx).First(&user, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}
@@ -89,6 +93,9 @@ func (d *UserRoleDao) GetUserRolesWithPermissions(ctx context.Context, id uint) 
 
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return []models.Role{}, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}

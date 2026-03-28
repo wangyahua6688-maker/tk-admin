@@ -66,7 +66,7 @@ func NewJWTMiddleware(mgr *tokenjwt.Manager) gin.HandlerFunc {
 			// 声明当前变量。
 			var user models.User
 			// 判断条件并进入对应分支逻辑。
-			if err := db.Select("id", "status").First(&user, claims.UserID).Error; err != nil || user.Status != 1 {
+			if err := db.Select("id", "status").First(&user, claims.UserID).Error; err != nil || user.ID == 0 || user.Status != 1 {
 				// 调用c.AbortWithStatusJSON完成当前处理。
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "user disabled or not found"})
 				// 返回当前处理结果。

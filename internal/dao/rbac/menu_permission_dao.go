@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"errors"
 
 	"go-admin/internal/models"
 	"gorm.io/gorm"
@@ -24,6 +25,9 @@ func (d *MenuPermissionDao) FindMenu(ctx context.Context, id uint) (*models.Menu
 	var m models.Menu
 	// 判断条件并进入对应分支逻辑。
 	if err := d.db.WithContext(ctx).First(&m, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}
@@ -56,6 +60,9 @@ func (d *MenuPermissionDao) GetPermissions(ctx context.Context, menuID uint) ([]
 	var menu models.Menu
 	// 判断条件并进入对应分支逻辑。
 	if err := d.db.WithContext(ctx).Preload("Permissions").First(&menu, menuID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return []models.Permission{}, nil
+		}
 		// 返回当前处理结果。
 		return nil, err
 	}

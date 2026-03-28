@@ -133,7 +133,12 @@ func (s *PostCommentService) CreatePostComment(ctx context.Context, postID uint,
 	}
 
 	// 校验帖子存在。
-	if _, err := s.postArticleDAO.GetPostArticleByID(ctx, postID); err != nil {
+	post, err := s.postArticleDAO.GetPostArticleByID(ctx, postID)
+	if err != nil {
+		// 返回当前处理结果。
+		return nil, errors.New("post not found")
+	}
+	if post == nil {
 		// 返回当前处理结果。
 		return nil, errors.New("post not found")
 	}
