@@ -15,7 +15,7 @@ database:
   log_level: "warn"
 
 redis:
-  addr: "redis:6379"
+  addr: "tk-redis:6379"
   password: ""
   db: 0
 

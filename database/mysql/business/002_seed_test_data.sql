@@ -26,7 +26,10 @@ VALUES
 REPLACE INTO tk_home_popup
   (id, title, content, image_url, button_text, button_link, position, show_once, status, sort, start_at, end_at, created_at, updated_at)
 VALUES
-  (1201, '欢迎来到测试环境', '当前站点已写入首页、开奖区、论坛与高手榜测试数据。', '', '知道了', '/forum', 'home', 0, 1, 1, '2026-01-01 00:00:00.000', '2026-12-31 23:59:59.000', NOW(3), NOW(3));
+  (1201, '欢迎来到测试环境', '当前站点已写入首页、开奖区、论坛与高手榜测试数据，可直接用于联调与演示。', '', '立即查看', '/forum', 'home', 0, 1, 1, '2026-01-01 00:00:00.000', '2026-12-31 23:59:59.000', NOW(3), NOW(3)),
+  (1202, '开奖区测试说明', '澳彩与港彩已补入近期开奖、回放地址、玩法标签与颜色数据，首页/H5/详情页都可以直接验证。', 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1200&q=80', '查看开奖区', '/history', 'home', 1, 1, 2, '2026-01-01 00:00:00.000', '2026-12-31 23:59:59.000', NOW(3), NOW(3)),
+  (1203, '论坛互动测试数据', '高手论坛、官方帖子、评论与高手榜单都已补入测试数据，适合做整站联调。', 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=80', '进入论坛', '/forum', 'home', 0, 1, 3, '2026-01-01 00:00:00.000', '2026-12-31 23:59:59.000', NOW(3), NOW(3)),
+  (1204, '停用示例弹窗', '这是一条停用状态的首页弹窗，用于验证后台启停管理和列表展示。', '', '忽略', '/home', 'home', 1, 0, 99, '2026-01-01 00:00:00.000', '2026-12-31 23:59:59.000', NOW(3), NOW(3));
 
 REPLACE INTO tk_external_link
   (id, name, url, position, icon_url, group_key, status, sort, created_at, updated_at)
