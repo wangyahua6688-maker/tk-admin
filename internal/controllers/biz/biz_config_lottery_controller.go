@@ -10,6 +10,7 @@ import (
 
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
 	"go-admin/internal/constants"
+	admindto "go-admin/internal/dto/admin"
 	"go-admin/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -18,9 +19,9 @@ import (
 // -------------------- Special Lottery --------------------
 
 // ListSpecialLotteries 查询彩种配置列表。
-func (bc *BizConfigController) ListSpecialLotteries(c *gin.Context) {
+func (bc *LotteryController) ListSpecialLotteries(c *gin.Context) {
 	// 固定按 sort + id 排序，确保前端按钮顺序稳定。
-	items, err := bc.svc.ListSpecialLotteries(c.Request.Context(), 200)
+	items, err := bc.specialLotterySvc.ListSpecialLotteries(c.Request.Context(), 200)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -33,7 +34,7 @@ func (bc *BizConfigController) ListSpecialLotteries(c *gin.Context) {
 }
 
 // CreateSpecialLottery 新增彩种配置。
-func (bc *BizConfigController) CreateSpecialLottery(c *gin.Context) {
+func (bc *LotteryController) CreateSpecialLottery(c *gin.Context) {
 	// 声明当前变量。
 	var req struct {
 		// 处理当前语句逻辑。
@@ -126,7 +127,7 @@ func (bc *BizConfigController) CreateSpecialLottery(c *gin.Context) {
 		item.Sort = *req.Sort
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.CreateSpecialLottery(c.Request.Context(), &item); err != nil {
+	if err := bc.specialLotterySvc.CreateSpecialLottery(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -139,7 +140,7 @@ func (bc *BizConfigController) CreateSpecialLottery(c *gin.Context) {
 }
 
 // UpdateSpecialLottery 更新彩种配置。
-func (bc *BizConfigController) UpdateSpecialLottery(c *gin.Context) {
+func (bc *LotteryController) UpdateSpecialLottery(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -246,7 +247,7 @@ func (bc *BizConfigController) UpdateSpecialLottery(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.UpdateSpecialLottery(c.Request.Context(), id, updates); err != nil {
+	if err := bc.specialLotterySvc.UpdateSpecialLottery(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -259,7 +260,7 @@ func (bc *BizConfigController) UpdateSpecialLottery(c *gin.Context) {
 }
 
 // DeleteSpecialLottery 删除彩种配置。
-func (bc *BizConfigController) DeleteSpecialLottery(c *gin.Context) {
+func (bc *LotteryController) DeleteSpecialLottery(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -270,7 +271,7 @@ func (bc *BizConfigController) DeleteSpecialLottery(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.DeleteSpecialLottery(c.Request.Context(), id); err != nil {
+	if err := bc.specialLotterySvc.DeleteSpecialLottery(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -284,64 +285,10 @@ func (bc *BizConfigController) DeleteSpecialLottery(c *gin.Context) {
 
 // -------------------- Lottery Info --------------------
 
-// lotteryInfoUpsertRequest 图库内容新增/编辑请求结构。
-type lotteryInfoUpsertRequest struct {
-	// 处理当前语句逻辑。
-	SpecialLotteryID *uint `json:"special_lottery_id"`
-	// 处理当前语句逻辑。
-	CategoryID *uint `json:"category_id"`
-	// 处理当前语句逻辑。
-	CategoryTag *string `json:"category_tag"`
-	// 处理当前语句逻辑。
-	Issue *string `json:"issue"`
-	// 处理当前语句逻辑。
-	Year *int `json:"year"`
-	// 处理当前语句逻辑。
-	Title *string `json:"title"`
-	// 处理当前语句逻辑。
-	CoverImageURL *string `json:"cover_image_url"`
-	// 处理当前语句逻辑。
-	DetailImageURL *string `json:"detail_image_url"`
-	// 处理当前语句逻辑。
-	DrawCode *string `json:"draw_code"`
-	// 处理当前语句逻辑。
-	NormalDrawResult *string `json:"normal_draw_result"`
-	// 处理当前语句逻辑。
-	SpecialDrawResult *string `json:"special_draw_result"`
-	// 处理当前语句逻辑。
-	DrawResult *string `json:"draw_result"`
-	// 处理当前语句逻辑。
-	DrawAt *string `json:"draw_at"`
-	// 处理当前语句逻辑。
-	PlaybackURL *string `json:"playback_url"`
-	// 处理当前语句逻辑。
-	LikesCount *int64 `json:"likes_count"`
-	// 处理当前语句逻辑。
-	CommentCount *int64 `json:"comment_count"`
-	// 处理当前语句逻辑。
-	FavoriteCount *int64 `json:"favorite_count"`
-	// 处理当前语句逻辑。
-	ReadCount *int64 `json:"read_count"`
-	// 处理当前语句逻辑。
-	PollEnabled *int8 `json:"poll_enabled"`
-	// 处理当前语句逻辑。
-	PollDefaultExpand *int8 `json:"poll_default_expand"`
-	// 处理当前语句逻辑。
-	RecommendInfoIDs *string `json:"recommend_info_ids"`
-	// 处理当前语句逻辑。
-	OptionNames *[]string `json:"option_names"`
-	// 处理当前语句逻辑。
-	IsCurrent *int8 `json:"is_current"`
-	// 处理当前语句逻辑。
-	Status *int8 `json:"status"`
-	// 处理当前语句逻辑。
-	Sort *int `json:"sort"`
-}
-
 // ListLotteryInfos 查询图库内容列表。
-func (bc *BizConfigController) ListLotteryInfos(c *gin.Context) {
+func (bc *LotteryController) ListLotteryInfos(c *gin.Context) {
 	// 图库内容管理优先按更新时间倒序，避免运营修改后找不到记录。
-	items, optionNameMap, err := bc.svc.ListLotteryInfosWithOptions(c.Request.Context(), 300)
+	items, optionNameMap, err := bc.lotteryInfoSvc.ListLotteryInfosWithOptions(c.Request.Context(), 300)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -359,9 +306,9 @@ func (bc *BizConfigController) ListLotteryInfos(c *gin.Context) {
 }
 
 // CreateLotteryInfo 新增图库内容。
-func (bc *BizConfigController) CreateLotteryInfo(c *gin.Context) {
+func (bc *LotteryController) CreateLotteryInfo(c *gin.Context) {
 	// 声明当前变量。
-	var req lotteryInfoUpsertRequest
+	var req admindto.LotteryInfoUpsertRequest
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -385,7 +332,7 @@ func (bc *BizConfigController) CreateLotteryInfo(c *gin.Context) {
 		specialLotteryID = *req.SpecialLotteryID
 	}
 	// 分类必须可落到 tk_lottery_category，禁止手工自由文本分类。
-	categoryID, categoryTag, err := bc.svc.ResolveLotteryCategory(c.Request.Context(), req.CategoryID, req.CategoryTag)
+	categoryID, categoryTag, err := bc.lotteryInfoSvc.ResolveLotteryCategory(c.Request.Context(), req.CategoryID, req.CategoryTag)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -519,7 +466,7 @@ func (bc *BizConfigController) CreateLotteryInfo(c *gin.Context) {
 	}
 
 	// 当前期约束：同一彩种只能有一条 is_current=1 记录。
-	if err := bc.svc.CreateLotteryInfo(c.Request.Context(), &item, optionNames); err != nil {
+	if err := bc.lotteryInfoSvc.CreateLotteryInfo(c.Request.Context(), &item, optionNames); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -530,7 +477,7 @@ func (bc *BizConfigController) CreateLotteryInfo(c *gin.Context) {
 }
 
 // UpdateLotteryInfo 编辑图库内容。
-func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
+func (bc *LotteryController) UpdateLotteryInfo(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -541,7 +488,7 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 		return
 	}
 	// 声明当前变量。
-	var req lotteryInfoUpsertRequest
+	var req admindto.LotteryInfoUpsertRequest
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -550,7 +497,7 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 		return
 	}
 	// 定义并初始化当前变量。
-	current, err := bc.svc.GetLotteryInfoByID(c.Request.Context(), id)
+	current, err := bc.lotteryInfoSvc.GetLotteryInfoByID(c.Request.Context(), id)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -688,7 +635,7 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 	// 分类字段任一变化时，都按分类表重算 category_id + category_tag。
 	if req.CategoryID != nil || req.CategoryTag != nil {
 		// 定义并初始化当前变量。
-		resolvedID, resolvedTag, resolveErr := bc.svc.ResolveLotteryCategory(
+		resolvedID, resolvedTag, resolveErr := bc.lotteryInfoSvc.ResolveLotteryCategory(
 			// 调用c.Request.Context完成当前处理。
 			c.Request.Context(),
 			// 调用valueOrCurrentUint完成当前处理。
@@ -822,7 +769,7 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 	}
 
 	// 更新时同样维护“每彩种唯一当前期”约束。
-	if err := bc.svc.UpdateLotteryInfo(c.Request.Context(), id, updates, updateOptions, optionNames, next.SpecialLotteryID, next.IsCurrent); err != nil {
+	if err := bc.lotteryInfoSvc.UpdateLotteryInfo(c.Request.Context(), id, updates, updateOptions, optionNames, next.SpecialLotteryID, next.IsCurrent); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -833,7 +780,7 @@ func (bc *BizConfigController) UpdateLotteryInfo(c *gin.Context) {
 }
 
 // DeleteLotteryInfo 删除图库内容。
-func (bc *BizConfigController) DeleteLotteryInfo(c *gin.Context) {
+func (bc *LotteryController) DeleteLotteryInfo(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -844,7 +791,7 @@ func (bc *BizConfigController) DeleteLotteryInfo(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.DeleteLotteryInfo(c.Request.Context(), id); err != nil {
+	if err := bc.lotteryInfoSvc.DeleteLotteryInfo(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

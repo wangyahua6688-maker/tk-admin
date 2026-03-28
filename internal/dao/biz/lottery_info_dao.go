@@ -8,7 +8,7 @@ import (
 )
 
 // ListLotteryInfos 查询图纸列表。
-func (d *BizConfigDAO) ListLotteryInfos(ctx context.Context, limit int) ([]models.WLotteryInfo, error) {
+func (d *LotteryDAO) ListLotteryInfos(ctx context.Context, limit int) ([]models.WLotteryInfo, error) {
 	// 以更新时间倒序输出，保证后台编辑后能快速找到。
 	query := d.db.WithContext(ctx).Model(&models.WLotteryInfo{}).Order("updated_at DESC, id DESC")
 	// 判断条件并进入对应分支逻辑。
@@ -28,7 +28,7 @@ func (d *BizConfigDAO) ListLotteryInfos(ctx context.Context, limit int) ([]model
 }
 
 // GetLotteryInfoByID 查询单条图纸。
-func (d *BizConfigDAO) GetLotteryInfoByID(ctx context.Context, id uint) (*models.WLotteryInfo, error) {
+func (d *LotteryDAO) GetLotteryInfoByID(ctx context.Context, id uint) (*models.WLotteryInfo, error) {
 	// 声明当前变量。
 	var item models.WLotteryInfo
 	// 判断条件并进入对应分支逻辑。
@@ -41,25 +41,25 @@ func (d *BizConfigDAO) GetLotteryInfoByID(ctx context.Context, id uint) (*models
 }
 
 // CreateLotteryInfoTx 在事务中创建图纸。
-func (d *BizConfigDAO) CreateLotteryInfoTx(tx *gorm.DB, item *models.WLotteryInfo) error {
+func (d *LotteryDAO) CreateLotteryInfoTx(tx *gorm.DB, item *models.WLotteryInfo) error {
 	// 返回当前处理结果。
 	return tx.Create(item).Error
 }
 
 // UpdateLotteryInfoTx 在事务中更新图纸。
-func (d *BizConfigDAO) UpdateLotteryInfoTx(tx *gorm.DB, id uint, updates map[string]interface{}) error {
+func (d *LotteryDAO) UpdateLotteryInfoTx(tx *gorm.DB, id uint, updates map[string]interface{}) error {
 	// 返回当前处理结果。
 	return tx.Model(&models.WLotteryInfo{}).Where("id = ?", id).Updates(updates).Error
 }
 
 // DeleteLotteryInfoTx 在事务中删除图纸。
-func (d *BizConfigDAO) DeleteLotteryInfoTx(tx *gorm.DB, id uint) error {
+func (d *LotteryDAO) DeleteLotteryInfoTx(tx *gorm.DB, id uint) error {
 	// 返回当前处理结果。
 	return tx.Delete(&models.WLotteryInfo{}, id).Error
 }
 
 // ListLotteryOptionsByInfoIDs 批量查询图纸的动物竞猜选项。
-func (d *BizConfigDAO) ListLotteryOptionsByInfoIDs(ctx context.Context, infoIDs []uint) ([]models.WLotteryOption, error) {
+func (d *LotteryDAO) ListLotteryOptionsByInfoIDs(ctx context.Context, infoIDs []uint) ([]models.WLotteryOption, error) {
 	// 判断条件并进入对应分支逻辑。
 	if len(infoIDs) == 0 {
 		// 返回当前处理结果。
@@ -83,7 +83,7 @@ func (d *BizConfigDAO) ListLotteryOptionsByInfoIDs(ctx context.Context, infoIDs 
 }
 
 // ReplaceLotteryOptionsTx 全量替换图纸动物竞猜选项（保留旧票数）。
-func (d *BizConfigDAO) ReplaceLotteryOptionsTx(tx *gorm.DB, infoID uint, optionNames []string) error {
+func (d *LotteryDAO) ReplaceLotteryOptionsTx(tx *gorm.DB, infoID uint, optionNames []string) error {
 	// 读取旧选项票数，保证编辑时票数不丢失。
 	var oldRows []models.WLotteryOption
 	// 判断条件并进入对应分支逻辑。

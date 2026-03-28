@@ -10,8 +10,8 @@ jwt:
   allow_insecure_memory_store: true
 
 database:
-#  dsn: "root:12345678@tcp(mysql:3306)/nb_sys_001?charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai"
-  dsn: "tkuser:TkUser_Pass2026!@tcp(mysql:3306)/nb_sys_001?charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai"
+  dsn: "root:12345678@tcp(127.0.0.1:3306)/nb_sys_001?charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai"
+#  dsn: "tkuser:TkUser_Pass2026!@tcp(mysql:3306)/nb_sys_001?charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai"
   log_level: "warn"
 
 redis:

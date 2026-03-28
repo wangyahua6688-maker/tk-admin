@@ -6,15 +6,27 @@ import (
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
 	"go-admin/internal/constants"
 	"go-admin/internal/models"
+	bizsvc "go-admin/internal/services/biz"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // -------------------- 外链 --------------------
 
-func (bc *BizConfigController) ListExternalLinks(c *gin.Context) {
+// ExternalLinkController 外链配置控制器。
+type ExternalLinkController struct {
+	externalLinkSvc *bizsvc.ExternalLinkService
+}
+
+// NewExternalLinkController 创建外链控制器。
+func NewExternalLinkController(db *gorm.DB) *ExternalLinkController {
+	return &ExternalLinkController{externalLinkSvc: bizsvc.NewExternalLinkService(db)}
+}
+
+func (bc *ExternalLinkController) ListExternalLinks(c *gin.Context) {
 	// 定义并初始化当前变量。
-	items, err := bc.svc.ListExternalLinks(c.Request.Context(), 200)
+	items, err := bc.externalLinkSvc.ListExternalLinks(c.Request.Context(), 200)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -27,7 +39,7 @@ func (bc *BizConfigController) ListExternalLinks(c *gin.Context) {
 }
 
 // CreateExternalLink 创建ExternalLink。
-func (bc *BizConfigController) CreateExternalLink(c *gin.Context) {
+func (bc *ExternalLinkController) CreateExternalLink(c *gin.Context) {
 	// 声明当前变量。
 	var req struct {
 		// 处理当前语句逻辑。
@@ -105,7 +117,7 @@ func (bc *BizConfigController) CreateExternalLink(c *gin.Context) {
 		item.Sort = *req.Sort
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.CreateExternalLink(c.Request.Context(), &item); err != nil {
+	if err := bc.externalLinkSvc.CreateExternalLink(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -116,7 +128,7 @@ func (bc *BizConfigController) CreateExternalLink(c *gin.Context) {
 }
 
 // UpdateExternalLink 更新ExternalLink。
-func (bc *BizConfigController) UpdateExternalLink(c *gin.Context) {
+func (bc *ExternalLinkController) UpdateExternalLink(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -231,7 +243,7 @@ func (bc *BizConfigController) UpdateExternalLink(c *gin.Context) {
 		req["group_key"] = strings.TrimSpace(groupRaw)
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.UpdateExternalLink(c.Request.Context(), id, req); err != nil {
+	if err := bc.externalLinkSvc.UpdateExternalLink(c.Request.Context(), id, req); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -242,7 +254,7 @@ func (bc *BizConfigController) UpdateExternalLink(c *gin.Context) {
 }
 
 // DeleteExternalLink 删除ExternalLink。
-func (bc *BizConfigController) DeleteExternalLink(c *gin.Context) {
+func (bc *ExternalLinkController) DeleteExternalLink(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -253,7 +265,7 @@ func (bc *BizConfigController) DeleteExternalLink(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.DeleteExternalLink(c.Request.Context(), id); err != nil {
+	if err := bc.externalLinkSvc.DeleteExternalLink(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

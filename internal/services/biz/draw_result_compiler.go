@@ -41,6 +41,8 @@ type drawResultStats struct {
 type drawResultBundle struct {
 	// DrawLabels 为“生肖/五行”组合标签。
 	DrawLabels string
+	// ColorLabels 为波色标签串。
+	ColorLabels string
 	// ZodiacLabels 为生肖标签串。
 	ZodiacLabels string
 	// WuxingLabels 为五行标签串。
@@ -139,6 +141,8 @@ func compileDrawResultBundle(item *models.WDrawRecord) (*drawResultBundle, error
 	special := details[6]
 	// 输出“生肖/五行”组合标签。
 	drawLabels := make([]string, 0, len(details))
+	// 输出波色标签。
+	colorLabels := make([]string, 0, len(details))
 	// 输出生肖标签。
 	zodiacLabels := make([]string, 0, len(details))
 	// 输出五行标签。
@@ -161,6 +165,8 @@ func compileDrawResultBundle(item *models.WDrawRecord) (*drawResultBundle, error
 	for idx, detail := range details {
 		// draw_labels 统一为“生肖/五行”。
 		drawLabels = append(drawLabels, detail.Zodiac+"/"+detail.Wuxing)
+		// 单独输出波色标签。
+		colorLabels = append(colorLabels, detail.ColorWave)
 		// 单独输出生肖标签。
 		zodiacLabels = append(zodiacLabels, detail.Zodiac)
 		// 单独输出五行标签。
@@ -464,6 +470,8 @@ func compileDrawResultBundle(item *models.WDrawRecord) (*drawResultBundle, error
 		// 处理当前语句逻辑。
 		DrawLabels: strings.Join(drawLabels, ","),
 		// 处理当前语句逻辑。
+		ColorLabels: strings.Join(colorLabels, ","),
+		// 处理当前语句逻辑。
 		ZodiacLabels: strings.Join(zodiacLabels, ","),
 		// 处理当前语句逻辑。
 		WuxingLabels: strings.Join(wuxingLabels, ","),
@@ -491,6 +499,8 @@ func hydrateDrawRecordDerivedFields(item *models.WDrawRecord) (*drawResultBundle
 	}
 	// 将自动生成的官方标签回写到主表。
 	item.DrawLabels = bundle.DrawLabels
+	// 将波色标签回写到主表。
+	item.ColorLabels = bundle.ColorLabels
 	// 将生肖标签回写到主表。
 	item.ZodiacLabels = bundle.ZodiacLabels
 	// 将五行标签回写到主表。
@@ -867,6 +877,7 @@ func buildDrawRecordUpdateMap(item *models.WDrawRecord) map[string]interface{} {
 		"special_draw_result":   item.SpecialDrawResult,
 		"draw_result":           item.DrawResult,
 		"draw_labels":           item.DrawLabels,
+		"color_labels":          item.ColorLabels,
 		"zodiac_labels":         item.ZodiacLabels,
 		"wuxing_labels":         item.WuxingLabels,
 		"playback_url":          item.PlaybackURL,
@@ -893,7 +904,7 @@ func buildDrawRecordUpdateMap(item *models.WDrawRecord) map[string]interface{} {
 }
 
 // CreateDrawRecord 创建开奖记录并同步玩法结果分表。
-func (s *BizConfigService) CreateDrawRecord(ctx context.Context, item *models.WDrawRecord) error {
+func (s *LotteryService) CreateDrawRecord(ctx context.Context, item *models.WDrawRecord) error {
 	// 先统一回写主表派生字段，确保主表和分表来自同一套规则。
 	bundle, err := hydrateDrawRecordDerivedFields(item)
 	if err != nil {
@@ -918,7 +929,7 @@ func (s *BizConfigService) CreateDrawRecord(ctx context.Context, item *models.WD
 }
 
 // UpdateDrawRecord 更新开奖记录并同步玩法结果分表。
-func (s *BizConfigService) UpdateDrawRecord(ctx context.Context, id uint, item *models.WDrawRecord) error {
+func (s *LotteryService) UpdateDrawRecord(ctx context.Context, id uint, item *models.WDrawRecord) error {
 	// 先统一回写主表派生字段，避免更新时只改号码不改玩法结果。
 	bundle, err := hydrateDrawRecordDerivedFields(item)
 	if err != nil {
@@ -942,7 +953,7 @@ func (s *BizConfigService) UpdateDrawRecord(ctx context.Context, id uint, item *
 }
 
 // DeleteDrawRecord 删除开奖记录及其玩法结果分表。
-func (s *BizConfigService) DeleteDrawRecord(ctx context.Context, id uint) error {
+func (s *LotteryService) DeleteDrawRecord(ctx context.Context, id uint) error {
 	// 通过事务保证主表和分表一起删除。
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 先删玩法结果分表，避免残留孤儿数据。

@@ -4,20 +4,37 @@ import (
 	"sort"
 	"strings"
 
-	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
 	"go-admin/internal/constants"
 	"go-admin/internal/models"
+	bizsvc "go-admin/internal/services/biz"
+
+	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // -------------------- Banner --------------------
 
-func (bc *BizConfigController) ListBanners(c *gin.Context) {
+// BannerController Banner 配置控制器。
+type BannerController struct {
+	bannerSvc *bizsvc.BannerService
+	lookupSvc *bizsvc.BizLookupService
+}
+
+// NewBannerController 创建 Banner 控制器。
+func NewBannerController(db *gorm.DB) *BannerController {
+	return &BannerController{
+		bannerSvc: bizsvc.NewBannerService(db),
+		lookupSvc: bizsvc.NewBizLookupService(db),
+	}
+}
+
+func (bc *BannerController) ListBanners(c *gin.Context) {
 	// 定义并初始化当前变量。
 	bannerType := strings.TrimSpace(c.Query("type"))
 	// 定义并初始化当前变量。
-	items, err := bc.svc.ListBanners(c.Request.Context(), bannerType, 300)
+	items, err := bc.bannerSvc.ListBanners(c.Request.Context(), bannerType, 300)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -30,7 +47,7 @@ func (bc *BizConfigController) ListBanners(c *gin.Context) {
 }
 
 // CreateBanner 创建Banner。
-func (bc *BizConfigController) CreateBanner(c *gin.Context) {
+func (bc *BannerController) CreateBanner(c *gin.Context) {
 	// 声明当前变量。
 	var req struct {
 		// 处理当前语句逻辑。
@@ -116,7 +133,7 @@ func (bc *BizConfigController) CreateBanner(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if jumpType == "post" {
 		// 定义并初始化当前变量。
-		ok, err := bc.svc.IsPostExists(c.Request.Context(), req.JumpPostID)
+		ok, err := bc.lookupSvc.IsPostExists(c.Request.Context(), req.JumpPostID)
 		// 判断条件并进入对应分支逻辑。
 		if err != nil {
 			// 调用utils.JSONError完成当前处理。
@@ -180,7 +197,7 @@ func (bc *BizConfigController) CreateBanner(c *gin.Context) {
 		item.Sort = *req.Sort
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.CreateBanner(c.Request.Context(), &item); err != nil {
+	if err := bc.bannerSvc.CreateBanner(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -191,7 +208,7 @@ func (bc *BizConfigController) CreateBanner(c *gin.Context) {
 }
 
 // UpdateBanner 更新Banner。
-func (bc *BizConfigController) UpdateBanner(c *gin.Context) {
+func (bc *BannerController) UpdateBanner(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -354,7 +371,7 @@ func (bc *BizConfigController) UpdateBanner(c *gin.Context) {
 	}
 
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.UpdateBanner(c.Request.Context(), id, updates); err != nil {
+	if err := bc.bannerSvc.UpdateBanner(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -365,7 +382,7 @@ func (bc *BizConfigController) UpdateBanner(c *gin.Context) {
 }
 
 // DeleteBanner 删除Banner。
-func (bc *BizConfigController) DeleteBanner(c *gin.Context) {
+func (bc *BannerController) DeleteBanner(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -376,7 +393,7 @@ func (bc *BizConfigController) DeleteBanner(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.DeleteBanner(c.Request.Context(), id); err != nil {
+	if err := bc.bannerSvc.DeleteBanner(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

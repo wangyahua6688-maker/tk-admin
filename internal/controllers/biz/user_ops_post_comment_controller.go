@@ -5,13 +5,25 @@ import (
 	"strings"
 
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
+	bizsvc "go-admin/internal/services/biz"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // -------------------- 帖子评论管理（按帖子维度） --------------------
 
-func (uc *UserOpsController) ListPostComments(c *gin.Context) {
+// PostCommentController 帖子评论控制器。
+type PostCommentController struct {
+	postCommentSvc *bizsvc.PostCommentService
+}
+
+// NewPostCommentController 创建帖子评论控制器。
+func NewPostCommentController(db *gorm.DB) *PostCommentController {
+	return &PostCommentController{postCommentSvc: bizsvc.NewPostCommentService(db)}
+}
+
+func (uc *PostCommentController) ListPostComments(c *gin.Context) {
 	// 定义并初始化当前变量。
 	postID, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -22,7 +34,7 @@ func (uc *UserOpsController) ListPostComments(c *gin.Context) {
 		return
 	}
 	// 定义并初始化当前变量。
-	items, err := uc.svc.ListPostComments(c.Request.Context(), postID)
+	items, err := uc.postCommentSvc.ListPostComments(c.Request.Context(), postID)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -35,7 +47,7 @@ func (uc *UserOpsController) ListPostComments(c *gin.Context) {
 }
 
 // CreatePostComment 创建PostComment。
-func (uc *UserOpsController) CreatePostComment(c *gin.Context) {
+func (uc *PostCommentController) CreatePostComment(c *gin.Context) {
 	// 定义并初始化当前变量。
 	postID, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -72,7 +84,7 @@ func (uc *UserOpsController) CreatePostComment(c *gin.Context) {
 		return
 	}
 	// 定义并初始化当前变量。
-	item, err := uc.svc.CreatePostComment(c.Request.Context(), postID, req.UserID, req.ParentID, strings.TrimSpace(req.Content), req.Status)
+	item, err := uc.postCommentSvc.CreatePostComment(c.Request.Context(), postID, req.UserID, req.ParentID, strings.TrimSpace(req.Content), req.Status)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。

@@ -12,11 +12,11 @@ import (
 
 // -------------------- Lottery Category --------------------
 
-func (bc *BizConfigController) ListLotteryCategories(c *gin.Context) {
+func (bc *LotteryController) ListLotteryCategories(c *gin.Context) {
 	// 定义并初始化当前变量。
 	keyword := strings.TrimSpace(c.Query("keyword"))
 	// 定义并初始化当前变量。
-	items, err := bc.svc.ListLotteryCategories(c.Request.Context(), keyword)
+	items, err := bc.lotteryCategorySvc.ListLotteryCategories(c.Request.Context(), keyword)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -29,7 +29,7 @@ func (bc *BizConfigController) ListLotteryCategories(c *gin.Context) {
 }
 
 // CreateLotteryCategory 创建LotteryCategory。
-func (bc *BizConfigController) CreateLotteryCategory(c *gin.Context) {
+func (bc *LotteryController) CreateLotteryCategory(c *gin.Context) {
 	// 声明当前变量。
 	var req struct {
 		// 处理当前语句逻辑。
@@ -92,7 +92,7 @@ func (bc *BizConfigController) CreateLotteryCategory(c *gin.Context) {
 	}
 
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.CreateLotteryCategory(c.Request.Context(), &item); err != nil {
+	if err := bc.lotteryCategorySvc.CreateLotteryCategory(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -103,7 +103,7 @@ func (bc *BizConfigController) CreateLotteryCategory(c *gin.Context) {
 }
 
 // UpdateLotteryCategory 更新LotteryCategory。
-func (bc *BizConfigController) UpdateLotteryCategory(c *gin.Context) {
+func (bc *LotteryController) UpdateLotteryCategory(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -194,7 +194,7 @@ func (bc *BizConfigController) UpdateLotteryCategory(c *gin.Context) {
 	}
 
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.UpdateLotteryCategory(c.Request.Context(), id, updates); err != nil {
+	if err := bc.lotteryCategorySvc.UpdateLotteryCategory(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -205,7 +205,7 @@ func (bc *BizConfigController) UpdateLotteryCategory(c *gin.Context) {
 }
 
 // DeleteLotteryCategory 删除LotteryCategory。
-func (bc *BizConfigController) DeleteLotteryCategory(c *gin.Context) {
+func (bc *LotteryController) DeleteLotteryCategory(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -216,7 +216,7 @@ func (bc *BizConfigController) DeleteLotteryCategory(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.DeleteLotteryCategory(c.Request.Context(), id); err != nil {
+	if err := bc.lotteryCategorySvc.DeleteLotteryCategory(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

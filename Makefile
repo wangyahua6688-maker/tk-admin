@@ -1,7 +1,7 @@
 APP_NAME=go-admin
 BUILD_DIR=build
 
-.PHONY: all build run docker-build docker-run
+.PHONY: all build run docker-build docker-run backfill-draw-results
 
 all: build
 
@@ -16,3 +16,6 @@ docker-build:
 
 docker-run:
 	docker-compose up --build
+
+backfill-draw-results:
+	go run ./tools/backfill_draw_results -config config.yaml -force

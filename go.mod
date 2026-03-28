@@ -11,7 +11,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
-	github.com/wangyahua6688-maker/tk-common v1.0.6
+	github.com/wangyahua6688-maker/tk-common v1.0.7
 	golang.org/x/crypto v0.45.0
 	gorm.io/gorm v1.30.0
 )

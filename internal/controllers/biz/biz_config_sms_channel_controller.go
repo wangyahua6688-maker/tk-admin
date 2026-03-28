@@ -6,19 +6,30 @@ import (
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
 	"go-admin/internal/constants"
 	"go-admin/internal/models"
+	bizsvc "go-admin/internal/services/biz"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // -------------------- 短信通道配置 --------------------
 
 // ListSMSChannels 查询短信通道配置列表。
-func (bc *BizConfigController) ListSMSChannels(c *gin.Context) {
+type SMSChannelController struct {
+	smsChannelSvc *bizsvc.SMSChannelService
+}
+
+// NewSMSChannelController 创建短信通道控制器。
+func NewSMSChannelController(db *gorm.DB) *SMSChannelController {
+	return &SMSChannelController{smsChannelSvc: bizsvc.NewSMSChannelService(db)}
+}
+
+func (bc *SMSChannelController) ListSMSChannels(c *gin.Context) {
 	// 按状态筛选时仅接收 0/1，其它值按“全部”处理。
 	status := strings.TrimSpace(c.Query("status"))
 
 	// 执行查询并返回。
-	items, err := bc.svc.ListSMSChannels(c.Request.Context(), status, 200)
+	items, err := bc.smsChannelSvc.ListSMSChannels(c.Request.Context(), status, 200)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -31,7 +42,7 @@ func (bc *BizConfigController) ListSMSChannels(c *gin.Context) {
 }
 
 // CreateSMSChannel 新增短信通道配置。
-func (bc *BizConfigController) CreateSMSChannel(c *gin.Context) {
+func (bc *SMSChannelController) CreateSMSChannel(c *gin.Context) {
 	// 声明请求结构，避免 map 直接更新带来的脏字段风险。
 	var req struct {
 		// 处理当前语句逻辑。
@@ -143,7 +154,7 @@ func (bc *BizConfigController) CreateSMSChannel(c *gin.Context) {
 	}
 
 	// 落库并返回。
-	if err := bc.svc.CreateSMSChannel(c.Request.Context(), &item); err != nil {
+	if err := bc.smsChannelSvc.CreateSMSChannel(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -154,7 +165,7 @@ func (bc *BizConfigController) CreateSMSChannel(c *gin.Context) {
 }
 
 // UpdateSMSChannel 更新短信通道配置。
-func (bc *BizConfigController) UpdateSMSChannel(c *gin.Context) {
+func (bc *SMSChannelController) UpdateSMSChannel(c *gin.Context) {
 	// 解析路由 ID。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -316,7 +327,7 @@ func (bc *BizConfigController) UpdateSMSChannel(c *gin.Context) {
 	}
 
 	// 执行更新并返回。
-	if err := bc.svc.UpdateSMSChannel(c.Request.Context(), id, updates); err != nil {
+	if err := bc.smsChannelSvc.UpdateSMSChannel(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -327,7 +338,7 @@ func (bc *BizConfigController) UpdateSMSChannel(c *gin.Context) {
 }
 
 // DeleteSMSChannel 删除短信通道配置。
-func (bc *BizConfigController) DeleteSMSChannel(c *gin.Context) {
+func (bc *SMSChannelController) DeleteSMSChannel(c *gin.Context) {
 	// 解析 ID 并执行删除。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -338,7 +349,7 @@ func (bc *BizConfigController) DeleteSMSChannel(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.DeleteSMSChannel(c.Request.Context(), id); err != nil {
+	if err := bc.smsChannelSvc.DeleteSMSChannel(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

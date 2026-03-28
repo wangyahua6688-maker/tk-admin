@@ -5,15 +5,27 @@ import (
 	"strings"
 
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
+	bizsvc "go-admin/internal/services/biz"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // -------------------- 热点评论 --------------------
 
-func (uc *UserOpsController) ListHotComments(c *gin.Context) {
+// HotCommentController 热点评论控制器。
+type HotCommentController struct {
+	hotCommentSvc *bizsvc.HotCommentService
+}
+
+// NewHotCommentController 创建热点评论控制器。
+func NewHotCommentController(db *gorm.DB) *HotCommentController {
+	return &HotCommentController{hotCommentSvc: bizsvc.NewHotCommentService(db)}
+}
+
+func (uc *HotCommentController) ListHotComments(c *gin.Context) {
 	// 定义并初始化当前变量。
-	items, err := uc.svc.ListHotComments(c.Request.Context(), 200)
+	items, err := uc.hotCommentSvc.ListHotComments(c.Request.Context(), 200)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -26,7 +38,7 @@ func (uc *UserOpsController) ListHotComments(c *gin.Context) {
 }
 
 // CreateHotComment 创建HotComment。
-func (uc *UserOpsController) CreateHotComment(c *gin.Context) {
+func (uc *HotCommentController) CreateHotComment(c *gin.Context) {
 	// 声明当前变量。
 	var req struct {
 		// 处理当前语句逻辑。
@@ -58,7 +70,7 @@ func (uc *UserOpsController) CreateHotComment(c *gin.Context) {
 	}
 
 	// 定义并初始化当前变量。
-	item, err := uc.svc.CreateHotComment(c.Request.Context(), req.PostID, req.UserID, req.ParentID, strings.TrimSpace(req.Content), req.Likes, req.Status)
+	item, err := uc.hotCommentSvc.CreateHotComment(c.Request.Context(), req.PostID, req.UserID, req.ParentID, strings.TrimSpace(req.Content), req.Likes, req.Status)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -71,7 +83,7 @@ func (uc *UserOpsController) CreateHotComment(c *gin.Context) {
 }
 
 // UpdateHotComment 更新HotComment。
-func (uc *UserOpsController) UpdateHotComment(c *gin.Context) {
+func (uc *HotCommentController) UpdateHotComment(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -124,7 +136,7 @@ func (uc *UserOpsController) UpdateHotComment(c *gin.Context) {
 	}
 
 	// 判断条件并进入对应分支逻辑。
-	if err := uc.svc.UpdateHotComment(c.Request.Context(), id, updates); err != nil {
+	if err := uc.hotCommentSvc.UpdateHotComment(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -135,7 +147,7 @@ func (uc *UserOpsController) UpdateHotComment(c *gin.Context) {
 }
 
 // DeleteHotComment 删除HotComment。
-func (uc *UserOpsController) DeleteHotComment(c *gin.Context) {
+func (uc *HotCommentController) DeleteHotComment(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -146,7 +158,7 @@ func (uc *UserOpsController) DeleteHotComment(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := uc.svc.DeleteHotComment(c.Request.Context(), id); err != nil {
+	if err := uc.hotCommentSvc.DeleteHotComment(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS tk_draw_record (
   special_draw_result VARCHAR(16) NOT NULL DEFAULT '' COMMENT '特别号码（1个）',
   draw_result VARCHAR(120) NOT NULL DEFAULT '' COMMENT '兼容字段：完整开奖号码（普通6个+特别号）',
   draw_labels VARCHAR(255) NOT NULL DEFAULT '' COMMENT '号码标签（与号码一一对应，格式示例：羊/土,蛇/金）',
+  color_labels VARCHAR(255) NOT NULL DEFAULT '' COMMENT '号码对应波色标签（与号码一一对应，示例：绿波,蓝波,红波）',
   zodiac_labels VARCHAR(255) NOT NULL DEFAULT '' COMMENT '号码对应属相标签（与号码一一对应，示例：羊,蛇,马）',
   wuxing_labels VARCHAR(255) NOT NULL DEFAULT '' COMMENT '号码对应五行标签（与号码一一对应，示例：土,金,火）',
   playback_url VARCHAR(255) NOT NULL DEFAULT '' COMMENT '开奖回放地址（直播结束后录入）',
@@ -614,7 +615,16 @@ WHERE TRIM(IFNULL(normal_draw_result, '')) <> '' OR TRIM(IFNULL(special_draw_res
 -- ---------- tk_draw_record 历史字段补齐 ----------
 SET @ddl = (
   SELECT IF(COUNT(1) = 0,
-    'ALTER TABLE tk_draw_record ADD COLUMN zodiac_labels VARCHAR(255) NOT NULL DEFAULT '''' COMMENT ''号码对应属相标签（与号码一一对应，示例：羊,蛇,马）'' AFTER draw_labels',
+    'ALTER TABLE tk_draw_record ADD COLUMN color_labels VARCHAR(255) NOT NULL DEFAULT '''' COMMENT ''号码对应波色标签（与号码一一对应，示例：绿波,蓝波,红波）'' AFTER draw_labels',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'color_labels'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN zodiac_labels VARCHAR(255) NOT NULL DEFAULT '''' COMMENT ''号码对应属相标签（与号码一一对应，示例：羊,蛇,马）'' AFTER color_labels',
     'SELECT 1')
   FROM information_schema.COLUMNS
   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'zodiac_labels'
@@ -627,6 +637,114 @@ SET @ddl = (
     'SELECT 1')
   FROM information_schema.COLUMNS
   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'wuxing_labels'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN special_single_double VARCHAR(16) NOT NULL DEFAULT '''' COMMENT ''特码单双（如：双）'' AFTER playback_url',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'special_single_double'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN special_big_small VARCHAR(16) NOT NULL DEFAULT '''' COMMENT ''特码大小（如：大）'' AFTER special_single_double',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'special_big_small'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN sum_single_double VARCHAR(16) NOT NULL DEFAULT '''' COMMENT ''总和单双（如：双）'' AFTER special_big_small',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'sum_single_double'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN sum_big_small VARCHAR(16) NOT NULL DEFAULT '''' COMMENT ''总和大小（如：大）'' AFTER sum_single_double',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'sum_big_small'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN special_code VARCHAR(16) NOT NULL DEFAULT '''' COMMENT ''特码数字'' AFTER recommend_ten',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'special_code'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN normal_code VARCHAR(120) NOT NULL DEFAULT '''' COMMENT ''正码（逗号分隔）'' AFTER special_code',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'normal_code'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN zheng1 VARCHAR(120) NOT NULL DEFAULT '''' COMMENT ''正1特描述（如：大双,合双,尾大,蓝波）'' AFTER normal_code',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'zheng1'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN zheng2 VARCHAR(120) NOT NULL DEFAULT '''' COMMENT ''正2特描述'' AFTER zheng1',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'zheng2'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN zheng3 VARCHAR(120) NOT NULL DEFAULT '''' COMMENT ''正3特描述'' AFTER zheng2',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'zheng3'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN zheng4 VARCHAR(120) NOT NULL DEFAULT '''' COMMENT ''正4特描述'' AFTER zheng3',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'zheng4'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN zheng5 VARCHAR(120) NOT NULL DEFAULT '''' COMMENT ''正5特描述'' AFTER zheng4',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'zheng5'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(1) = 0,
+    'ALTER TABLE tk_draw_record ADD COLUMN zheng6 VARCHAR(120) NOT NULL DEFAULT '''' COMMENT ''正6特描述'' AFTER zheng5',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tk_draw_record' AND COLUMN_NAME = 'zheng6'
 );
 PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 

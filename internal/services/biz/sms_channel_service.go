@@ -5,11 +5,23 @@ import (
 	"strconv"
 	"strings"
 
+	bizdao "go-admin/internal/dao/biz"
 	"go-admin/internal/models"
+	"gorm.io/gorm"
 )
 
+// SMSChannelService 短信通道业务服务。
+type SMSChannelService struct {
+	dao *bizdao.SMSChannelDAO
+}
+
+// NewSMSChannelService 创建短信通道服务。
+func NewSMSChannelService(db *gorm.DB) *SMSChannelService {
+	return &SMSChannelService{dao: bizdao.NewSMSChannelDAO(db)}
+}
+
 // ListSMSChannels 查询短信通道配置列表。
-func (s *BizConfigService) ListSMSChannels(ctx context.Context, status string, limit int) ([]models.WSMSChannel, error) {
+func (s *SMSChannelService) ListSMSChannels(ctx context.Context, status string, limit int) ([]models.WSMSChannel, error) {
 	// 将字符串状态转换为可选筛选值。
 	var statusFilter *int
 	// 定义并初始化当前变量。
@@ -26,19 +38,19 @@ func (s *BizConfigService) ListSMSChannels(ctx context.Context, status string, l
 }
 
 // CreateSMSChannel 新增短信通道配置。
-func (s *BizConfigService) CreateSMSChannel(ctx context.Context, item *models.WSMSChannel) error {
+func (s *SMSChannelService) CreateSMSChannel(ctx context.Context, item *models.WSMSChannel) error {
 	// 直通 DAO 创建记录。
 	return s.dao.CreateSMSChannel(ctx, item)
 }
 
 // UpdateSMSChannel 更新短信通道配置。
-func (s *BizConfigService) UpdateSMSChannel(ctx context.Context, id uint, updates map[string]interface{}) error {
+func (s *SMSChannelService) UpdateSMSChannel(ctx context.Context, id uint, updates map[string]interface{}) error {
 	// 直通 DAO 更新记录。
 	return s.dao.UpdateSMSChannel(ctx, id, updates)
 }
 
 // DeleteSMSChannel 删除短信通道配置。
-func (s *BizConfigService) DeleteSMSChannel(ctx context.Context, id uint) error {
+func (s *SMSChannelService) DeleteSMSChannel(ctx context.Context, id uint) error {
 	// 直通 DAO 删除记录。
 	return s.dao.DeleteSMSChannel(ctx, id)
 }

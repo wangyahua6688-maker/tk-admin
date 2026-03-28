@@ -7,15 +7,31 @@ import (
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
 	"go-admin/internal/constants"
 	"go-admin/internal/models"
+	bizsvc "go-admin/internal/services/biz"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // -------------------- 官方发帖 --------------------
 
-func (bc *BizConfigController) ListOfficialPosts(c *gin.Context) {
+// OfficialPostController 官方发帖控制器。
+type OfficialPostController struct {
+	officialPostSvc *bizsvc.OfficialPostService
+	lookupSvc       *bizsvc.BizLookupService
+}
+
+// NewOfficialPostController 创建官方发帖控制器。
+func NewOfficialPostController(db *gorm.DB) *OfficialPostController {
+	return &OfficialPostController{
+		officialPostSvc: bizsvc.NewOfficialPostService(db),
+		lookupSvc:       bizsvc.NewBizLookupService(db),
+	}
+}
+
+func (bc *OfficialPostController) ListOfficialPosts(c *gin.Context) {
 	// 定义并初始化当前变量。
-	items, err := bc.svc.ListOfficialPosts(c.Request.Context(), 200)
+	items, err := bc.officialPostSvc.ListOfficialPosts(c.Request.Context(), 200)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -28,7 +44,7 @@ func (bc *BizConfigController) ListOfficialPosts(c *gin.Context) {
 }
 
 // CreateOfficialPost 创建OfficialPost。
-func (bc *BizConfigController) CreateOfficialPost(c *gin.Context) {
+func (bc *OfficialPostController) CreateOfficialPost(c *gin.Context) {
 	// 声明当前变量。
 	var req struct {
 		// 处理当前语句逻辑。
@@ -64,7 +80,7 @@ func (bc *BizConfigController) CreateOfficialPost(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if !bc.svc.IsUserTypes(c.Request.Context(), req.UserID, "official") {
+	if !bc.lookupSvc.IsUserTypes(c.Request.Context(), req.UserID, "official") {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminBizInvalidRequest, "user_id must be official account")
 		// 返回当前处理结果。
@@ -92,7 +108,7 @@ func (bc *BizConfigController) CreateOfficialPost(c *gin.Context) {
 		item.Status = *req.Status
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.CreateOfficialPost(c.Request.Context(), &item); err != nil {
+	if err := bc.officialPostSvc.CreateOfficialPost(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -103,7 +119,7 @@ func (bc *BizConfigController) CreateOfficialPost(c *gin.Context) {
 }
 
 // UpdateOfficialPost 更新OfficialPost。
-func (bc *BizConfigController) UpdateOfficialPost(c *gin.Context) {
+func (bc *OfficialPostController) UpdateOfficialPost(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -129,7 +145,7 @@ func (bc *BizConfigController) UpdateOfficialPost(c *gin.Context) {
 		// 定义并初始化当前变量。
 		userID := toUint(rawUserID)
 		// 判断条件并进入对应分支逻辑。
-		if userID == 0 || !bc.svc.IsUserTypes(c.Request.Context(), userID, "official") {
+		if userID == 0 || !bc.lookupSvc.IsUserTypes(c.Request.Context(), userID, "official") {
 			// 调用utils.JSONError完成当前处理。
 			commonresp.GinError(c, constants.AdminBizInvalidRequest, "user_id must be official account")
 			// 返回当前处理结果。
@@ -139,7 +155,7 @@ func (bc *BizConfigController) UpdateOfficialPost(c *gin.Context) {
 		req["user_id"] = userID
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.UpdateOfficialPost(c.Request.Context(), id, req); err != nil {
+	if err := bc.officialPostSvc.UpdateOfficialPost(c.Request.Context(), id, req); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -150,7 +166,7 @@ func (bc *BizConfigController) UpdateOfficialPost(c *gin.Context) {
 }
 
 // DeleteOfficialPost 删除OfficialPost。
-func (bc *BizConfigController) DeleteOfficialPost(c *gin.Context) {
+func (bc *OfficialPostController) DeleteOfficialPost(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -161,7 +177,7 @@ func (bc *BizConfigController) DeleteOfficialPost(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.DeleteOfficialPost(c.Request.Context(), id); err != nil {
+	if err := bc.officialPostSvc.DeleteOfficialPost(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

@@ -4,10 +4,21 @@ import (
 	"context"
 
 	"go-admin/internal/models"
+	"gorm.io/gorm"
 )
 
+// OfficialPostDAO 官方发帖数据访问层。
+type OfficialPostDAO struct {
+	db *gorm.DB
+}
+
+// NewOfficialPostDAO 创建官方发帖 DAO。
+func NewOfficialPostDAO(db *gorm.DB) *OfficialPostDAO {
+	return &OfficialPostDAO{db: db}
+}
+
 // ListOfficialPosts 查询官方发帖列表。
-func (d *BizConfigDAO) ListOfficialPosts(ctx context.Context, limit int) ([]models.WPostArticle, error) {
+func (d *OfficialPostDAO) ListOfficialPosts(ctx context.Context, limit int) ([]models.WPostArticle, error) {
 	// 定义并初始化当前变量。
 	query := d.db.WithContext(ctx).Model(&models.WPostArticle{}).Where("is_official = 1").Order("id DESC")
 	// 判断条件并进入对应分支逻辑。
@@ -27,19 +38,19 @@ func (d *BizConfigDAO) ListOfficialPosts(ctx context.Context, limit int) ([]mode
 }
 
 // CreateOfficialPost 新增官方发帖。
-func (d *BizConfigDAO) CreateOfficialPost(ctx context.Context, item *models.WPostArticle) error {
+func (d *OfficialPostDAO) CreateOfficialPost(ctx context.Context, item *models.WPostArticle) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Create(item).Error
 }
 
 // UpdateOfficialPost 更新官方发帖。
-func (d *BizConfigDAO) UpdateOfficialPost(ctx context.Context, id uint, updates map[string]interface{}) error {
+func (d *OfficialPostDAO) UpdateOfficialPost(ctx context.Context, id uint, updates map[string]interface{}) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Model(&models.WPostArticle{}).Where("id = ?", id).Updates(updates).Error
 }
 
 // DeleteOfficialPost 删除官方发帖。
-func (d *BizConfigDAO) DeleteOfficialPost(ctx context.Context, id uint) error {
+func (d *OfficialPostDAO) DeleteOfficialPost(ctx context.Context, id uint) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Delete(&models.WPostArticle{}, id).Error
 }

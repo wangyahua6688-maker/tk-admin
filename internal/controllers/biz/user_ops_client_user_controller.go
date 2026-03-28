@@ -6,17 +6,29 @@ import (
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
 	"go-admin/internal/constants"
 	"go-admin/internal/models"
+	bizsvc "go-admin/internal/services/biz"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // -------------------- 客户端用户 --------------------
 
-func (uc *UserOpsController) ListClientUsers(c *gin.Context) {
+// ClientUserController 客户端用户控制器。
+type ClientUserController struct {
+	clientUserSvc *bizsvc.ClientUserService
+}
+
+// NewClientUserController 创建客户端用户控制器。
+func NewClientUserController(db *gorm.DB) *ClientUserController {
+	return &ClientUserController{clientUserSvc: bizsvc.NewClientUserService(db)}
+}
+
+func (uc *ClientUserController) ListClientUsers(c *gin.Context) {
 	// 定义并初始化当前变量。
 	userType := strings.TrimSpace(c.Query("user_type"))
 	// 定义并初始化当前变量。
-	items, err := uc.svc.ListClientUsers(c.Request.Context(), userType, 300)
+	items, err := uc.clientUserSvc.ListClientUsers(c.Request.Context(), userType, 300)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -29,7 +41,7 @@ func (uc *UserOpsController) ListClientUsers(c *gin.Context) {
 }
 
 // CreateClientUser 创建ClientUser。
-func (uc *UserOpsController) CreateClientUser(c *gin.Context) {
+func (uc *ClientUserController) CreateClientUser(c *gin.Context) {
 	// 声明当前变量。
 	var req struct {
 		// 处理当前语句逻辑。
@@ -81,7 +93,7 @@ func (uc *UserOpsController) CreateClientUser(c *gin.Context) {
 	}
 
 	// 判断条件并进入对应分支逻辑。
-	if err := uc.svc.CreateClientUser(c.Request.Context(), &item); err != nil {
+	if err := uc.clientUserSvc.CreateClientUser(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -92,7 +104,7 @@ func (uc *UserOpsController) CreateClientUser(c *gin.Context) {
 }
 
 // UpdateClientUser 更新ClientUser。
-func (uc *UserOpsController) UpdateClientUser(c *gin.Context) {
+func (uc *ClientUserController) UpdateClientUser(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -152,7 +164,7 @@ func (uc *UserOpsController) UpdateClientUser(c *gin.Context) {
 	}
 
 	// 判断条件并进入对应分支逻辑。
-	if err := uc.svc.UpdateClientUser(c.Request.Context(), id, updates); err != nil {
+	if err := uc.clientUserSvc.UpdateClientUser(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -163,7 +175,7 @@ func (uc *UserOpsController) UpdateClientUser(c *gin.Context) {
 }
 
 // DeleteClientUser 删除ClientUser。
-func (uc *UserOpsController) DeleteClientUser(c *gin.Context) {
+func (uc *ClientUserController) DeleteClientUser(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -174,7 +186,7 @@ func (uc *UserOpsController) DeleteClientUser(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := uc.svc.DeleteClientUser(c.Request.Context(), id); err != nil {
+	if err := uc.clientUserSvc.DeleteClientUser(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

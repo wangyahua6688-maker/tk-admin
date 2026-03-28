@@ -5,10 +5,21 @@ import (
 	"strings"
 
 	"go-admin/internal/models"
+	"gorm.io/gorm"
 )
 
+// ClientUserDAO 客户端用户数据访问层。
+type ClientUserDAO struct {
+	db *gorm.DB
+}
+
+// NewClientUserDAO 创建客户端用户 DAO。
+func NewClientUserDAO(db *gorm.DB) *ClientUserDAO {
+	return &ClientUserDAO{db: db}
+}
+
 // ListClientUsers 查询客户端用户列表。
-func (d *UserOpsDAO) ListClientUsers(ctx context.Context, userType string, limit int) ([]models.WUser, error) {
+func (d *ClientUserDAO) ListClientUsers(ctx context.Context, userType string, limit int) ([]models.WUser, error) {
 	// 定义并初始化当前变量。
 	query := d.db.WithContext(ctx).Model(&models.WUser{}).Order("id DESC")
 	// 判断条件并进入对应分支逻辑。
@@ -35,19 +46,19 @@ func (d *UserOpsDAO) ListClientUsers(ctx context.Context, userType string, limit
 }
 
 // CreateClientUser 新增客户端用户。
-func (d *UserOpsDAO) CreateClientUser(ctx context.Context, item *models.WUser) error {
+func (d *ClientUserDAO) CreateClientUser(ctx context.Context, item *models.WUser) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Create(item).Error
 }
 
 // UpdateClientUser 更新客户端用户。
-func (d *UserOpsDAO) UpdateClientUser(ctx context.Context, id uint, updates map[string]interface{}) error {
+func (d *ClientUserDAO) UpdateClientUser(ctx context.Context, id uint, updates map[string]interface{}) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Model(&models.WUser{}).Where("id = ?", id).Updates(updates).Error
 }
 
 // DeleteClientUser 删除客户端用户。
-func (d *UserOpsDAO) DeleteClientUser(ctx context.Context, id uint) error {
+func (d *ClientUserDAO) DeleteClientUser(ctx context.Context, id uint) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Delete(&models.WUser{}, id).Error
 }

@@ -4,10 +4,21 @@ import (
 	"context"
 
 	"go-admin/internal/models"
+	"gorm.io/gorm"
 )
 
+// PostArticleDAO 发帖数据访问层。
+type PostArticleDAO struct {
+	db *gorm.DB
+}
+
+// NewPostArticleDAO 创建发帖 DAO。
+func NewPostArticleDAO(db *gorm.DB) *PostArticleDAO {
+	return &PostArticleDAO{db: db}
+}
+
 // ListPostArticles 查询帖子列表（按官方/网友区分）。
-func (d *UserOpsDAO) ListPostArticles(ctx context.Context, isOfficial int8, limit int) ([]models.WPostArticle, error) {
+func (d *PostArticleDAO) ListPostArticles(ctx context.Context, isOfficial int8, limit int) ([]models.WPostArticle, error) {
 	// 定义并初始化当前变量。
 	query := d.db.WithContext(ctx).Model(&models.WPostArticle{}).Where("is_official = ?", isOfficial).Order("id DESC")
 	// 判断条件并进入对应分支逻辑。
@@ -27,25 +38,25 @@ func (d *UserOpsDAO) ListPostArticles(ctx context.Context, isOfficial int8, limi
 }
 
 // CreatePostArticle 新增帖子。
-func (d *UserOpsDAO) CreatePostArticle(ctx context.Context, item *models.WPostArticle) error {
+func (d *PostArticleDAO) CreatePostArticle(ctx context.Context, item *models.WPostArticle) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Create(item).Error
 }
 
 // UpdatePostArticle 更新帖子。
-func (d *UserOpsDAO) UpdatePostArticle(ctx context.Context, id uint, updates map[string]interface{}) error {
+func (d *PostArticleDAO) UpdatePostArticle(ctx context.Context, id uint, updates map[string]interface{}) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Model(&models.WPostArticle{}).Where("id = ?", id).Updates(updates).Error
 }
 
 // DeletePostArticle 删除帖子。
-func (d *UserOpsDAO) DeletePostArticle(ctx context.Context, id uint) error {
+func (d *PostArticleDAO) DeletePostArticle(ctx context.Context, id uint) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Delete(&models.WPostArticle{}, id).Error
 }
 
 // GetPostArticleByID 查询帖子是否存在。
-func (d *UserOpsDAO) GetPostArticleByID(ctx context.Context, id uint) (*models.WPostArticle, error) {
+func (d *PostArticleDAO) GetPostArticleByID(ctx context.Context, id uint) (*models.WPostArticle, error) {
 	// 声明当前变量。
 	var post models.WPostArticle
 	// 判断条件并进入对应分支逻辑。

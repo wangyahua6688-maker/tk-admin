@@ -9,7 +9,7 @@ import (
 )
 
 // ListDrawRecords 查询开奖记录列表（支持彩种与关键字筛选）。
-func (d *BizConfigDAO) ListDrawRecords(ctx context.Context, specialLotteryID uint, keyword string, limit int) ([]models.WDrawRecord, error) {
+func (d *LotteryDAO) ListDrawRecords(ctx context.Context, specialLotteryID uint, keyword string, limit int) ([]models.WDrawRecord, error) {
 	// 构建基础查询并设置排序。
 	query := d.db.WithContext(ctx).Model(&models.WDrawRecord{}).Order("draw_at DESC, id DESC")
 	// 限制数量，防止一次性拉取过多数据。
@@ -42,7 +42,7 @@ func (d *BizConfigDAO) ListDrawRecords(ctx context.Context, specialLotteryID uin
 }
 
 // GetDrawRecordByID 查询单条开奖记录。
-func (d *BizConfigDAO) GetDrawRecordByID(ctx context.Context, id uint) (*models.WDrawRecord, error) {
+func (d *LotteryDAO) GetDrawRecordByID(ctx context.Context, id uint) (*models.WDrawRecord, error) {
 	// 查询单条记录。
 	var item models.WDrawRecord
 	// 判断条件并进入对应分支逻辑。
@@ -55,19 +55,19 @@ func (d *BizConfigDAO) GetDrawRecordByID(ctx context.Context, id uint) (*models.
 }
 
 // CreateDrawRecordTx 在事务中创建开奖记录。
-func (d *BizConfigDAO) CreateDrawRecordTx(tx *gorm.DB, item *models.WDrawRecord) error {
+func (d *LotteryDAO) CreateDrawRecordTx(tx *gorm.DB, item *models.WDrawRecord) error {
 	// 直接写入开奖记录。
 	return tx.Create(item).Error
 }
 
 // UpdateDrawRecordTx 在事务中更新开奖记录。
-func (d *BizConfigDAO) UpdateDrawRecordTx(tx *gorm.DB, id uint, updates map[string]interface{}) error {
+func (d *LotteryDAO) UpdateDrawRecordTx(tx *gorm.DB, id uint, updates map[string]interface{}) error {
 	// 按主键更新记录。
 	return tx.Model(&models.WDrawRecord{}).Where("id = ?", id).Updates(updates).Error
 }
 
 // ResetCurrentDrawRecordTx 将指定彩种的 current 标记清零。
-func (d *BizConfigDAO) ResetCurrentDrawRecordTx(tx *gorm.DB, specialLotteryID uint, excludeID uint) error {
+func (d *LotteryDAO) ResetCurrentDrawRecordTx(tx *gorm.DB, specialLotteryID uint, excludeID uint) error {
 	// 清理同彩种的 current 标识（排除当前记录）。
 	query := tx.Model(&models.WDrawRecord{}).Where("special_lottery_id = ?", specialLotteryID)
 	// 判断条件并进入对应分支逻辑。
@@ -80,7 +80,7 @@ func (d *BizConfigDAO) ResetCurrentDrawRecordTx(tx *gorm.DB, specialLotteryID ui
 }
 
 // DeleteDrawRecord 删除开奖记录。
-func (d *BizConfigDAO) DeleteDrawRecord(ctx context.Context, id uint) error {
+func (d *LotteryDAO) DeleteDrawRecord(ctx context.Context, id uint) error {
 	// 直接按主键删除。
 	return d.db.WithContext(ctx).Delete(&models.WDrawRecord{}, id).Error
 }

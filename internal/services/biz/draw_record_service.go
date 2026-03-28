@@ -14,13 +14,13 @@ type DrawRecordFilter struct {
 }
 
 // ListDrawRecords 查询开奖记录列表。
-func (s *BizConfigService) ListDrawRecords(ctx context.Context, filter DrawRecordFilter) ([]models.WDrawRecord, error) {
+func (s *LotteryService) ListDrawRecords(ctx context.Context, filter DrawRecordFilter) ([]models.WDrawRecord, error) {
 	// 交由 DAO 执行查询，保持 service 层专注于编排逻辑。
 	return s.dao.ListDrawRecords(ctx, filter.SpecialLotteryID, filter.Keyword, filter.Limit)
 }
 
 // GetDrawRecordByID 获取单条开奖记录。
-func (s *BizConfigService) GetDrawRecordByID(ctx context.Context, id uint) (*models.WDrawRecord, error) {
+func (s *LotteryService) GetDrawRecordByID(ctx context.Context, id uint) (*models.WDrawRecord, error) {
 	// 单表查询直接下沉 DAO。
 	return s.dao.GetDrawRecordByID(ctx, id)
 }

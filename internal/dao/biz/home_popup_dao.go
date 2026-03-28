@@ -5,10 +5,21 @@ import (
 	"strings"
 
 	"go-admin/internal/models"
+	"gorm.io/gorm"
 )
 
+// HomePopupDAO 首页弹窗数据访问层。
+type HomePopupDAO struct {
+	db *gorm.DB
+}
+
+// NewHomePopupDAO 创建首页弹窗 DAO。
+func NewHomePopupDAO(db *gorm.DB) *HomePopupDAO {
+	return &HomePopupDAO{db: db}
+}
+
 // ListHomePopups 查询首屏弹窗列表。
-func (d *BizConfigDAO) ListHomePopups(ctx context.Context, position string, limit int) ([]models.WHomePopup, error) {
+func (d *HomePopupDAO) ListHomePopups(ctx context.Context, position string, limit int) ([]models.WHomePopup, error) {
 	// 更新当前变量或字段值。
 	position = strings.TrimSpace(position)
 	// 判断条件并进入对应分支逻辑。
@@ -35,19 +46,19 @@ func (d *BizConfigDAO) ListHomePopups(ctx context.Context, position string, limi
 }
 
 // CreateHomePopup 新增首屏弹窗。
-func (d *BizConfigDAO) CreateHomePopup(ctx context.Context, item *models.WHomePopup) error {
+func (d *HomePopupDAO) CreateHomePopup(ctx context.Context, item *models.WHomePopup) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Create(item).Error
 }
 
 // UpdateHomePopup 更新首屏弹窗。
-func (d *BizConfigDAO) UpdateHomePopup(ctx context.Context, id uint, updates map[string]interface{}) error {
+func (d *HomePopupDAO) UpdateHomePopup(ctx context.Context, id uint, updates map[string]interface{}) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Model(&models.WHomePopup{}).Where("id = ?", id).Updates(updates).Error
 }
 
 // DeleteHomePopup 删除首屏弹窗。
-func (d *BizConfigDAO) DeleteHomePopup(ctx context.Context, id uint) error {
+func (d *HomePopupDAO) DeleteHomePopup(ctx context.Context, id uint) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Delete(&models.WHomePopup{}, id).Error
 }

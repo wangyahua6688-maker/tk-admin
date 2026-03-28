@@ -6,14 +6,25 @@ import (
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
 	"go-admin/internal/constants"
 	"go-admin/internal/models"
+	bizsvc "go-admin/internal/services/biz"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // -------------------- 首页首屏弹窗 --------------------
 
 // ListHomePopups 查询首页首屏弹窗列表。
-func (bc *BizConfigController) ListHomePopups(c *gin.Context) {
+type HomePopupController struct {
+	homePopupSvc *bizsvc.HomePopupService
+}
+
+// NewHomePopupController 创建首页首屏弹窗控制器。
+func NewHomePopupController(db *gorm.DB) *HomePopupController {
+	return &HomePopupController{homePopupSvc: bizsvc.NewHomePopupService(db)}
+}
+
+func (bc *HomePopupController) ListHomePopups(c *gin.Context) {
 	// 读取位置筛选参数，默认只看首页弹窗。
 	position := strings.TrimSpace(c.Query("position"))
 	// 判断条件并进入对应分支逻辑。
@@ -23,7 +34,7 @@ func (bc *BizConfigController) ListHomePopups(c *gin.Context) {
 	}
 
 	// 执行查询并输出结果。
-	items, err := bc.svc.ListHomePopups(c.Request.Context(), position, 200)
+	items, err := bc.homePopupSvc.ListHomePopups(c.Request.Context(), position, 200)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -36,7 +47,7 @@ func (bc *BizConfigController) ListHomePopups(c *gin.Context) {
 }
 
 // CreateHomePopup 新增首页首屏弹窗。
-func (bc *BizConfigController) CreateHomePopup(c *gin.Context) {
+func (bc *HomePopupController) CreateHomePopup(c *gin.Context) {
 	// 定义请求结构，便于字段级校验。
 	var req struct {
 		// 处理当前语句逻辑。
@@ -143,7 +154,7 @@ func (bc *BizConfigController) CreateHomePopup(c *gin.Context) {
 	}
 
 	// 落库并返回新建记录。
-	if err := bc.svc.CreateHomePopup(c.Request.Context(), &item); err != nil {
+	if err := bc.homePopupSvc.CreateHomePopup(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -154,7 +165,7 @@ func (bc *BizConfigController) CreateHomePopup(c *gin.Context) {
 }
 
 // UpdateHomePopup 更新首页首屏弹窗。
-func (bc *BizConfigController) UpdateHomePopup(c *gin.Context) {
+func (bc *HomePopupController) UpdateHomePopup(c *gin.Context) {
 	// 解析路由主键ID。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -299,7 +310,7 @@ func (bc *BizConfigController) UpdateHomePopup(c *gin.Context) {
 	}
 
 	// 执行更新并返回ID。
-	if err := bc.svc.UpdateHomePopup(c.Request.Context(), id, updates); err != nil {
+	if err := bc.homePopupSvc.UpdateHomePopup(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -310,7 +321,7 @@ func (bc *BizConfigController) UpdateHomePopup(c *gin.Context) {
 }
 
 // DeleteHomePopup 删除首页首屏弹窗。
-func (bc *BizConfigController) DeleteHomePopup(c *gin.Context) {
+func (bc *HomePopupController) DeleteHomePopup(c *gin.Context) {
 	// 解析路由主键ID。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -322,7 +333,7 @@ func (bc *BizConfigController) DeleteHomePopup(c *gin.Context) {
 	}
 
 	// 执行删除。
-	if err := bc.svc.DeleteHomePopup(c.Request.Context(), id); err != nil {
+	if err := bc.homePopupSvc.DeleteHomePopup(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

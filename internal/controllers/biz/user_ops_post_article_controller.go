@@ -6,15 +6,31 @@ import (
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
 	"go-admin/internal/constants"
 	"go-admin/internal/models"
+	bizsvc "go-admin/internal/services/biz"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // -------------------- 发帖管理 --------------------
 
-func (uc *UserOpsController) ListPostArticles(c *gin.Context) {
+// PostArticleController 发帖管理控制器。
+type PostArticleController struct {
+	postArticleSvc *bizsvc.PostArticleService
+	lookupSvc      *bizsvc.UserOpsLookupService
+}
+
+// NewPostArticleController 创建发帖管理控制器。
+func NewPostArticleController(db *gorm.DB) *PostArticleController {
+	return &PostArticleController{
+		postArticleSvc: bizsvc.NewPostArticleService(db),
+		lookupSvc:      bizsvc.NewUserOpsLookupService(db),
+	}
+}
+
+func (uc *PostArticleController) ListPostArticles(c *gin.Context) {
 	// 定义并初始化当前变量。
-	items, err := uc.svc.ListPostArticles(c.Request.Context(), false, 200)
+	items, err := uc.postArticleSvc.ListPostArticles(c.Request.Context(), false, 200)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -27,7 +43,7 @@ func (uc *UserOpsController) ListPostArticles(c *gin.Context) {
 }
 
 // CreatePostArticle 创建PostArticle。
-func (uc *UserOpsController) CreatePostArticle(c *gin.Context) {
+func (uc *PostArticleController) CreatePostArticle(c *gin.Context) {
 	// 声明当前变量。
 	var req struct {
 		// 处理当前语句逻辑。
@@ -63,7 +79,7 @@ func (uc *UserOpsController) CreatePostArticle(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if !uc.svc.IsUserTypes(c.Request.Context(), req.UserID, "robot") {
+	if !uc.lookupSvc.IsUserTypes(c.Request.Context(), req.UserID, "robot") {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminBizInvalidRequest, "user_id must be robot account")
 		// 返回当前处理结果。
@@ -92,7 +108,7 @@ func (uc *UserOpsController) CreatePostArticle(c *gin.Context) {
 	}
 
 	// 判断条件并进入对应分支逻辑。
-	if err := uc.svc.CreatePostArticle(c.Request.Context(), &item); err != nil {
+	if err := uc.postArticleSvc.CreatePostArticle(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -103,7 +119,7 @@ func (uc *UserOpsController) CreatePostArticle(c *gin.Context) {
 }
 
 // UpdatePostArticle 更新PostArticle。
-func (uc *UserOpsController) UpdatePostArticle(c *gin.Context) {
+func (uc *PostArticleController) UpdatePostArticle(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -138,7 +154,7 @@ func (uc *UserOpsController) UpdatePostArticle(c *gin.Context) {
 	// 判断条件并进入对应分支逻辑。
 	if req.UserID != nil {
 		// 判断条件并进入对应分支逻辑。
-		if *req.UserID == 0 || !uc.svc.IsUserTypes(c.Request.Context(), *req.UserID, "robot") {
+		if *req.UserID == 0 || !uc.lookupSvc.IsUserTypes(c.Request.Context(), *req.UserID, "robot") {
 			// 调用utils.JSONError完成当前处理。
 			commonresp.GinError(c, constants.AdminBizInvalidRequest, "user_id must be robot account")
 			// 返回当前处理结果。
@@ -178,7 +194,7 @@ func (uc *UserOpsController) UpdatePostArticle(c *gin.Context) {
 	}
 
 	// 判断条件并进入对应分支逻辑。
-	if err := uc.svc.UpdatePostArticle(c.Request.Context(), id, updates); err != nil {
+	if err := uc.postArticleSvc.UpdatePostArticle(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -189,7 +205,7 @@ func (uc *UserOpsController) UpdatePostArticle(c *gin.Context) {
 }
 
 // DeletePostArticle 删除PostArticle。
-func (uc *UserOpsController) DeletePostArticle(c *gin.Context) {
+func (uc *PostArticleController) DeletePostArticle(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -200,7 +216,7 @@ func (uc *UserOpsController) DeletePostArticle(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := uc.svc.DeletePostArticle(c.Request.Context(), id); err != nil {
+	if err := uc.postArticleSvc.DeletePostArticle(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

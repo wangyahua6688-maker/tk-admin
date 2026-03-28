@@ -5,11 +5,29 @@ import (
 	"errors"
 	"strings"
 
+	bizdao "go-admin/internal/dao/biz"
 	"go-admin/internal/models"
+	"gorm.io/gorm"
 )
 
+// PostCommentService 帖子评论业务服务。
+type PostCommentService struct {
+	dao            *bizdao.PostCommentDAO
+	postArticleDAO *bizdao.PostArticleDAO
+	lookupSvc      *UserOpsLookupService
+}
+
+// NewPostCommentService 创建帖子评论服务。
+func NewPostCommentService(db *gorm.DB) *PostCommentService {
+	return &PostCommentService{
+		dao:            bizdao.NewPostCommentDAO(db),
+		postArticleDAO: bizdao.NewPostArticleDAO(db),
+		lookupSvc:      NewUserOpsLookupService(db),
+	}
+}
+
 // ListPostComments 查询帖子评论并补充用户信息。
-func (s *UserOpsService) ListPostComments(ctx context.Context, postID uint) ([]map[string]interface{}, error) {
+func (s *PostCommentService) ListPostComments(ctx context.Context, postID uint) ([]map[string]interface{}, error) {
 	// 拉取评论列表。
 	rows, err := s.dao.ListPostComments(ctx, postID, 500)
 	// 判断条件并进入对应分支逻辑。
@@ -40,7 +58,7 @@ func (s *UserOpsService) ListPostComments(ctx context.Context, postID uint) ([]m
 	// 判断条件并进入对应分支逻辑。
 	if len(userIDs) > 0 {
 		// 定义并初始化当前变量。
-		users, uerr := s.dao.GetUsersByIDs(ctx, userIDs)
+		users, uerr := s.lookupSvc.GetUsersByIDs(ctx, userIDs)
 		// 判断条件并进入对应分支逻辑。
 		if uerr != nil {
 			// 返回当前处理结果。
@@ -91,7 +109,7 @@ func (s *UserOpsService) ListPostComments(ctx context.Context, postID uint) ([]m
 }
 
 // CreatePostComment 新增帖子评论（机器人/官方）。
-func (s *UserOpsService) CreatePostComment(ctx context.Context, postID uint, userID uint, parentID uint, content string, status *int8) (*models.WComment, error) {
+func (s *PostCommentService) CreatePostComment(ctx context.Context, postID uint, userID uint, parentID uint, content string, status *int8) (*models.WComment, error) {
 	// 参数校验。
 	if postID == 0 {
 		// 返回当前处理结果。
@@ -109,13 +127,13 @@ func (s *UserOpsService) CreatePostComment(ctx context.Context, postID uint, use
 	}
 
 	// 校验用户类型。
-	if !s.IsUserTypes(ctx, userID, "robot", "official") {
+	if !s.lookupSvc.IsUserTypes(ctx, userID, "robot", "official") {
 		// 返回当前处理结果。
 		return nil, errors.New("user must be robot or official account")
 	}
 
 	// 校验帖子存在。
-	if _, err := s.dao.GetPostArticleByID(ctx, postID); err != nil {
+	if _, err := s.postArticleDAO.GetPostArticleByID(ctx, postID); err != nil {
 		// 返回当前处理结果。
 		return nil, errors.New("post not found")
 	}

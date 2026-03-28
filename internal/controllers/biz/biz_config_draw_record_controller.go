@@ -8,6 +8,7 @@ import (
 
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
 	"go-admin/internal/constants"
+	admindto "go-admin/internal/dto/admin"
 	"go-admin/internal/models"
 	bizsvc "go-admin/internal/services/biz"
 
@@ -15,68 +16,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// drawRecordUpsertRequest 开奖区记录新增/编辑请求结构。
-type drawRecordUpsertRequest struct {
-	// 处理当前语句逻辑。
-	SpecialLotteryID *uint `json:"special_lottery_id"`
-	// 处理当前语句逻辑。
-	Issue *string `json:"issue"`
-	// 处理当前语句逻辑。
-	Year *int `json:"year"`
-	// 处理当前语句逻辑。
-	DrawAt *string `json:"draw_at"`
-	// 处理当前语句逻辑。
-	NormalDrawResult *string `json:"normal_draw_result"`
-	// 处理当前语句逻辑。
-	SpecialDrawResult *string `json:"special_draw_result"`
-	// 处理当前语句逻辑。
-	DrawResult *string `json:"draw_result"`
-	// 处理当前语句逻辑。
-	DrawLabels *string `json:"draw_labels"`
-	// 处理当前语句逻辑。
-	PlaybackURL *string `json:"playback_url"`
-	// 处理当前语句逻辑。
-	SpecialSingleDouble *string `json:"special_single_double"`
-	// 处理当前语句逻辑。
-	SpecialBigSmall *string `json:"special_big_small"`
-	// 处理当前语句逻辑。
-	SumSingleDouble *string `json:"sum_single_double"`
-	// 处理当前语句逻辑。
-	SumBigSmall *string `json:"sum_big_small"`
-	// 处理当前语句逻辑。
-	RecommendSix *string `json:"recommend_six"`
-	// 处理当前语句逻辑。
-	RecommendFour *string `json:"recommend_four"`
-	// 处理当前语句逻辑。
-	RecommendOne *string `json:"recommend_one"`
-	// 处理当前语句逻辑。
-	RecommendTen *string `json:"recommend_ten"`
-	// 处理当前语句逻辑。
-	SpecialCode *string `json:"special_code"`
-	// 处理当前语句逻辑。
-	NormalCode *string `json:"normal_code"`
-	// 处理当前语句逻辑。
-	Zheng1 *string `json:"zheng1"`
-	// 处理当前语句逻辑。
-	Zheng2 *string `json:"zheng2"`
-	// 处理当前语句逻辑。
-	Zheng3 *string `json:"zheng3"`
-	// 处理当前语句逻辑。
-	Zheng4 *string `json:"zheng4"`
-	// 处理当前语句逻辑。
-	Zheng5 *string `json:"zheng5"`
-	// 处理当前语句逻辑。
-	Zheng6 *string `json:"zheng6"`
-	// 处理当前语句逻辑。
-	IsCurrent *int8 `json:"is_current"`
-	// 处理当前语句逻辑。
-	Status *int8 `json:"status"`
-	// 处理当前语句逻辑。
-	Sort *int `json:"sort"`
-}
-
 // ListDrawRecords 查询开奖区开奖记录列表。
-func (bc *BizConfigController) ListDrawRecords(c *gin.Context) {
+func (bc *LotteryController) ListDrawRecords(c *gin.Context) {
 	// 1) 读取筛选参数（彩种ID + 关键字）。
 	specialLotteryID := strings.TrimSpace(c.Query("special_lottery_id"))
 	// 定义并初始化当前变量。
@@ -103,7 +44,7 @@ func (bc *BizConfigController) ListDrawRecords(c *gin.Context) {
 	}
 
 	// 3) 执行查询并返回。
-	items, err := bc.svc.ListDrawRecords(c.Request.Context(), filter)
+	items, err := bc.drawRecordSvc.ListDrawRecords(c.Request.Context(), filter)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -116,9 +57,9 @@ func (bc *BizConfigController) ListDrawRecords(c *gin.Context) {
 }
 
 // CreateDrawRecord 新增开奖区开奖记录。
-func (bc *BizConfigController) CreateDrawRecord(c *gin.Context) {
+func (bc *LotteryController) CreateDrawRecord(c *gin.Context) {
 	// 声明当前变量。
-	var req drawRecordUpsertRequest
+	var req admindto.DrawRecordUpsertRequest
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -205,7 +146,7 @@ func (bc *BizConfigController) CreateDrawRecord(c *gin.Context) {
 	}
 
 	// 同一彩种只允许一条当前期记录。
-	if err := bc.svc.CreateDrawRecord(c.Request.Context(), &item); err != nil {
+	if err := bc.drawRecordSvc.CreateDrawRecord(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -219,7 +160,7 @@ func (bc *BizConfigController) CreateDrawRecord(c *gin.Context) {
 }
 
 // UpdateDrawRecord 编辑开奖区开奖记录。
-func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
+func (bc *LotteryController) UpdateDrawRecord(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -230,7 +171,7 @@ func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
 		return
 	}
 	// 声明当前变量。
-	var req drawRecordUpsertRequest
+	var req admindto.DrawRecordUpsertRequest
 	// 判断条件并进入对应分支逻辑。
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -240,7 +181,7 @@ func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
 	}
 
 	// 定义并初始化当前变量。
-	current, err := bc.svc.GetDrawRecordByID(c.Request.Context(), id)
+	current, err := bc.drawRecordSvc.GetDrawRecordByID(c.Request.Context(), id)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 判断条件并进入对应分支逻辑。
@@ -402,7 +343,7 @@ func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
 	}
 
 	// 4) 写库并维护“同彩种唯一当前期”约束。
-	if err := bc.svc.UpdateDrawRecord(c.Request.Context(), id, &next); err != nil {
+	if err := bc.drawRecordSvc.UpdateDrawRecord(c.Request.Context(), id, &next); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -418,7 +359,7 @@ func (bc *BizConfigController) UpdateDrawRecord(c *gin.Context) {
 }
 
 // DeleteDrawRecord 删除开奖区开奖记录。
-func (bc *BizConfigController) DeleteDrawRecord(c *gin.Context) {
+func (bc *LotteryController) DeleteDrawRecord(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -429,7 +370,7 @@ func (bc *BizConfigController) DeleteDrawRecord(c *gin.Context) {
 		return
 	}
 	// 删除前先取当前记录，用于删除后清理对应彩种缓存。
-	current, err := bc.svc.GetDrawRecordByID(c.Request.Context(), id)
+	current, err := bc.drawRecordSvc.GetDrawRecordByID(c.Request.Context(), id)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 判断条件并进入对应分支逻辑。
@@ -445,7 +386,7 @@ func (bc *BizConfigController) DeleteDrawRecord(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.DeleteDrawRecord(c.Request.Context(), id); err != nil {
+	if err := bc.drawRecordSvc.DeleteDrawRecord(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

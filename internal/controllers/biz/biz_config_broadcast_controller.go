@@ -6,15 +6,27 @@ import (
 	commonresp "github.com/wangyahua6688-maker/tk-common/utils/httpresp"
 	"go-admin/internal/constants"
 	"go-admin/internal/models"
+	bizsvc "go-admin/internal/services/biz"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // -------------------- Broadcast --------------------
 
-func (bc *BizConfigController) ListBroadcasts(c *gin.Context) {
+// BroadcastController 广播配置控制器。
+type BroadcastController struct {
+	broadcastSvc *bizsvc.BroadcastService
+}
+
+// NewBroadcastController 创建广播控制器。
+func NewBroadcastController(db *gorm.DB) *BroadcastController {
+	return &BroadcastController{broadcastSvc: bizsvc.NewBroadcastService(db)}
+}
+
+func (bc *BroadcastController) ListBroadcasts(c *gin.Context) {
 	// 定义并初始化当前变量。
-	items, err := bc.svc.ListBroadcasts(c.Request.Context(), 200)
+	items, err := bc.broadcastSvc.ListBroadcasts(c.Request.Context(), 200)
 	// 判断条件并进入对应分支逻辑。
 	if err != nil {
 		// 调用utils.JSONError完成当前处理。
@@ -27,7 +39,7 @@ func (bc *BizConfigController) ListBroadcasts(c *gin.Context) {
 }
 
 // CreateBroadcast 创建Broadcast。
-func (bc *BizConfigController) CreateBroadcast(c *gin.Context) {
+func (bc *BroadcastController) CreateBroadcast(c *gin.Context) {
 	// 声明当前变量。
 	var req struct {
 		// 处理当前语句逻辑。
@@ -66,7 +78,7 @@ func (bc *BizConfigController) CreateBroadcast(c *gin.Context) {
 		item.Sort = *req.Sort
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.CreateBroadcast(c.Request.Context(), &item); err != nil {
+	if err := bc.broadcastSvc.CreateBroadcast(c.Request.Context(), &item); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -77,7 +89,7 @@ func (bc *BizConfigController) CreateBroadcast(c *gin.Context) {
 }
 
 // UpdateBroadcast 更新Broadcast。
-func (bc *BizConfigController) UpdateBroadcast(c *gin.Context) {
+func (bc *BroadcastController) UpdateBroadcast(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -135,7 +147,7 @@ func (bc *BizConfigController) UpdateBroadcast(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.UpdateBroadcast(c.Request.Context(), id, updates); err != nil {
+	if err := bc.broadcastSvc.UpdateBroadcast(c.Request.Context(), id, updates); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。
@@ -146,7 +158,7 @@ func (bc *BizConfigController) UpdateBroadcast(c *gin.Context) {
 }
 
 // DeleteBroadcast 删除Broadcast。
-func (bc *BizConfigController) DeleteBroadcast(c *gin.Context) {
+func (bc *BroadcastController) DeleteBroadcast(c *gin.Context) {
 	// 定义并初始化当前变量。
 	id, err := parseUintID(c)
 	// 判断条件并进入对应分支逻辑。
@@ -157,7 +169,7 @@ func (bc *BizConfigController) DeleteBroadcast(c *gin.Context) {
 		return
 	}
 	// 判断条件并进入对应分支逻辑。
-	if err := bc.svc.DeleteBroadcast(c.Request.Context(), id); err != nil {
+	if err := bc.broadcastSvc.DeleteBroadcast(c.Request.Context(), id); err != nil {
 		// 调用utils.JSONError完成当前处理。
 		commonresp.GinError(c, constants.AdminSysInternalError, err.Error())
 		// 返回当前处理结果。

@@ -10,7 +10,7 @@ import (
 )
 
 // ListLotteryInfosWithOptions 查询图纸列表并附带动物竞猜选项。
-func (s *BizConfigService) ListLotteryInfosWithOptions(ctx context.Context, limit int) ([]models.WLotteryInfo, map[uint][]string, error) {
+func (s *LotteryService) ListLotteryInfosWithOptions(ctx context.Context, limit int) ([]models.WLotteryInfo, map[uint][]string, error) {
 	// 1) 查询图纸列表。
 	items, err := s.dao.ListLotteryInfos(ctx, limit)
 	// 判断条件并进入对应分支逻辑。
@@ -55,13 +55,13 @@ func (s *BizConfigService) ListLotteryInfosWithOptions(ctx context.Context, limi
 }
 
 // GetLotteryInfoByID 获取单条图纸内容。
-func (s *BizConfigService) GetLotteryInfoByID(ctx context.Context, id uint) (*models.WLotteryInfo, error) {
+func (s *LotteryService) GetLotteryInfoByID(ctx context.Context, id uint) (*models.WLotteryInfo, error) {
 	// 返回当前处理结果。
 	return s.dao.GetLotteryInfoByID(ctx, id)
 }
 
 // ResolveLotteryCategory 解析分类输入为标准分类ID+标签。
-func (s *BizConfigService) ResolveLotteryCategory(ctx context.Context, categoryID *uint, categoryTag *string) (uint, string, error) {
+func (s *LotteryService) ResolveLotteryCategory(ctx context.Context, categoryID *uint, categoryTag *string) (uint, string, error) {
 	// 优先按 category_id 解析。
 	if categoryID != nil && *categoryID > 0 {
 		// 定义并初始化当前变量。
@@ -93,7 +93,7 @@ func (s *BizConfigService) ResolveLotteryCategory(ctx context.Context, categoryI
 }
 
 // CreateLotteryInfo 创建图纸并写入竞猜选项。
-func (s *BizConfigService) CreateLotteryInfo(ctx context.Context, item *models.WLotteryInfo, optionNames []string) error {
+func (s *LotteryService) CreateLotteryInfo(ctx context.Context, item *models.WLotteryInfo, optionNames []string) error {
 	// 归一化选项列表，防止为空。
 	normalized := normalizeOptionNames(optionNames)
 	// 判断条件并进入对应分支逻辑。
@@ -127,7 +127,7 @@ func (s *BizConfigService) CreateLotteryInfo(ctx context.Context, item *models.W
 }
 
 // UpdateLotteryInfo 更新图纸并在必要时替换竞猜选项。
-func (s *BizConfigService) UpdateLotteryInfo(ctx context.Context, id uint, updates map[string]interface{}, updateOptions bool, optionNames []string, specialLotteryID uint, isCurrent int8) error {
+func (s *LotteryService) UpdateLotteryInfo(ctx context.Context, id uint, updates map[string]interface{}, updateOptions bool, optionNames []string, specialLotteryID uint, isCurrent int8) error {
 	// 仅在需要时更新选项。
 	normalized := normalizeOptionNames(optionNames)
 	// 判断条件并进入对应分支逻辑。
@@ -166,7 +166,7 @@ func (s *BizConfigService) UpdateLotteryInfo(ctx context.Context, id uint, updat
 }
 
 // DeleteLotteryInfo 删除图纸并清理竞猜选项。
-func (s *BizConfigService) DeleteLotteryInfo(ctx context.Context, id uint) error {
+func (s *LotteryService) DeleteLotteryInfo(ctx context.Context, id uint) error {
 	// 返回当前处理结果。
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 先删选项，避免残留。

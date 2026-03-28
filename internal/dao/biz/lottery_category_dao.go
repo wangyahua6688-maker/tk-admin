@@ -9,7 +9,7 @@ import (
 )
 
 // ListLotteryCategories 查询图库分类列表。
-func (d *BizConfigDAO) ListLotteryCategories(ctx context.Context, keyword string) ([]models.WLotteryCategory, error) {
+func (d *LotteryDAO) ListLotteryCategories(ctx context.Context, keyword string) ([]models.WLotteryCategory, error) {
 	// 定义并初始化当前变量。
 	query := d.db.WithContext(ctx).Order("sort ASC, id ASC")
 	// 判断条件并进入对应分支逻辑。
@@ -29,25 +29,25 @@ func (d *BizConfigDAO) ListLotteryCategories(ctx context.Context, keyword string
 }
 
 // CreateLotteryCategory 新增图库分类。
-func (d *BizConfigDAO) CreateLotteryCategory(ctx context.Context, item *models.WLotteryCategory) error {
+func (d *LotteryDAO) CreateLotteryCategory(ctx context.Context, item *models.WLotteryCategory) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Create(item).Error
 }
 
 // UpdateLotteryCategory 更新图库分类。
-func (d *BizConfigDAO) UpdateLotteryCategory(ctx context.Context, id uint, updates map[string]interface{}) error {
+func (d *LotteryDAO) UpdateLotteryCategory(ctx context.Context, id uint, updates map[string]interface{}) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Model(&models.WLotteryCategory{}).Where("id = ?", id).Updates(updates).Error
 }
 
 // DeleteLotteryCategory 删除图库分类。
-func (d *BizConfigDAO) DeleteLotteryCategory(ctx context.Context, id uint) error {
+func (d *LotteryDAO) DeleteLotteryCategory(ctx context.Context, id uint) error {
 	// 返回当前处理结果。
 	return d.db.WithContext(ctx).Delete(&models.WLotteryCategory{}, id).Error
 }
 
 // GetLotteryCategoryByID 按主键获取分类。
-func (d *BizConfigDAO) GetLotteryCategoryByID(ctx context.Context, id uint) (*models.WLotteryCategory, error) {
+func (d *LotteryDAO) GetLotteryCategoryByID(ctx context.Context, id uint) (*models.WLotteryCategory, error) {
 	// 声明当前变量。
 	var cat models.WLotteryCategory
 	// 判断条件并进入对应分支逻辑。
@@ -60,7 +60,7 @@ func (d *BizConfigDAO) GetLotteryCategoryByID(ctx context.Context, id uint) (*mo
 }
 
 // GetLotteryCategoryByTag 按 key/name 查询分类（兼容旧请求）。
-func (d *BizConfigDAO) GetLotteryCategoryByTag(ctx context.Context, tag string) (*models.WLotteryCategory, error) {
+func (d *LotteryDAO) GetLotteryCategoryByTag(ctx context.Context, tag string) (*models.WLotteryCategory, error) {
 	// 更新当前变量或字段值。
 	tag = strings.TrimSpace(tag)
 	// 判断条件并进入对应分支逻辑。
